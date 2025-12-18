@@ -3,7 +3,8 @@
  * Frontend API functions for subscription management
  */
 
-const API_BASE = 'http://localhost:5000/api/subscription';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+const API_BASE = `${API_BASE_URL}/subscription`;
 
 /**
  * Get auth headers

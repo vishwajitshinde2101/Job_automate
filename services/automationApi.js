@@ -4,7 +4,7 @@
  * Use this in your React components to talk to the automation server
  */
 
-const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
 
 /**
  * Read auth token from localStorage (or another storage you use)
