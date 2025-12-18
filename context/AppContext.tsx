@@ -1,0 +1,234 @@
+
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { User, PricingPlan, JobConfig, LogEntry, JobReport } from '../types';
+import { PRICING_PLANS } from '../constants';
+
+interface AppContextType {
+  user: User;
+  logs: LogEntry[];
+  reports: JobReport[];
+  isAutomating: boolean;
+  login: (username: string, email: string) => void;
+  logout: () => void;
+  selectPlan: (planId: string) => void;
+  updateConfig: (config: JobConfig) => void;
+  startAutomation: () => void;
+  stopAutomation: () => void;
+  scheduleAutomation: (time: string) => void;
+  downloadReport: () => void;
+}
+
+const AppContext = createContext<AppContextType | undefined>(undefined);
+
+const INITIAL_USER: User = {
+  username: '',
+  email: '',
+  isLoggedIn: false,
+};
+
+// Helper to get persisted user from localStorage
+const getPersistedUser = (): User => {
+  try {
+    const stored = localStorage.getItem('jobAutomate_user');
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      return { ...INITIAL_USER, ...parsed };
+    }
+  } catch (e) {
+    console.error('Failed to parse stored user:', e);
+  }
+  return INITIAL_USER;
+};
+
+// Mock Backend Logic
+export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const [user, setUser] = useState<User>(getPersistedUser);
+  const [isAutomating, setIsAutomating] = useState(false);
+  const [logs, setLogs] = useState<LogEntry[]>([]);
+  const [reports, setReports] = useState<JobReport[]>([]);
+
+  // Persist user state to localStorage whenever it changes
+  useEffect(() => {
+    if (user.isLoggedIn) {
+      localStorage.setItem('jobAutomate_user', JSON.stringify(user));
+    } else {
+      localStorage.removeItem('jobAutomate_user');
+    }
+  }, [user]);
+
+  // Simulation Interval Ref
+  const [intervalId, setIntervalId] = useState<ReturnType<typeof setInterval> | null>(null);
+
+  const login = (username: string, email: string) => {
+    setUser({ ...user, username, email, isLoggedIn: true });
+    addLog(`User ${username} logged in successfully.`, 'text-green-400');
+  };
+
+  const logout = () => {
+    stopAutomation();
+    setUser(INITIAL_USER);
+    setLogs([]);
+    setReports([]);
+  };
+
+  const selectPlan = (planId: string) => {
+    const plan = PRICING_PLANS.find(p => p.id === planId);
+    if (plan) {
+      setUser(prev => ({ ...prev, plan }));
+      addLog(`Plan updated to: ${plan.name}`, 'text-neon-blue');
+    }
+  };
+
+  const updateConfig = (config: JobConfig) => {
+    setUser(prev => ({ ...prev, config }));
+    addLog(`Configuration saved for target: ${config.targetRole}`, 'text-yellow-400');
+    if (config.resumeName) {
+        addLog(`Resume '${config.resumeName}' analyzed. Score: ${config.resumeScore || 85}/100`, 'text-neon-purple');
+    }
+  };
+
+  const addLog = (text: string, color: string = 'text-gray-300') => {
+    setLogs(prev => [...prev.slice(-99), { // Keep last 100 logs
+      id: Date.now(),
+      timestamp: new Date().toLocaleTimeString(),
+      text,
+      color
+    }]);
+  };
+
+  const startAutomation = () => {
+    if (!user.config) {
+      addLog('Error: No configuration found. Please setup profile.', 'text-red-500');
+      return;
+    }
+    
+    setIsAutomating(true);
+    // Mimic the exact start sequence of autoApply.js
+    addLog('🌐 Opening Naukri Login...', 'text-white');
+    
+    setTimeout(() => {
+        addLog('🔐 Logging in...', 'text-yellow-400');
+        setTimeout(() => {
+            addLog(`📄 Opening job page... ${user.config?.targetRole} jobs`, 'text-neon-blue');
+            const id = setInterval(() => {
+              runSimulationStep();
+            }, 6000); // Slower interval to match script pacing
+            setIntervalId(id);
+        }, 3000);
+    }, 2000);
+  };
+
+  const stopAutomation = () => {
+    if (intervalId) clearInterval(intervalId);
+    setIsAutomating(false);
+    addLog('Automation stopped by user.', 'text-red-400');
+  };
+  
+  const scheduleAutomation = (time: string) => {
+    addLog(`⏰ Automation scheduled for ${time}. Waiting...`, 'text-neon-green');
+  };
+
+  // The "Puppeteer Script" Simulation
+  const runSimulationStep = () => {
+    const companies = ['TechSol Info', 'InnovateAI Systems', 'DataCorp Global', 'CloudSys', 'Webify Solutions', 'AutoTech Labs', 'SoftServe Inc'];
+    const titles = [user.config?.targetRole || 'Software Engineer', 'Senior Developer', 'Full Stack Engineer', 'Backend Developer'];
+    
+    const randomCompany = companies[Math.floor(Math.random() * companies.length)];
+    const randomTitle = titles[Math.floor(Math.random() * titles.length)];
+    
+    // Mimic script loop output
+    addLog(`\n-----------------------------`, 'text-gray-500');
+    addLog(`➡ Opening job: ${randomTitle} at ${randomCompany}`, 'text-white');
+    
+    setTimeout(() => {
+        // Match Score Logic
+        const matchCheck = Math.floor(Math.random() * 5) + 2; // 2 to 6
+        const matchCross = Math.random() > 0.8 ? 1 : 0; // Occasional mismatch
+
+        addLog(`Match Score: { check: ${matchCheck}, cross: ${matchCross} }`, 'text-gray-400');
+
+        if (matchCross === 0 && matchCheck >= 4) {
+            addLog("👍 Good match → Eligible to apply", 'text-green-400');
+            
+            setTimeout(() => {
+                const isExternal = Math.random() > 0.8;
+                if (isExternal) {
+                    addLog("⛔ External Apply → Skipping...", 'text-red-400');
+                    addReport(randomTitle, randomCompany, 85, 'External');
+                } else {
+                    addLog("✔ Clicking apply…", 'text-neon-blue');
+                    
+                    // Chatbot Simulation
+                    setTimeout(() => {
+                        const hasChatbot = Math.random() > 0.5;
+                        if (hasChatbot) {
+                             addLog(`❓ Question: What is your expected CTC?`, 'text-yellow-200');
+                             addLog(`🟢 AI Answer: ${user.config?.expectedSalary || '10 LPA'}`, 'text-green-300');
+                             addLog("🎉 Chatbot answers completed!", 'text-purple-400');
+                        }
+                        
+                        addLog("⏳ Waiting 4 seconds...", 'text-gray-500');
+                        addReport(randomTitle, randomCompany, 95, 'Applied');
+                    }, 1500);
+                }
+            }, 1000);
+
+        } else {
+            addLog("❌ Poor match → Skipping...", 'text-red-400');
+            addLog("⏳ Waiting 4 seconds...", 'text-gray-500');
+        }
+    }, 1500);
+  };
+
+  const addReport = (title: string, company: string, score: number, status: any) => {
+     const newReport: JobReport = {
+        id: Date.now(),
+        date: new Date().toISOString().split('T')[0],
+        jobTitle: title,
+        company: company,
+        matchScore: score,
+        status: status,
+        platform: 'Naukri'
+    };
+    setReports(prev => [newReport, ...prev]);
+  };
+
+  const downloadReport = () => {
+    const headers = ['Date', 'Job Title', 'Company', 'Match Score', 'Status'];
+    const rows = reports.map(r => [r.date, r.jobTitle, r.company, `${r.matchScore}%`, r.status]);
+    const csvContent = "data:text/csv;charset=utf-8," + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `job_report_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    addLog('Report downloaded successfully.', 'text-neon-blue');
+  };
+
+  return (
+    <AppContext.Provider value={{
+      user,
+      logs,
+      reports,
+      isAutomating,
+      login,
+      logout,
+      selectPlan,
+      updateConfig,
+      startAutomation,
+      stopAutomation,
+      scheduleAutomation,
+      downloadReport
+    }}>
+      {children}
+    </AppContext.Provider>
+  );
+};
+
+export const useApp = () => {
+  const context = useContext(AppContext);
+  if (!context) throw new Error("useApp must be used within AppProvider");
+  return context;
+};

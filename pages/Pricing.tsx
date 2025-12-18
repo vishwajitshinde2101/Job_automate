@@ -1,0 +1,325 @@
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Check, Zap, Crown, Rocket, AlertCircle, CheckCircle, Loader2, ArrowRight } from 'lucide-react';
+import { getPlans, createOrder, initiatePayment, getSubscriptionStatus } from '../services/subscriptionApi';
+
+interface PlanFeature {
+  id: string;
+  featureKey: string;
+  featureValue: string;
+  featureLabel?: string;
+}
+
+interface Plan {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  durationDays: number;
+  features: PlanFeature[];
+  sortOrder: number;
+}
+
+interface Subscription {
+  id: string;
+  planName: string;
+  endDate: string;
+  daysRemaining: number;
+  status: string;
+}
+
+const Pricing: React.FC = () => {
+  const navigate = useNavigate();
+  const [plans, setPlans] = useState<Plan[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [processingPlanId, setProcessingPlanId] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+  const [currentSubscription, setCurrentSubscription] = useState<Subscription | null>(null);
+
+  // Check if user is logged in
+  const isLoggedIn = !!localStorage.getItem('token');
+  const userInfo = JSON.parse(localStorage.getItem('user') || '{}');
+
+  useEffect(() => {
+    loadPlans();
+    if (isLoggedIn) {
+      loadSubscriptionStatus();
+    }
+  }, [isLoggedIn]);
+
+  const loadPlans = async () => {
+    setLoading(true);
+    try {
+      const result = await getPlans();
+      if (result.success) {
+        setPlans(result.data || []);
+      } else {
+        setError(result.error || 'Failed to load plans');
+      }
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadSubscriptionStatus = async () => {
+    try {
+      const result = await getSubscriptionStatus();
+      if (result.success && result.data.hasActiveSubscription) {
+        setCurrentSubscription(result.data.subscription);
+      }
+    } catch (err) {
+      console.error('Failed to load subscription status:', err);
+    }
+  };
+
+  const handleSelectPlan = async (plan: Plan) => {
+    if (!isLoggedIn) {
+      navigate('/login', { state: { from: '/pricing', planId: plan.id } });
+      return;
+    }
+
+    setProcessingPlanId(plan.id);
+    setError(null);
+    setSuccess(null);
+
+    try {
+      // Create order
+      const orderResult = await createOrder(plan.id);
+      if (!orderResult.success) {
+        throw new Error(orderResult.error || 'Failed to create order');
+      }
+
+      // Initiate payment
+      initiatePayment(
+        orderResult.data,
+        userInfo,
+        (successResult) => {
+          setSuccess('Payment successful! Your subscription is now active.');
+          setProcessingPlanId(null);
+          loadSubscriptionStatus();
+          // Redirect to dashboard after 2 seconds
+          setTimeout(() => navigate('/dashboard'), 2000);
+        },
+        (failureResult) => {
+          setError(failureResult.error || 'Payment failed');
+          setProcessingPlanId(null);
+        }
+      );
+    } catch (err: any) {
+      setError(err.message);
+      setProcessingPlanId(null);
+    }
+  };
+
+  const getPlanIcon = (index: number) => {
+    const icons = [Zap, Crown, Rocket];
+    const Icon = icons[index % icons.length];
+    return <Icon className="w-8 h-8" />;
+  };
+
+  const getPlanGradient = (index: number) => {
+    const gradients = [
+      'from-blue-500 to-cyan-500',
+      'from-purple-500 to-pink-500',
+      'from-orange-500 to-red-500',
+    ];
+    return gradients[index % gradients.length];
+  };
+
+  const formatPrice = (price: number) => {
+    return new Intl.NumberFormat('en-IN', {
+      style: 'currency',
+      currency: 'INR',
+      minimumFractionDigits: 0,
+    }).format(price);
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center">
+        <Loader2 className="w-8 h-8 text-indigo-500 animate-spin" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
+      {/* Header */}
+      <div className="pt-20 pb-12 text-center">
+        <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
+          Choose Your Plan
+        </h1>
+        <p className="text-gray-400 text-lg max-w-2xl mx-auto px-4">
+          Automate your job applications and land your dream job faster
+        </p>
+      </div>
+
+      {/* Current Subscription Banner */}
+      {currentSubscription && (
+        <div className="max-w-4xl mx-auto px-4 mb-8">
+          <div className="bg-indigo-500/20 border border-indigo-500/50 rounded-xl p-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <CheckCircle className="w-6 h-6 text-indigo-400" />
+              <div>
+                <p className="text-white font-medium">
+                  Active Plan: {currentSubscription.planName}
+                </p>
+                <p className="text-gray-400 text-sm">
+                  {currentSubscription.daysRemaining} days remaining
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => navigate('/dashboard')}
+              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-colors"
+            >
+              Go to Dashboard
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Alerts */}
+      {error && (
+        <div className="max-w-4xl mx-auto px-4 mb-6">
+          <div className="bg-red-500/20 border border-red-500/50 rounded-xl p-4 flex items-center gap-3">
+            <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0" />
+            <p className="text-red-400">{error}</p>
+          </div>
+        </div>
+      )}
+
+      {success && (
+        <div className="max-w-4xl mx-auto px-4 mb-6">
+          <div className="bg-green-500/20 border border-green-500/50 rounded-xl p-4 flex items-center gap-3">
+            <CheckCircle className="w-5 h-5 text-green-400 flex-shrink-0" />
+            <p className="text-green-400">{success}</p>
+          </div>
+        </div>
+      )}
+
+      {/* Plans Grid */}
+      <div className="max-w-6xl mx-auto px-4 pb-20">
+        <div className="grid md:grid-cols-3 gap-8">
+          {plans.map((plan, index) => {
+            const isPopular = index === 1;
+            const isProcessing = processingPlanId === plan.id;
+            const isCurrentPlan = currentSubscription?.planName === plan.name;
+
+            return (
+              <div
+                key={plan.id}
+                className={`relative bg-gray-800/50 backdrop-blur-sm border rounded-2xl p-8 transition-all duration-300 ${
+                  isPopular
+                    ? 'border-indigo-500 scale-105 shadow-2xl shadow-indigo-500/20'
+                    : 'border-gray-700 hover:border-gray-600'
+                }`}
+              >
+                {/* Popular Badge */}
+                {isPopular && (
+                  <div className="absolute -top-4 left-1/2 -translate-x-1/2">
+                    <span className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white px-4 py-1 rounded-full text-sm font-medium">
+                      Most Popular
+                    </span>
+                  </div>
+                )}
+
+                {/* Plan Icon */}
+                <div
+                  className={`w-16 h-16 rounded-xl bg-gradient-to-br ${getPlanGradient(
+                    index
+                  )} flex items-center justify-center text-white mb-6`}
+                >
+                  {getPlanIcon(index)}
+                </div>
+
+                {/* Plan Name & Description */}
+                <h3 className="text-2xl font-bold text-white mb-2">{plan.name}</h3>
+                <p className="text-gray-400 text-sm mb-6">{plan.description}</p>
+
+                {/* Price */}
+                <div className="mb-6">
+                  <span className="text-4xl font-bold text-white">
+                    {formatPrice(plan.price)}
+                  </span>
+                  <span className="text-gray-400 ml-2">
+                    / {plan.durationDays} days
+                  </span>
+                </div>
+
+                {/* Features */}
+                <ul className="space-y-3 mb-8">
+                  {plan.features.map((feature) => (
+                    <li key={feature.id} className="flex items-start gap-3">
+                      <Check className="w-5 h-5 text-green-400 flex-shrink-0 mt-0.5" />
+                      <span className="text-gray-300 text-sm">
+                        {feature.featureLabel || feature.featureValue}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+
+                {/* CTA Button */}
+                <button
+                  onClick={() => handleSelectPlan(plan)}
+                  disabled={isProcessing || isCurrentPlan}
+                  className={`w-full py-3 px-6 rounded-xl font-medium transition-all duration-300 flex items-center justify-center gap-2 ${
+                    isCurrentPlan
+                      ? 'bg-gray-700 text-gray-400 cursor-not-allowed'
+                      : isPopular
+                      ? 'bg-gradient-to-r from-indigo-500 to-purple-500 text-white hover:from-indigo-600 hover:to-purple-600'
+                      : 'bg-gray-700 text-white hover:bg-gray-600'
+                  }`}
+                >
+                  {isProcessing ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      Processing...
+                    </>
+                  ) : isCurrentPlan ? (
+                    'Current Plan'
+                  ) : (
+                    <>
+                      Get Started
+                      <ArrowRight className="w-5 h-5" />
+                    </>
+                  )}
+                </button>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Empty State */}
+        {plans.length === 0 && !loading && (
+          <div className="text-center py-20">
+            <p className="text-gray-400 text-lg">No plans available at the moment.</p>
+          </div>
+        )}
+      </div>
+
+      {/* Footer Links */}
+      <div className="border-t border-gray-800 py-8">
+        <div className="max-w-4xl mx-auto px-4 flex flex-wrap justify-center gap-6 text-sm">
+          <a href="/privacy-policy" className="text-gray-400 hover:text-white transition-colors">
+            Privacy Policy
+          </a>
+          <a href="/terms" className="text-gray-400 hover:text-white transition-colors">
+            Terms & Conditions
+          </a>
+          <a href="/refund-policy" className="text-gray-400 hover:text-white transition-colors">
+            Refund Policy
+          </a>
+          <a href="/contact" className="text-gray-400 hover:text-white transition-colors">
+            Contact Us
+          </a>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default Pricing;
