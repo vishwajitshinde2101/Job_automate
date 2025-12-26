@@ -14,6 +14,7 @@ const Auth: React.FC<AuthProps> = ({ type }) => {
   const [error, setError] = useState('');
   const [showWelcome, setShowWelcome] = useState(false);
   const [welcomeName, setWelcomeName] = useState('');
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
 
   const [formData, setFormData] = useState({
     firstName: '',
@@ -53,10 +54,18 @@ const Auth: React.FC<AuthProps> = ({ type }) => {
         localStorage.setItem('token', data.token);
         localStorage.setItem('user', JSON.stringify(data.user));
 
-        // Update context
-        login(formData.firstName || 'User', formData.email);
+        // Update context with onboarding status
+        login(data.user.firstName || 'User', formData.email, data.user.onboardingCompleted);
         setLoading(false);
-        navigate('/plans');
+
+        // Show welcome popup
+        setWelcomeName(data.user.firstName || 'User');
+        setShowWelcome(true);
+
+        // Navigate to pricing page after signup to select subscription
+        setTimeout(() => {
+          navigate('/pricing');
+        }, 2000);
       } else {
         // Call Login API
         const response = await fetch(`${API_BASE_URL}/auth/login`, {
@@ -78,8 +87,8 @@ const Auth: React.FC<AuthProps> = ({ type }) => {
         localStorage.setItem('token', data.token);
         localStorage.setItem('user', JSON.stringify(data.user));
 
-        // Update context
-        login(data.user.firstName || 'User', formData.email);
+        // Update context with onboarding status
+        login(data.user.firstName || 'User', formData.email, data.user.onboardingCompleted);
         setLoading(false);
 
         // Show welcome popup
@@ -118,7 +127,9 @@ const Auth: React.FC<AuthProps> = ({ type }) => {
             {/* Welcome Text */}
             <div className="flex items-center justify-center gap-2 mb-2">
               <Sparkles className="w-5 h-5 text-neon-blue" />
-              <h2 className="text-2xl font-bold text-white">Welcome Back!</h2>
+              <h2 className="text-2xl font-bold text-white">
+                {type === 'signup' ? 'Welcome!' : 'Welcome Back!'}
+              </h2>
               <Sparkles className="w-5 h-5 text-neon-blue" />
             </div>
 
@@ -127,7 +138,9 @@ const Auth: React.FC<AuthProps> = ({ type }) => {
             </p>
 
             <p className="text-gray-400 mb-6">
-              You've successfully logged in. Redirecting you to your dashboard...
+              {type === 'signup'
+                ? "Your account has been created successfully! Please select a subscription plan to continue..."
+                : "You've successfully logged in. Redirecting you to your dashboard..."}
             </p>
 
             {/* Loading Bar */}
@@ -222,10 +235,49 @@ const Auth: React.FC<AuthProps> = ({ type }) => {
             </div>
           </div>
 
+          {/* Terms & Conditions Checkbox - Only for Signup */}
+          {type === 'signup' && (
+            <div className="bg-dark-900/50 border-2 border-yellow-500/30 rounded-lg p-4">
+              <label className="flex items-start gap-3 cursor-pointer group">
+                <div className="relative flex items-center justify-center mt-0.5">
+                  <input
+                    type="checkbox"
+                    checked={acceptedTerms}
+                    onChange={(e) => setAcceptedTerms(e.target.checked)}
+                    className="w-5 h-5 bg-dark-800 border-2 border-gray-600 rounded cursor-pointer checked:bg-neon-blue checked:border-neon-blue appearance-none transition-all"
+                    required
+                  />
+                  {acceptedTerms && (
+                    <CheckCircle className="w-4 h-4 text-white absolute pointer-events-none" />
+                  )}
+                </div>
+                <span className="text-sm text-gray-300 leading-relaxed flex-1">
+                  I accept the{' '}
+                  <a
+                    href="/terms"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-neon-blue hover:underline font-semibold"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    Terms and Conditions
+                  </a>
+                  <span className="text-red-400 ml-1">*</span>
+                </span>
+              </label>
+              {!acceptedTerms && (
+                <p className="text-xs text-yellow-400 mt-2 flex items-center gap-1">
+                  <AlertCircle className="w-3 h-3" />
+                  You must accept the Terms and Conditions to continue
+                </p>
+              )}
+            </div>
+          )}
+
           <button
             type="submit"
-            disabled={loading || showWelcome}
-            className="w-full bg-neon-blue text-black font-bold py-3 rounded-lg hover:bg-white transition-colors flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(0,243,255,0.3)] disabled:opacity-50"
+            disabled={loading || showWelcome || (type === 'signup' && !acceptedTerms)}
+            className="w-full bg-neon-blue text-black font-bold py-3 rounded-lg hover:bg-white transition-colors flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(0,243,255,0.3)] disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? <Loader2 className="animate-spin w-5 h-5" /> : (
               <>

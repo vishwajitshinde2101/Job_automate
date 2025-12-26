@@ -20,6 +20,10 @@ const Plan = sequelize.define('Plan', {
         type: DataTypes.STRING(500),
         allowNull: true,
     },
+    subtitle: {
+        type: DataTypes.STRING(255),
+        allowNull: true,
+    },
     price: {
         type: DataTypes.DECIMAL(10, 2),
         allowNull: false,
@@ -32,6 +36,14 @@ const Plan = sequelize.define('Plan', {
     isActive: {
         type: DataTypes.BOOLEAN,
         defaultValue: true,
+    },
+    isPopular: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false,
+    },
+    comingSoon: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false,
     },
     sortOrder: {
         type: DataTypes.INTEGER,

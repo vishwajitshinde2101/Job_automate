@@ -1,132 +1,179 @@
 /**
- * ======================== SEED PLANS ========================
- * Run this script to populate plans and plan_features tables
+ * ========================================================================
+ * SEED PRICING PLANS
+ * ========================================================================
+ * Populates the plans and plan_features tables with pricing data
+ * Matches the pricing structure in constants.ts
+ *
  * Usage: node server/db/seedPlans.js
+ * ========================================================================
  */
 
 import sequelize from './config.js';
 import Plan from '../models/Plan.js';
 import PlanFeature from '../models/PlanFeature.js';
 
+// Pricing plans data matching constants.ts
 const plansData = [
     {
-        name: 'Starter',
-        description: 'Perfect for getting started with job automation',
-        price: 299,
-        durationDays: 7,
+        id: 'basic',
+        name: 'Starter Plan',
+        description: 'Perfect for job seekers starting their automation journey',
+        subtitle: null,
+        price: 299.00,
+        durationDays: 30, // 1 month
+        isActive: true,
+        isPopular: false,
+        comingSoon: false,
         sortOrder: 1,
         features: [
-            { featureKey: 'applications_per_day', featureValue: '25', featureLabel: '25 applications per day' },
-            { featureKey: 'job_portals', featureValue: '1', featureLabel: '1 job portal (Naukri)' },
-            { featureKey: 'resume_profiles', featureValue: '1', featureLabel: '1 resume profile' },
-            { featureKey: 'email_support', featureValue: 'true', featureLabel: 'Email support' },
-            { featureKey: 'application_tracking', featureValue: 'basic', featureLabel: 'Basic application tracking' },
-        ],
+            'Unlimited Job Applications',
+            'Basic Match Score Algorithm',
+            'Daily Excel Report',
+            'Standard Support'
+        ]
     },
     {
-        name: 'Professional',
-        description: 'Best value for serious job seekers',
-        price: 799,
-        durationDays: 30,
+        id: 'pro',
+        name: 'Pro Automation Plan',
+        description: 'Most popular plan for serious job seekers',
+        subtitle: null,
+        price: 499.00,
+        durationDays: 60, // 2 months
+        isActive: true,
+        isPopular: true,
+        comingSoon: false,
         sortOrder: 2,
         features: [
-            { featureKey: 'applications_per_day', featureValue: '100', featureLabel: '100 applications per day' },
-            { featureKey: 'job_portals', featureValue: '3', featureLabel: '3 job portals supported' },
-            { featureKey: 'resume_profiles', featureValue: '3', featureLabel: '3 resume profiles' },
-            { featureKey: 'priority_support', featureValue: 'true', featureLabel: 'Priority email support' },
-            { featureKey: 'application_tracking', featureValue: 'advanced', featureLabel: 'Advanced application tracking' },
-            { featureKey: 'smart_matching', featureValue: 'true', featureLabel: 'Smart job matching' },
-            { featureKey: 'custom_filters', featureValue: 'true', featureLabel: 'Custom job filters' },
-        ],
+            'Unlimited Job Applications',
+            'Advanced Match Score Algorithm',
+            'Advanced Keyword Matching',
+            'Daily Excel Report',
+            '24/7 Priority Support'
+        ]
     },
     {
-        name: 'Enterprise',
-        description: 'Maximum automation for fastest results',
-        price: 1999,
-        durationDays: 90,
+        id: 'advanced',
+        name: 'Advanced Automation',
+        description: 'Next-generation automation for maximum career acceleration',
+        subtitle: 'For serious job seekers who want unfair advantage',
+        price: 999.00,
+        durationDays: 90, // 3 months (estimated)
+        isActive: false, // Not available for purchase yet
+        isPopular: false,
+        comingSoon: true,
         sortOrder: 3,
         features: [
-            { featureKey: 'applications_per_day', featureValue: 'unlimited', featureLabel: 'Unlimited applications' },
-            { featureKey: 'job_portals', featureValue: 'all', featureLabel: 'All job portals supported' },
-            { featureKey: 'resume_profiles', featureValue: 'unlimited', featureLabel: 'Unlimited resume profiles' },
-            { featureKey: 'dedicated_support', featureValue: 'true', featureLabel: 'Dedicated account manager' },
-            { featureKey: 'application_tracking', featureValue: 'premium', featureLabel: 'Premium analytics dashboard' },
-            { featureKey: 'smart_matching', featureValue: 'true', featureLabel: 'AI-powered job matching' },
-            { featureKey: 'custom_filters', featureValue: 'true', featureLabel: 'Advanced custom filters' },
-            { featureKey: 'api_access', featureValue: 'true', featureLabel: 'API access' },
-            { featureKey: 'priority_applications', featureValue: 'true', featureLabel: 'Priority application queue' },
-        ],
-    },
+            '✔ Everything in Pro Automation',
+            '✔ Interview Prep Automation',
+            '✔ HR Outreach on Autopilot',
+            '✔ Email + Profile Auto Updates',
+            '✔ Deep Automation Insights (Locked)',
+            '🔒 Advanced Controls (Unlock on Upgrade)'
+        ]
+    }
 ];
 
 async function seedPlans() {
+    console.log('\n========================================================================');
+    console.log('                    SEEDING PRICING PLANS                              ');
+    console.log('========================================================================\n');
+
     try {
-        console.log('Connecting to database...');
+        // Connect to database
         await sequelize.authenticate();
-        console.log('Connected!\n');
+        console.log('✅ Database connection established\n');
 
-        // Sync the models (create tables if not exists)
-        await Plan.sync({ alter: true });
-        await PlanFeature.sync({ alter: true });
-        console.log('Plans and PlanFeatures tables ready.\n');
+        let totalPlansCreated = 0;
+        let totalPlansUpdated = 0;
+        let totalFeaturesCreated = 0;
 
-        // Clear existing data (optional - comment out if you want to preserve data)
-        console.log('Clearing existing plans and features...');
-        await PlanFeature.destroy({ where: {} });
-        await Plan.destroy({ where: {} });
-        console.log('Existing data cleared.\n');
-
-        let totalPlans = 0;
-        let totalFeatures = 0;
-
+        // Process each plan
         for (const planData of plansData) {
-            console.log(`Creating plan: ${planData.name}...`);
+            console.log(`📦 Processing plan: ${planData.name}...`);
 
-            // Create the plan
-            const plan = await Plan.create({
-                name: planData.name,
-                description: planData.description,
-                price: planData.price,
-                durationDays: planData.durationDays,
-                sortOrder: planData.sortOrder,
-                isActive: true,
-            });
-            totalPlans++;
+            const { features, ...planFields } = planData;
 
-            // Create features for this plan
-            for (const feature of planData.features) {
-                await PlanFeature.create({
-                    planId: plan.id,
-                    featureKey: feature.featureKey,
-                    featureValue: feature.featureValue,
-                    featureLabel: feature.featureLabel,
+            try {
+                // Find or create the plan
+                const [plan, planCreated] = await Plan.findOrCreate({
+                    where: { id: planData.id },
+                    defaults: planFields
                 });
-                totalFeatures++;
-            }
 
-            console.log(`  ✓ Plan created with ${planData.features.length} features`);
+                if (planCreated) {
+                    totalPlansCreated++;
+                    console.log(`   ✅ Plan created: ${planData.name}`);
+                } else {
+                    // Update existing plan
+                    await plan.update(planFields);
+                    totalPlansUpdated++;
+                    console.log(`   ↻ Plan updated: ${planData.name}`);
+                }
+
+                // Delete existing features for this plan to ensure clean slate
+                await PlanFeature.destroy({
+                    where: { planId: plan.id }
+                });
+
+                // Insert features
+                let featureOrder = 0;
+                for (const featureText of features) {
+                    featureOrder++;
+
+                    await PlanFeature.create({
+                        planId: plan.id,
+                        featureKey: `feature_${featureOrder}`,
+                        featureValue: featureText,
+                        featureLabel: featureText,
+                    });
+
+                    totalFeaturesCreated++;
+                }
+
+                console.log(`   ✅ Added ${features.length} features\n`);
+
+            } catch (error) {
+                console.error(`   ❌ Failed to process plan ${planData.name}: ${error.message}\n`);
+            }
         }
 
-        console.log(`\n✅ Successfully seeded ${totalPlans} plans with ${totalFeatures} features!`);
+        console.log('========================================================================');
+        console.log(`✅ SEEDING COMPLETE`);
+        console.log(`   Plans created: ${totalPlansCreated}`);
+        console.log(`   Plans updated: ${totalPlansUpdated}`);
+        console.log(`   Features created: ${totalFeaturesCreated}`);
+        console.log('========================================================================\n');
 
-        // Display created plans
-        console.log('\n📋 Created Plans:');
-        const createdPlans = await Plan.findAll({
+        // Display final plan summary
+        const allPlans = await Plan.findAll({
             include: [{ model: PlanFeature, as: 'features' }],
-            order: [['sortOrder', 'ASC']],
+            order: [['sortOrder', 'ASC']]
         });
 
-        for (const plan of createdPlans) {
-            console.log(`\n  ${plan.name} (₹${plan.price}/${plan.durationDays} days)`);
-            console.log(`  Features:`);
-            for (const feature of plan.features) {
-                console.log(`    - ${feature.featureLabel}`);
+        console.log('📊 PLANS SUMMARY:\n');
+        for (const plan of allPlans) {
+            console.log(`   ${plan.sortOrder}. ${plan.name}`);
+            console.log(`      Price: ₹${plan.price} / ${plan.durationDays} days`);
+            if (plan.subtitle) {
+                console.log(`      Subtitle: ${plan.subtitle}`);
             }
+            console.log(`      Features: ${plan.features.length}`);
+            console.log(`      Popular: ${plan.isPopular ? '⭐ Yes' : 'No'}`);
+            console.log(`      Coming Soon: ${plan.comingSoon ? '🔒 Yes' : 'No'}`);
+            console.log(`      Active: ${plan.isActive ? '✅ Yes' : '❌ No'}`);
+            console.log('      Feature List:');
+            for (const feature of plan.features) {
+                console.log(`        - ${feature.featureLabel}`);
+            }
+            console.log('');
         }
 
         process.exit(0);
     } catch (error) {
-        console.error('Error seeding plans:', error);
+        console.error('\n❌ SEEDING FAILED');
+        console.error(`Error: ${error.message}`);
+        console.error(error.stack);
         process.exit(1);
     }
 }

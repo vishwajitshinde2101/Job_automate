@@ -4,14 +4,15 @@
  */
 
 import jwt from 'jsonwebtoken';
+import User from '../models/User.js';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your_super_secret_jwt_key_change_in_production';
 
 /**
- * Generate JWT token
+ * Generate JWT token with role
  */
-export const generateToken = (userId) => {
-    return jwt.sign({ userId }, JWT_SECRET, { expiresIn: '30d' });
+export const generateToken = (userId, role = 'user') => {
+    return jwt.sign({ userId, role }, JWT_SECRET, { expiresIn: '30d' });
 };
 
 /**
@@ -30,8 +31,50 @@ export const authenticateToken = (req, res, next) => {
             return res.status(403).json({ error: 'Invalid or expired token' });
         }
         req.userId = user.userId;
+        req.userRole = user.role || 'user';
         next();
     });
 };
 
-export default { generateToken, authenticateToken };
+/**
+ * Verify admin role middleware
+ * Must be used after authenticateToken
+ */
+export const authenticateAdmin = async (req, res, next) => {
+    try {
+        // Check if user is authenticated
+        if (!req.userId) {
+            return res.status(401).json({ error: 'Authentication required' });
+        }
+
+        // Fetch user from database to verify role
+        const user = await User.findByPk(req.userId);
+
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        if (user.role !== 'admin') {
+            return res.status(403).json({
+                error: 'Admin access required',
+                message: 'You do not have permission to access this resource'
+            });
+        }
+
+        if (!user.isActive) {
+            return res.status(403).json({
+                error: 'Account deactivated',
+                message: 'Your admin account has been deactivated'
+            });
+        }
+
+        // Attach user object to request for further use
+        req.user = user;
+        next();
+    } catch (error) {
+        console.error('Admin authentication error:', error);
+        res.status(500).json({ error: 'Authentication failed' });
+    }
+};
+
+export default { generateToken, authenticateToken, authenticateAdmin };

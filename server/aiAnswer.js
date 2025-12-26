@@ -2,17 +2,20 @@
  * ======================== AI ANSWER MODULE (WITH DATABASE) ========================
  * Handles interview question answering using OpenAI + MySQL database.
  * Fetches user data dynamically from DB instead of hardcoding values.
+ * Includes intelligent skill-based question handling.
  * Production-ready with proper error handling.
  */
 
 import OpenAI from 'openai';
 import dotenv from 'dotenv';
+import mysql from 'mysql2/promise';
 
 dotenv.config();
 
-// Store resume text and user data for current session
+// Store resume text, user data, and skills for current session
 let resumeText = '';
 let userAnswersData = null;
+let skillsData = [];
 
 /**
  * Initialize resume text from file or default resume
@@ -23,48 +26,9 @@ export function initializeResume(fileText) {
         resumeText = fileText;
         console.log('📄 Resume initialized from uploaded file');
     } else {
-        // Default resume (can be replaced with user's actual resume)
-        resumeText = `
-Pawar Pravin
-pravin.pawar2726@gmail.com | 9529633527 | .NET Developer | Pune
-
-Professional Summary
-Experienced and dedicated .NET Developer with over 3+ years of expertise in designing, developing, and
-maintaining web and desktop applications using .NET Framework, C#, ASP.NET, MVC, and .NET Core.
-Skilled in the full software development lifecycle (SDLC), including requirement analysis, design,
-implementation, testing, and deployment. Proficient in SQL Server, Entity Framework, and RESTful APIs to
-deliver efficient, scalable, and high performance applications. Strong problem-solving abilities and a
-collaborative team player, adept at Agile development.
-
-Technical Skills
-• Programming Languages: C#, VB.NET, JavaScript, HTML5, CSS3
-• Frameworks & Libraries: .NET Framework, .NET Core, ASP.NET MVC, Entity Framework, LINQ, Web API
-• Databases: SQL Server, MySQL, SQLite, Entity Framework ORM
-• Front-End Technologies: Angular, jQuery, Bootstrap
-• Tools & IDEs: Visual Studio, Visual Studio Code, Git, TFS, Postman
-• Web Services & APIs: RESTful API development and integration, SOAP
-• Version Control: Git, GitHub, Bitbucket
-• Other Skills: Agile/Scrum methodology, Unit Testing, Logging & Exception Handling, Debugging & Performance Optimization
-
-Professional Experience
-YOUNGELEMENT INDIA PRIVATE LIMITED — .NET Developer
-DEC 2022 – Present | Pune
-
-Health Insurance Management System
-• Technologies: C#, ASP.NET MVC/Core, SQL Server, HTML, CSS, JavaScript, Bootstrap, jQuery
-• Description: Web-based application to manage health insurance policies, claims, and customer data
-• Improved modules for policy management, customer registration, and claims processing
-• Planned database schemas, queries, and stored procedures in SQL Server
-
-Vendor Data Management System
-• Technologies: C#, ASP.NET MVC/Core, SQL Server, HTML, CSS, JavaScript, Bootstrap, jQuery
-• Developed modules for vendor registration, contract management, and transaction tracking
-• Designed and optimized database schemas in SQL Server
-
-Education
-B.Sc. in Computer Science, Solapur University, 2023
-    `;
-        console.log('📄 Using default resume');
+        // No default resume - must be provided by user
+        resumeText = '';
+        console.log('⚠️  No resume provided - answers will be limited to skill data and common questions');
     }
 }
 
@@ -75,6 +39,93 @@ B.Sc. in Computer Science, Solapur University, 2023
 export function setUserAnswersData(data) {
     userAnswersData = data;
     console.log('✅ User answers data loaded from database');
+}
+
+// Export alias for backward compatibility
+export const setUserData = setUserAnswersData;
+
+/**
+ * Initialize skills from database for a specific user
+ * @param {string} userId - User ID
+ * @param {object} dbConfig - Database configuration
+ */
+export async function initializeSkillsFromDB(userId, dbConfig) {
+    try {
+        const connection = await mysql.createConnection(dbConfig);
+        const [rows] = await connection.execute(
+            "SELECT skill_name, display_name, rating, out_of, experience FROM skills WHERE user_id = ?",
+            [userId]
+        );
+        skillsData = rows;
+        await connection.end();
+        console.log(`✅ Loaded ${rows.length} skills from database for user ${userId}`);
+    } catch (err) {
+        console.error("❌ Error loading skills from DB:", err.message);
+        skillsData = [];
+    }
+}
+
+/**
+ * Detect if question is skill-related and find matching skill
+ * @param {string} question - Interview question
+ * @returns {object|null} Matching skill or null
+ */
+function findMatchingSkill(question) {
+    if (!question || skillsData.length === 0) return null;
+
+    const normalizedQuestion = question.toLowerCase();
+
+    // Try to find exact or partial match with skill_name or display_name
+    for (const skill of skillsData) {
+        const skillName = (skill.skill_name || '').toLowerCase();
+        const displayName = (skill.display_name || '').toLowerCase();
+
+        if (normalizedQuestion.includes(skillName) || normalizedQuestion.includes(displayName)) {
+            return skill;
+        }
+    }
+
+    return null;
+}
+
+/**
+ * Generate answer for skill-related questions
+ * @param {string} question - Interview question
+ * @param {object} skill - Skill data from database
+ * @returns {string} Answer
+ */
+function generateSkillAnswer(question, skill) {
+    const normalizedQuestion = question.toLowerCase();
+    const skillName = skill.display_name || skill.skill_name;
+
+    // Experience-related questions
+    if (normalizedQuestion.includes('experience') || normalizedQuestion.includes('worked') ||
+        normalizedQuestion.includes('using') || normalizedQuestion.includes('years')) {
+        if (skill.experience) {
+            return `${skill.experience} experience with ${skillName}`;
+        }
+        return `Around 3 years of experience with ${skillName}`;
+    }
+
+    // Rating/Proficiency questions
+    if (normalizedQuestion.includes('rate') || normalizedQuestion.includes('rating') ||
+        normalizedQuestion.includes('proficient') || normalizedQuestion.includes('good') ||
+        normalizedQuestion.includes('scale') || normalizedQuestion.includes('expertise')) {
+        if (skill.rating && skill.out_of) {
+            return `I would rate myself ${skill.rating} out of ${skill.out_of} in ${skillName}`;
+        } else if (skill.rating) {
+            return `I would rate myself ${skill.rating}/10 in ${skillName}`;
+        }
+        return `I have good working knowledge of ${skillName} and continuously improving`;
+    }
+
+    // General skill questions
+    if (skill.experience) {
+        return `I have ${skill.experience} experience working with ${skillName}`;
+    }
+
+    // Skill exists but no detailed data
+    return `I have basic working knowledge of ${skillName} and I am actively improving it`;
 }
 
 /**
@@ -96,37 +147,101 @@ function extractExperience(text) {
  */
 export async function getAnswer(question) {
     try {
-        // Get data from database if available, else use defaults
-        const name = userAnswersData?.name || 'User';
-        const currentCTC = userAnswersData?.currentCTC || 'Not specified';
-        const expectedCTC = userAnswersData?.expectedCTC || 'Not specified';
-        const noticePeriod = userAnswersData?.noticePeriod || 'Immediate';
-        const location = userAnswersData?.location || 'Bangalore';
-        const yearsOfExperience = userAnswersData?.yearsOfExperience || '3';
-        const naukriEmail = userAnswersData?.naukriEmail || '';
 
-        // Predefined answers for common questions (using dynamic DB values)
+
+        // ✅ Validate question first
+        if (!isValidInterviewQuestion(question)) {
+            console.log(`⚠️ Ignored non-interview question: "${question}"`);
+            return ''; // Empty answer, or you can return a polite message like:
+            // return 'This does not seem like a valid interview question.';
+        }
+
+        // STEP 1: Check if question is skill-related
+        const matchingSkill = findMatchingSkill(question);
+        if (matchingSkill) {
+            const skillAnswer = generateSkillAnswer(question, matchingSkill);
+            console.log(`✓ Question: "${question}" → "${skillAnswer}" (from skills DB)`);
+            return skillAnswer;
+        }
+
+        // STEP 2: Get data from database if available, else use defaults
+        // STEP 2: Get data from database (NO DEFAULTS)
+        const name = userAnswersData?.name;
+        const currentCTC = userAnswersData?.currentCTC;
+        const expectedCTC = userAnswersData?.expectedCTC;
+        const noticePeriod = userAnswersData?.noticePeriod;
+        const location = userAnswersData?.location;
+        const yearsOfExperience = userAnswersData?.yearsOfExperience;
+        const naukriEmail = userAnswersData?.naukriEmail;
+
+        // STEP 3: Predefined answers for common questions (using dynamic DB values)
         const commonAnswers = {
-            experience: () => `${yearsOfExperience} years`,
-            notice: () => noticePeriod,
-            noticePeriod: () => noticePeriod,
+
+            // Personal
             name: () => name,
             fullname: () => name,
-            location: () => location,
-            city: () => location,
-            state: () => 'Not specified',
-            country: () => 'India',
-            currentSalary: () => currentCTC,
-            salary: () => currentCTC,
-            currentctc: () => currentCTC,
-            expectedSalary: () => expectedCTC,
-            expectedctc: () => expectedCTC,
-            faceToFace: () => 'Not available for face-to-face interviews at the moment',
-            interviewMode: () => 'Online preferred',
-            availability: () => 'Available immediately',
             email: () => naukriEmail,
-            phone: () => 'Available upon request',
+            phone: () => 'Will be shared during interview',
+
+            // Experience
+            experience: () => `${yearsOfExperience} years`,
+            totalExperience: () => `${yearsOfExperience} years`,
+
+            // Location
+            location: () => `${location}, India`,
+            city: () => location,
+            state: () => 'Maharashtra',
+            country: () => 'India',
+
+            // Notice Period
+            notice: () => noticePeriod,
+            noticePeriod: () => noticePeriod,
+
+            availability: () => {
+                if (!noticePeriod) return '';
+                return noticePeriod.toLowerCase().includes('immediate')
+                    ? 'Immediate'
+                    : noticePeriod;
+            },
+
+            // Salary
+            currentSalary: () => `${currentCTC} LPA`,
+            salary: () => `${currentCTC} LPA`,
+            currentctc: () => `${currentCTC} LPA`,
+
+            expectedSalary: () => `${expectedCTC} LPA`,
+            expectedctc: () => `${expectedCTC} LPA`,
+
+            // Interview
+            faceToFace: () => userAnswersData?.availability || 'Not available currently',
+            interviewMode: () => 'Online',
+
+            // Default fallback
+            default: () => '',
         };
+
+
+        // const commonAnswers = {
+        //     experience: () => `${yearsOfExperience} years`,
+        //     notice: () => noticePeriod,
+        //     noticePeriod: () => noticePeriod,
+        //     name: () => name,
+        //     fullname: () => name,
+        //     location: () => location,
+        //     city: () => location,
+        //     state: () => 'Not specified',
+        //     country: () => 'India',
+        //     currentSalary: () => currentCTC,
+        //     salary: () => currentCTC,
+        //     currentctc: () => currentCTC,
+        //     expectedSalary: () => expectedCTC,
+        //     expectedctc: () => expectedCTC,
+        //     faceToFace: () => 'Not available for face-to-face interviews at the moment',
+        //     interviewMode: () => 'Online preferred',
+        //     availability: () => 'Available immediately',
+        //     email: () => naukriEmail,
+        //     phone: () => 'Available upon request',
+        // };
 
         // Check for common questions (case-insensitive)
         const lowerQuestion = question.toLowerCase();
@@ -138,17 +253,26 @@ export async function getAnswer(question) {
             }
         }
 
-        // For complex questions, use OpenAI
+        // For complex questions, use OpenAI only if resume is available
+        if (!resumeText || resumeText.trim() === '') {
+            // No resume available - cannot answer complex questions
+            console.log(`⚠️  Question: "${question}" → No resume available`);
+            return 'I would need to review my documentation to answer that accurately.';
+        }
+
         if (!process.env.OPENAI_API_KEY) {
-            throw new Error('OPENAI_API_KEY not configured. Set it in .env file');
+            console.log(`⚠️  Question: "${question}" → No OpenAI API key configured`);
+            return 'I would need to review my documentation to answer that accurately.';
         }
 
         const client = new OpenAI({
             apiKey: process.env.OPENAI_API_KEY,
         });
 
-        const prompt = `You are an expert interview assistant. Answer this question ONLY using the resume provided below.
+        const prompt = `
+You are an expert interview assistant. Answer the question ONLY using the resume provided below.
 Keep the answer concise, professional, and specific to the resume content.
+Do NOT invent or assume any information not present in the resume.
 
 Resume:
 \`\`\`
@@ -157,7 +281,8 @@ ${resumeText}
 
 Question: ${question}
 
-Provide ONLY the answer, no explanations.`;
+Provide ONLY the answer, no explanations.
+`;
 
         const response = await client.messages.create({
             model: 'claude-3-5-sonnet-20241022',
@@ -170,7 +295,7 @@ Provide ONLY the answer, no explanations.`;
             ],
         });
 
-        const answer = response.content[0].type === 'text' ? response.content[0].text : 'Unable to generate answer';
+        const answer = response.content[0].type === 'text' ? response.content[0].text : 'I would need to review my documentation to answer that accurately.';
         console.log(`🤖 Question: "${question}" → "${answer}" (from OpenAI)`);
         return answer;
     } catch (error) {
@@ -185,4 +310,27 @@ Provide ONLY the answer, no explanations.`;
  */
 export function getResumeText() {
     return resumeText;
+}
+
+function isValidInterviewQuestion(question) {
+    if (!question || question.trim() === '') return false;
+
+    // Ignore greetings or generic messages
+    const greetings = [
+        'hi', 'hello', 'thank you', 'kindly answer', 'please answer', 'showing interest'
+    ];
+
+    const lowerQ = question.toLowerCase();
+    for (const greet of greetings) {
+        if (lowerQ.includes(greet)) {
+            return false; // It's a greeting or non-question
+        }
+    }
+
+    // Check if question ends with '?'
+    if (!question.trim().endsWith('?')) {
+        return false; // Not a proper question
+    }
+
+    return true; // Valid question
 }

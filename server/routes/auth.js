@@ -7,6 +7,7 @@ import express from 'express';
 import User from '../models/User.js';
 import JobSettings from '../models/JobSettings.js';
 import { generateToken, authenticateToken } from '../middleware/auth.js';
+import { verifyNaukriCredentials } from '../verifyNaukriCredentials.js';
 
 const router = express.Router();
 
@@ -41,7 +42,7 @@ router.post('/signup', async (req, res) => {
             userId: user.id,
         });
 
-        const token = generateToken(user.id);
+        const token = generateToken(user.id, user.role);
 
         res.status(201).json({
             message: 'User created successfully',
@@ -51,6 +52,8 @@ router.post('/signup', async (req, res) => {
                 email: user.email,
                 firstName: user.firstName,
                 lastName: user.lastName,
+                role: user.role,
+                onboardingCompleted: user.onboardingCompleted,
             },
         });
     } catch (error) {
@@ -83,7 +86,7 @@ router.post('/login', async (req, res) => {
             return res.status(401).json({ error: 'Invalid credentials' });
         }
 
-        const token = generateToken(user.id);
+        const token = generateToken(user.id, user.role);
 
         res.json({
             message: 'Login successful',
@@ -93,6 +96,8 @@ router.post('/login', async (req, res) => {
                 email: user.email,
                 firstName: user.firstName,
                 lastName: user.lastName,
+                role: user.role,
+                onboardingCompleted: user.onboardingCompleted,
             },
         });
     } catch (error) {
@@ -135,6 +140,81 @@ router.get('/profile', authenticateToken, async (req, res) => {
  */
 router.post('/logout', authenticateToken, (req, res) => {
     res.json({ message: 'Logged out successfully' });
+});
+
+/**
+ * POST /api/auth/complete-onboarding
+ * Mark user's onboarding as completed
+ */
+router.post('/complete-onboarding', authenticateToken, async (req, res) => {
+    try {
+        const user = await User.findByPk(req.userId);
+
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        user.onboardingCompleted = true;
+        await user.save();
+
+        res.json({
+            success: true,
+            message: 'Onboarding completed successfully',
+            onboardingCompleted: true
+        });
+    } catch (error) {
+        console.error('Complete onboarding error:', error);
+        res.status(500).json({ error: 'Failed to complete onboarding' });
+    }
+});
+
+/**
+ * POST /api/auth/verify-naukri-credentials
+ * Verify Naukri account credentials by attempting login
+ * SECURITY: Only performs login check - no data scraping or job actions
+ */
+router.post('/verify-naukri-credentials', authenticateToken, async (req, res) => {
+    try {
+        const { naukriUsername, naukriPassword } = req.body;
+
+        // Validate inputs
+        if (!naukriUsername || !naukriPassword) {
+            return res.status(400).json({
+                success: false,
+                error: 'Naukri username and password are required'
+            });
+        }
+
+        console.log(`[API] Verifying Naukri credentials for user ${req.userId}...`);
+
+        // Call verification function (credentials are NOT logged)
+        const result = await verifyNaukriCredentials(naukriUsername, naukriPassword);
+
+        // Update user's job settings with verification status if successful
+        if (result.success) {
+            const jobSettings = await JobSettings.findOne({ where: { userId: req.userId } });
+            if (jobSettings) {
+                jobSettings.credentialsVerified = true;
+                jobSettings.lastVerified = new Date();
+                await jobSettings.save();
+                console.log(`[API] ✓ Credentials verified and saved for user ${req.userId}`);
+            }
+        }
+
+        // Return verification result
+        res.json({
+            success: result.success,
+            message: result.message,
+            verified: result.success
+        });
+
+    } catch (error) {
+        console.error('[API] Credential verification error:', error.message);
+        res.status(500).json({
+            success: false,
+            error: 'Verification failed due to a server error. Please try again later.'
+        });
+    }
 });
 
 export default router;

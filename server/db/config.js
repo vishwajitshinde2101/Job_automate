@@ -25,6 +25,18 @@ const sequelize = new Sequelize(
         port: DB_PORT,
         dialect: 'mysql',
         logging: false,
+        dialectOptions: {
+            connectTimeout: 60000, // 60 seconds
+            ssl: {
+                rejectUnauthorized: false // Required for Railway/production databases
+            }
+        },
+        pool: {
+            max: 5,
+            min: 0,
+            acquire: 60000,
+            idle: 10000
+        },
         define: {
             timestamps: true,
             underscored: true,
@@ -34,8 +46,15 @@ const sequelize = new Sequelize(
 
 /**
  * Create database if it doesn't exist
+ * Skip for production/Railway as database already exists
  */
 async function createDatabaseIfNotExists() {
+    // Skip database creation for Railway/production databases
+    if (DB_HOST !== 'localhost' && DB_HOST !== '127.0.0.1') {
+        console.log(`✅ Using existing database '${DB_NAME}' on ${DB_HOST}`);
+        return;
+    }
+
     try {
         const connection = await mysql.createConnection({
             host: DB_HOST,
@@ -65,9 +84,10 @@ export const initDatabase = async () => {
         await sequelize.authenticate();
         console.log('✅ MySQL Connection established successfully');
 
-        // Sync all models
-        await sequelize.sync({ alter: true });
-        console.log('✅ Database tables synchronized');
+        // Note: Using migrations instead of auto-sync for production safety
+        // Only sync without altering existing tables
+        await sequelize.sync({ alter: false });
+        console.log('✅ Database connection verified');
 
         return sequelize;
     } catch (error) {

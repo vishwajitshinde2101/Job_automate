@@ -19,7 +19,7 @@ import JobSettings from '../models/JobSettings.js';
 import User from '../models/User.js';
 import Skill from '../models/Skill.js';
 import UserFilter from '../models/UserFilter.js';
-import { setUserAnswersData } from '../aiAnswer.js';
+import { setUserData, initializeSkillsFromDB } from '../aiAnswer.js';
 import { getCredentials } from '../utils/credentialsManager.js';
 import sequelize from '../db/config.js';
 import { scheduleJobForUser, cancelScheduledJob } from '../services/schedulerService.js';
@@ -100,7 +100,7 @@ router.post('/run-bot', authenticateToken, async (req, res) => {
                 naukriPassword = creds.password;
             } catch (err) {
                 return res.status(400).json({
-                    error: 'Naukri credentials not found. Please save your credentials first.'
+                    error: 'Naukri credentials not found. Please add your Naukri.com email and password in the Job Profile settings to continue.'
                 });
             }
         }
@@ -123,7 +123,7 @@ router.post('/run-bot', authenticateToken, async (req, res) => {
         }
 
         // 6. Load user data into AI answer module
-        setUserAnswersData({
+        setUserData({
             name: user.firstName || 'User',
             currentCTC: jobSettings.currentCTC || 'Not specified',
             expectedCTC: jobSettings.expectedCTC || 'Not specified',
@@ -136,11 +136,18 @@ router.post('/run-bot', authenticateToken, async (req, res) => {
             skills: skillsData,
         });
 
+        // Load skills from database for intelligent answering
+        await initializeSkillsFromDB(req.userId, {
+            host: process.env.DB_HOST || 'localhost',
+            port: process.env.DB_PORT || 3306,
+            user: process.env.DB_USER || 'root',
+            password: process.env.DB_PASSWORD || '',
+            database: process.env.DB_NAME || 'jobautomate',
+        });
 
-        // 6. Get request parameters
+        // 7. Get request parameters
         const {
             jobUrl,
-            maxPages = 5,
             searchKeywords
         } = req.body;
 
@@ -148,12 +155,14 @@ router.post('/run-bot', authenticateToken, async (req, res) => {
         const finalUrlFromDb = await fetchFinalUrlFromDB(req.userId);
         console.log('Final URL from DB:', finalUrlFromDb);
 
+        // Get maxPages from job settings (user-configured value)
+        const maxPages = jobSettings.maxPages || 5;
 
         // 7. Start automation with all data loaded
         const result = await startAutomation({
             userId: req.userId,  // Pass userId for direct DB lookup
             jobUrl: finalUrlFromDb || 'https://www.naukri.com/mnjuser/homepage/https://www.naukri.com/mnjuser/homepage',
-            maxPages: Math.min(maxPages, 20), // Cap at 20 pages
+            maxPages: Math.min(maxPages, 50), // Cap at 50 pages (same as UI max)
             searchKeywords: searchKeywords || jobSettings.searchKeywords,
             resumeText: jobSettings.resumeText || 'No resume provided',
             naukriEmail: naukriEmail,
@@ -205,7 +214,7 @@ router.post('/start', authenticateToken, async (req, res) => {
         }
 
         // Load user data into aiAnswer module for dynamic answers
-        setUserAnswersData({
+        setUserData({
             name: jobSettings.firstName || 'User',
             currentCTC: jobSettings.currentCTC,
             expectedCTC: jobSettings.expectedCTC,
@@ -213,6 +222,15 @@ router.post('/start', authenticateToken, async (req, res) => {
             location: jobSettings.location,
             yearsOfExperience: jobSettings.yearsOfExperience,
             naukriEmail: jobSettings.naukriEmail,
+        });
+
+        // Load skills from database for intelligent answering
+        await initializeSkillsFromDB(req.userId, {
+            host: process.env.DB_HOST || 'localhost',
+            port: process.env.DB_PORT || 3306,
+            user: process.env.DB_USER || 'root',
+            password: process.env.DB_PASSWORD || '',
+            database: process.env.DB_NAME || 'jobautomate',
         });
 
         const { jobUrl, maxPages } = req.body;
@@ -236,13 +254,13 @@ router.post('/start', authenticateToken, async (req, res) => {
  * POST /api/automation/stop
  * Stop the currently running automation
  */
-router.post('/stop', authenticateToken, (req, res) => {
+router.post('/stop', authenticateToken, async (req, res) => {
     try {
         if (!isAutomationRunning()) {
             return res.status(400).json({ error: 'No automation running' });
         }
 
-        stopAutomation();
+        await stopAutomation();
         res.json({
             success: true,
             message: 'Automation stopped',

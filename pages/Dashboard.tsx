@@ -1,16 +1,22 @@
 
 import React, { useRef, useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
-import { Play, Square, Download, Activity, Save, User, Key, MapPin, Search, Globe, ChevronLeft, ChevronRight, RotateCw, X, UploadCloud, FileText, CheckCircle, Clock, IndianRupee, Calendar, Loader2, AlertCircle, Plus, Trash2, Star, Filter, Building2, Briefcase, GraduationCap, Home, Zap, Crown, Rocket, CreditCard, Check, BarChart3, TrendingUp, TrendingDown, Target, Award, Users, Mail, ThumbsUp, ArrowUpRight, Lightbulb, Eye, EyeOff } from 'lucide-react';
+import { Play, Square, Download, Activity, Save, User, Key, MapPin, Search, Globe, ChevronLeft, ChevronRight, RotateCw, X, UploadCloud, FileText, CheckCircle, Clock, IndianRupee, Calendar, Loader2, AlertCircle, Plus, Trash2, Star, Filter, Building2, Briefcase, GraduationCap, Home, Zap, Crown, Rocket, CreditCard, Check, BarChart3, TrendingUp, TrendingDown, Target, Award, Users, Mail, ThumbsUp, ArrowUpRight, Lightbulb, Eye, EyeOff, ExternalLink } from 'lucide-react';
 import DashboardLayout from '../components/DashboardLayout';
-import { runBot, stopAutomation, getAutomationLogs, updateJobSettings, getJobSettings, getSkills, saveSkillsBulk, deleteSkill, getAllFilters, getUserFilters, saveUserFilters, runFilter, getFilterLogs } from '../services/automationApi';
+import OnboardingFlow from '../components/OnboardingFlow';
+import SuggestAndEarn from '../components/SuggestAndEarn';
+import AppSettings from '../components/AppSettings';
+import { runBot, stopAutomation, getAutomationLogs, updateJobSettings, getJobSettings, getSkills, saveSkillsBulk, deleteSkill, getAllFilters, getUserFilters, saveUserFilters, runFilter, getFilterLogs, verifyNaukriCredentials } from '../services/automationApi';
 import { getSubscriptionStatus, createOrder, initiatePayment } from '../services/subscriptionApi';
 import { getPlans, Plan } from '../services/plansApi';
 
 const Dashboard: React.FC = () => {
-  const { user, logs, reports, isAutomating, startAutomation, stopAutomation, scheduleAutomation, downloadReport, updateConfig } = useApp();
+  const navigate = useNavigate();
+  const { user, logout, logs, reports, isAutomating, startAutomation, stopAutomation, scheduleAutomation, downloadReport, updateConfig, completeOnboarding } = useApp();
   const logContainerRef = useRef<HTMLDivElement>(null);
-  const [activeTab, setActiveTab] = useState('overview');
+  // New users without Naukri credentials should see Job Profile tab first
+  const [activeTab, setActiveTab] = useState(!user.config?.naukriUsername ? 'config' : 'overview');
   const [isRunning, setIsRunning] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -23,9 +29,20 @@ const Dashboard: React.FC = () => {
   // Show/hide password state
   const [showNaukriPassword, setShowNaukriPassword] = useState(false);
 
+  // Verification confirmation modal state
+  const [showVerificationConfirm, setShowVerificationConfirm] = useState(false);
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [verificationStatus, setVerificationStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [isCredentialsVerified, setIsCredentialsVerified] = useState(false);
+  const [originalPassword, setOriginalPassword] = useState(''); // Track original password to detect changes
+  const [needsReVerification, setNeedsReVerification] = useState(false);
+
   // Filter automation state
   const [isFilterRunning, setIsFilterRunning] = useState(false);
   const filterPollRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Bot automation polling ref
+  const botPollRef = useRef<NodeJS.Timeout | null>(null);
 
   // Auto-scroll logs
   useEffect(() => {
@@ -34,11 +51,14 @@ const Dashboard: React.FC = () => {
     }
   }, [logs, botLogs]);
 
-  // Cleanup filter polling on unmount
+  // Cleanup polling on unmount
   useEffect(() => {
     return () => {
       if (filterPollRef.current) {
         clearInterval(filterPollRef.current);
+      }
+      if (botPollRef.current) {
+        clearInterval(botPollRef.current);
       }
     };
   }, []);
@@ -50,6 +70,14 @@ const Dashboard: React.FC = () => {
     loadFilters();
     loadSubscriptionData();
   }, []);
+
+  // Handle logout when activeTab is set to 'logout'
+  useEffect(() => {
+    if (activeTab === 'logout') {
+      logout();
+      navigate('/');
+    }
+  }, [activeTab, logout, navigate]);
 
   // Load subscription status and available plans
   const loadSubscriptionData = async () => {
@@ -67,7 +95,7 @@ const Dashboard: React.FC = () => {
         setAvailablePlans(plansResult.data);
       }
     } catch (err) {
-      console.error('Failed to load subscription data:', err);
+      setError('Unable to load subscription plans. Please refresh the page and try again.');
     } finally {
       setSubscriptionLoading(false);
     }
@@ -131,15 +159,10 @@ const Dashboard: React.FC = () => {
           const savedData = userFiltersResult.data;
           const filterData = result.data;
 
-          // Debug: Log saved data from database
-          console.log('📦 Saved filters from DB:', savedData);
-
           // Helper function to find IDs from comma-separated labels (for multi-select)
           const findIdsByLabels = (filterType: string, labelsStr: string): string[] => {
             if (!labelsStr || !filterData[filterType]) return [];
             const labels = labelsStr.split(',').map((l: string) => l.trim()).filter((l: string) => l);
-            console.log(`🔍 ${filterType}: Looking for labels:`, labels);
-            console.log(`🔍 ${filterType}: Available options:`, filterData[filterType]?.map((o: any) => o.label));
 
             return labels.map((label: string) => {
               // Try exact match first
@@ -161,11 +184,6 @@ const Dashboard: React.FC = () => {
                   label.toLowerCase().includes(o.label?.toLowerCase())
                 );
               }
-              if (!option) {
-                console.warn(`❌ Filter "${filterType}": Could not find option for label "${label}"`);
-              } else {
-                console.log(`✅ ${filterType}: Matched "${label}" -> ID: ${option.id}`);
-              }
               return option?.id || '';
             }).filter((id: string) => id);
           };
@@ -185,12 +203,11 @@ const Dashboard: React.FC = () => {
             employement: findIdsByLabels('employement', savedData.employement),
             glbl_RoleCat: findIdsByLabels('glbl_RoleCat', savedData.glbl_RoleCat),
             topGroupId: findIdsByLabels('topGroupId', savedData.topGroupId),
-            featuredCompanies: findIdsByLabels('featuredCompanies', savedData.featuredCompanies),
           });
         }
       }
     } catch (err) {
-      console.error('Failed to load filters:', err);
+      setError('Unable to load filter options. Please refresh the page and try again.');
     } finally {
       setFiltersLoading(false);
     }
@@ -209,8 +226,31 @@ const Dashboard: React.FC = () => {
     noticePeriod: 'Immediate',
     availability: 'Flexible',
     resumeName: '',
-    resumeScore: 0
+    resumeScore: 0,
+    maxPages: 5,
+    yearsOfExperience: 0
   });
+
+  // Calculate Job Profile completion percentage (excluding Job Search Filters and Location)
+  const calculateProfileCompletion = () => {
+    const requiredFields = [
+      configForm.naukriUsername,
+      configForm.naukriPassword,
+      configForm.resumeName,
+      configForm.targetRole,
+      configForm.currentSalary,
+      configForm.expectedSalary,
+      configForm.noticePeriod,
+      configForm.keywords,
+      configForm.availability,
+    ];
+
+    const filledFields = requiredFields.filter(field => field && field.toString().trim() !== '').length;
+    return Math.round((filledFields / requiredFields.length) * 100);
+  };
+
+  const profileCompletion = calculateProfileCompletion();
+  const isProfileComplete = profileCompletion === 100;
 
   // Skills state
   const [skills, setSkills] = useState<any[]>([]);
@@ -237,7 +277,6 @@ const Dashboard: React.FC = () => {
     employement: string[];
     glbl_RoleCat: string[];
     topGroupId: string[];
-    featuredCompanies: string[];
   }>({
     freshness: '',
     salaryRange: [],
@@ -250,8 +289,7 @@ const Dashboard: React.FC = () => {
     business_size: [],
     employement: [],
     glbl_RoleCat: [],
-    topGroupId: [],
-    featuredCompanies: []
+    topGroupId: []
   });
   const [filtersLoading, setFiltersLoading] = useState(false);
   const [openFilterDropdown, setOpenFilterDropdown] = useState<string | null>(null);
@@ -264,6 +302,30 @@ const Dashboard: React.FC = () => {
 
   // Analytics state
   const [analyticsTimeFilter, setAnalyticsTimeFilter] = useState('7d'); // 1d, 7d, 1m, 3m, 6m
+
+  // Application History state
+  const [historyData, setHistoryData] = useState<any>(null);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [historyError, setHistoryError] = useState<string | null>(null);
+  const [historyPage, setHistoryPage] = useState(1);
+  const [historyLimit] = useState(20);
+  const [selectedApplication, setSelectedApplication] = useState<any>(null);
+  const [showFilters, setShowFilters] = useState(false);
+
+  // History Filters
+  const [historyFilters, setHistoryFilters] = useState({
+    matchStatus: '',
+    applyType: '',
+    pageNumber: '',
+    earlyApplicant: '',
+    keySkillsMatch: '',
+    locationMatch: '',
+    experienceMatch: '',
+    minScore: '',
+    maxScore: '',
+    startDate: '',
+    endDate: '',
+  });
 
   const handleSaveConfig = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -282,6 +344,8 @@ const Dashboard: React.FC = () => {
         noticePeriod: configForm.noticePeriod,
         searchKeywords: configForm.keywords,
         availability: configForm.availability,
+        maxPages: configForm.maxPages,
+        yearsOfExperience: configForm.yearsOfExperience ?? 0,
       };
 
       // Call API to save configuration
@@ -299,13 +363,9 @@ const Dashboard: React.FC = () => {
         const labels = ids
           .map((id: string) => {
             const option = filters[filterType]?.find((o: any) => o.id === id);
-            if (!option) {
-              console.warn(`⚠️ Save: Could not find label for ${filterType} ID: ${id}`);
-            }
             return option?.label || '';
           })
           .filter((label: string) => label);
-        console.log(`💾 Saving ${filterType}: IDs [${ids.join(', ')}] -> Labels "${labels.join(', ')}"`);
         return labels.join(', ');
       };
 
@@ -322,10 +382,8 @@ const Dashboard: React.FC = () => {
         employement: idsToLabels('employement', selectedFilters.employement),
         glbl_RoleCat: idsToLabels('glbl_RoleCat', selectedFilters.glbl_RoleCat),
         topGroupId: idsToLabels('topGroupId', selectedFilters.topGroupId),
-        featuredCompanies: idsToLabels('featuredCompanies', selectedFilters.featuredCompanies),
       };
 
-      console.log('📤 Filters being saved to DB:', filtersToSave);
       await saveUserFilters(filtersToSave);
 
       // Also update local context
@@ -374,7 +432,7 @@ const Dashboard: React.FC = () => {
                 }
               }
             } catch (pollErr) {
-              console.error('Error polling filter logs:', pollErr);
+              // Silent error - polling will retry
             }
           }, 1000);
 
@@ -382,7 +440,6 @@ const Dashboard: React.FC = () => {
           setError(`⚠️ Config saved but filter automation failed: ${filterResult.error}`);
         }
       } catch (filterErr: any) {
-        console.error('Filter automation error:', filterErr);
         setSuccess('✅ Configuration saved! (Filter automation could not start)');
       }
 
@@ -436,22 +493,56 @@ const Dashboard: React.FC = () => {
         type: 'info'
       }]);
 
-      // Call the run-bot API
-      const result = await runBot({
-        maxPages: configForm.keywords ? 5 : 10, // Use fewer pages if keywords specified
+      // Start the bot (non-blocking - runs in background)
+      runBot({
+        maxPages: configForm.maxPages || 5,
         searchKeywords: configForm.keywords,
+      }).then((result) => {
+        // Handle completion
+        if (result.logs && result.logs.length > 0) {
+          setBotLogs(result.logs);
+        }
+
+        if (result.success) {
+          setSuccess(`✅ Bot completed! Applied to ${result.jobsApplied} jobs`);
+        } else {
+          setError(`❌ Bot error: ${result.error}`);
+        }
+        setIsRunning(false);
+      }).catch((err: any) => {
+        setError(`Failed to run bot: ${err.message}`);
+        setBotLogs(prev => [...prev, {
+          timestamp: new Date().toLocaleTimeString(),
+          message: `❌ Error: ${err.message}`,
+          type: 'error'
+        }]);
+        setIsRunning(false);
       });
 
-      // Add result to logs
-      if (result.logs && result.logs.length > 0) {
-        setBotLogs(result.logs);
+      // Start polling logs immediately (don't wait for completion)
+      if (botPollRef.current) {
+        clearInterval(botPollRef.current);
       }
 
-      if (result.success) {
-        setSuccess(`✅ Bot completed! Applied to ${result.jobsApplied} jobs`);
-      } else {
-        setError(`❌ Bot error: ${result.error}`);
-      }
+      botPollRef.current = setInterval(async () => {
+        try {
+          const logsResult = await getAutomationLogs();
+          if (logsResult.logs && logsResult.logs.length > 0) {
+            setBotLogs(logsResult.logs);
+          }
+
+          // Stop polling if automation is no longer running
+          if (!logsResult.isRunning) {
+            if (botPollRef.current) {
+              clearInterval(botPollRef.current);
+              botPollRef.current = null;
+            }
+          }
+        } catch (err) {
+          // Silent error - polling will retry
+        }
+      }, 2000); // Poll every 2 seconds
+
     } catch (err: any) {
       setError(`Failed to start bot: ${err.message}`);
       setBotLogs(prev => [...prev, {
@@ -459,7 +550,6 @@ const Dashboard: React.FC = () => {
         message: `❌ Error: ${err.message}`,
         type: 'error'
       }]);
-    } finally {
       setIsRunning(false);
     }
   };
@@ -467,13 +557,45 @@ const Dashboard: React.FC = () => {
   // Handle bot stop
   const handleStopBot = async () => {
     try {
-      await stopAutomation();
-      setSuccess('Bot stopped');
+      // Immediately update UI state
       setIsRunning(false);
+      setError(null);
+
+      // Clear any active polling
+      if (botPollRef.current) {
+        clearInterval(botPollRef.current);
+        botPollRef.current = null;
+      }
+
+      // Add stopping log
+      setBotLogs(prev => [...prev, {
+        timestamp: new Date().toLocaleTimeString(),
+        message: '⚠️ Stopping automation...',
+        type: 'warning'
+      }]);
+
+      // Call backend to stop automation
+      await stopAutomation();
+
+      // Add success log
+      setBotLogs(prev => [...prev, {
+        timestamp: new Date().toLocaleTimeString(),
+        message: '✅ Automation stopped successfully',
+        type: 'success'
+      }]);
+
+      setSuccess('Bot stopped successfully');
     } catch (err: any) {
       setError(`Failed to stop bot: ${err.message}`);
+      setBotLogs(prev => [...prev, {
+        timestamp: new Date().toLocaleTimeString(),
+        message: `❌ Stop error: ${err.message}`,
+        type: 'error'
+      }]);
     }
-  }; const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       setAnalyzing(true);
@@ -520,13 +642,30 @@ const Dashboard: React.FC = () => {
           noticePeriod: result.noticePeriod || 'Immediate',
           availability: result.availability || 'Flexible',
           resumeName: result.resumeFileName || '',
-          resumeScore: result.resumeScore || 0
+          resumeScore: result.resumeScore || 0,
+          maxPages: result.maxPages || 5,
+          yearsOfExperience: result.yearsOfExperience ?? 0
         });
+
+        // Set verification status from database
+        setIsCredentialsVerified(result.credentialsVerified || false);
+
+        // Store original password to detect changes
+        setOriginalPassword(result.naukriPassword || '');
       }
     } catch (err) {
-      console.error('Failed to load job settings:', err);
+      setError('Unable to load job settings. Please refresh the page and try again.');
     }
   };
+
+  // Detect password changes and require re-verification
+  useEffect(() => {
+    if (isCredentialsVerified && originalPassword && configForm.naukriPassword !== originalPassword) {
+      setNeedsReVerification(true);
+    } else if (isCredentialsVerified && configForm.naukriPassword === originalPassword) {
+      setNeedsReVerification(false);
+    }
+  }, [configForm.naukriPassword, originalPassword, isCredentialsVerified]);
 
   // Load skills on mount
   useEffect(() => {
@@ -538,8 +677,128 @@ const Dashboard: React.FC = () => {
       const result = await getSkills();
       setSkills(result.skills || []);
     } catch (err) {
-      console.error('Failed to load skills:', err);
+      // Silently fail - skills are optional
     }
+  };
+
+  // Fetch application history from database
+  const fetchApplicationHistory = async (page: number) => {
+    setHistoryLoading(true);
+    setHistoryError(null);
+
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        setHistoryError('Not authenticated');
+        return;
+      }
+
+      // Build query params with filters
+      const params = new URLSearchParams({
+        page: page.toString(),
+        limit: historyLimit.toString(),
+      });
+
+      // Add filters if they have values
+      if (historyFilters.matchStatus) params.append('matchStatus', historyFilters.matchStatus);
+      if (historyFilters.applyType) params.append('applyType', historyFilters.applyType);
+      if (historyFilters.pageNumber) params.append('pageNumber', historyFilters.pageNumber);
+      if (historyFilters.earlyApplicant) params.append('earlyApplicant', historyFilters.earlyApplicant);
+      if (historyFilters.keySkillsMatch) params.append('keySkillsMatch', historyFilters.keySkillsMatch);
+      if (historyFilters.locationMatch) params.append('locationMatch', historyFilters.locationMatch);
+      if (historyFilters.experienceMatch) params.append('experienceMatch', historyFilters.experienceMatch);
+      if (historyFilters.minScore) params.append('minScore', historyFilters.minScore);
+      if (historyFilters.maxScore) params.append('maxScore', historyFilters.maxScore);
+      if (historyFilters.startDate) params.append('startDate', historyFilters.startDate);
+      if (historyFilters.endDate) params.append('endDate', historyFilters.endDate);
+
+      const response = await fetch(
+        `http://localhost:5000/api/job-results?${params.toString()}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch application history');
+      }
+
+      const result = await response.json();
+      setHistoryData(result);
+      setHistoryPage(page);
+    } catch (err: any) {
+      setHistoryError(err.message || 'An error occurred');
+    } finally {
+      setHistoryLoading(false);
+    }
+  };
+
+  // Load history when tab changes to 'history'
+  useEffect(() => {
+    if (activeTab === 'history') {
+      fetchApplicationHistory(historyPage);
+    }
+  }, [activeTab]);
+
+  // Handle ESC key to close modal
+  useEffect(() => {
+    const handleEscKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && selectedApplication) {
+        setSelectedApplication(null);
+      }
+    };
+
+    window.addEventListener('keydown', handleEscKey);
+    return () => window.removeEventListener('keydown', handleEscKey);
+  }, [selectedApplication]);
+
+  const handleHistoryPageChange = (newPage: number) => {
+    if (historyData && newPage >= 1 && newPage <= historyData.totalPages) {
+      fetchApplicationHistory(newPage);
+    }
+  };
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleString('en-IN', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
+
+  const formatBoolean = (value: boolean) => (value ? 'Yes' : 'No');
+
+  // Handle filter changes
+  const handleFilterChange = (filterName: string, value: string) => {
+    setHistoryFilters(prev => ({ ...prev, [filterName]: value }));
+  };
+
+  const handleApplyFilters = () => {
+    setHistoryPage(1);
+    fetchApplicationHistory(1);
+  };
+
+  const handleClearFilters = () => {
+    setHistoryFilters({
+      matchStatus: '',
+      applyType: '',
+      pageNumber: '',
+      earlyApplicant: '',
+      keySkillsMatch: '',
+      locationMatch: '',
+      experienceMatch: '',
+      minScore: '',
+      maxScore: '',
+      startDate: '',
+      endDate: '',
+    });
+    setHistoryPage(1);
+    setTimeout(() => fetchApplicationHistory(1), 100);
   };
 
   const handleAddSkill = async () => {
@@ -566,6 +825,40 @@ const Dashboard: React.FC = () => {
       setTimeout(() => setSuccess(null), 2000);
     } catch (err: any) {
       setError(`❌ Failed to add skill: ${err.message}`);
+    }
+  };
+
+  // Handle Naukri credential verification
+  const handleVerifyCredentials = async () => {
+    setIsVerifying(true);
+    setVerificationStatus('idle');
+    setError(null);
+
+    try {
+      const result = await verifyNaukriCredentials(
+        configForm.naukriUsername,
+        configForm.naukriPassword
+      );
+
+      if (result.success) {
+        setVerificationStatus('success');
+        setIsCredentialsVerified(true); // Update verification status
+        setNeedsReVerification(false); // Clear re-verification flag
+        setOriginalPassword(configForm.naukriPassword); // Update original password
+        setSuccess('✓ Credentials verified successfully! You can now use the automation.');
+        setTimeout(() => {
+          setSuccess(null);
+          setShowVerificationConfirm(false);
+        }, 3000);
+      } else {
+        setVerificationStatus('error');
+        setError(result.message || 'Verification failed. Please check your credentials.');
+      }
+    } catch (err: any) {
+      setVerificationStatus('error');
+      setError(err.message || 'Verification failed due to a network error. Please try again.');
+    } finally {
+      setIsVerifying(false);
     }
   };
 
@@ -625,131 +918,232 @@ const Dashboard: React.FC = () => {
     switch (activeTab) {
       case 'overview':
         return (
-          <div className="space-y-6 max-w-6xl mx-auto">
-            {/* Analytics Cards Removed */}
+          <div className="w-full max-w-[95%] mx-auto p-6">
+            {/* Browser Simulation + Terminal Stack - Centered Container */}
+            <div className="flex flex-col bg-black rounded-2xl border border-gray-800 overflow-hidden shadow-2xl">
 
-            {/* BROWSER SIMULATION + TERMINAL STACK */}
-            <div className="space-y-0 bg-black rounded-xl border border-gray-800 overflow-hidden shadow-2xl">
-
-              {/* Mock Browser Header */}
-              <div className="bg-gray-800 border-b border-gray-700 p-2 flex items-center gap-3">
-                <div className="flex gap-1.5 ml-2">
-                  <div className="w-3 h-3 rounded-full bg-red-500"></div>
-                  <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
-                  <div className="w-3 h-3 rounded-full bg-green-500"></div>
+              {/* Mock Browser Header - Consistent Theme */}
+              <div className="bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 border-b border-gray-700 p-3 flex items-center gap-4 shadow-lg">
+                <div className="flex gap-2 ml-3">
+                  <div className="w-3.5 h-3.5 rounded-full bg-red-500/80 hover:bg-red-600 transition-colors cursor-pointer"></div>
+                  <div className="w-3.5 h-3.5 rounded-full bg-yellow-500/80 hover:bg-yellow-600 transition-colors cursor-pointer"></div>
+                  <div className="w-3.5 h-3.5 rounded-full bg-green-500/80 hover:bg-green-600 transition-colors cursor-pointer"></div>
                 </div>
 
-                {/* Address Bar */}
-                <div className="flex-1 bg-dark-900 rounded-md px-3 py-1.5 flex items-center gap-2 text-xs text-gray-400 font-mono border border-gray-700">
-                  <Globe className="w-3 h-3 text-gray-500" />
+                {/* Address Bar - Consistent Style */}
+                <div className="flex-1 bg-dark-900 rounded-lg px-4 py-2.5 flex items-center gap-3 text-sm text-gray-300 font-mono border border-gray-700 shadow-inner">
+                  <Globe className="w-4 h-4 text-gray-500" />
                   <span className="flex-1 truncate">{isAutomating ? browserState.url : 'about:blank'}</span>
-                  {isAutomating && <RotateCw className="w-3 h-3 animate-spin text-neon-blue" />}
+                  {isAutomating && <RotateCw className="w-4 h-4 animate-spin text-neon-blue" />}
                 </div>
 
-                {/* Run Controls */}
-                <div className="flex gap-2">
+                {/* Run Controls - Consistent Theme */}
+                <div className="flex gap-3 mr-2">
                   <button
                     onClick={handleScheduleClick}
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-700 text-white text-xs font-bold rounded hover:bg-gray-600 transition-colors border border-gray-600"
+                    className="flex items-center gap-2 px-4 py-2 bg-gray-700 text-white text-sm font-semibold rounded-lg hover:bg-gray-600 transition-all border border-gray-600 shadow-md hover:shadow-lg"
                   >
-                    <Calendar className="w-3 h-3" /> Schedule
+                    <Calendar className="w-4 h-4" /> Schedule
                   </button>
 
                   {!isRunning ? (
                     <button
                       onClick={handleStartBot}
-                      className="flex items-center gap-1.5 px-4 py-1.5 bg-neon-blue text-black text-xs font-bold rounded hover:bg-white transition-colors shadow-[0_0_10px_rgba(0,243,255,0.3)]"
+                      className="flex items-center gap-2 px-5 py-2 bg-gradient-to-r from-neon-blue to-blue-500 text-black text-sm font-bold rounded-lg hover:from-white hover:to-neon-blue transition-all shadow-[0_0_20px_rgba(0,243,255,0.4)] hover:shadow-[0_0_30px_rgba(0,243,255,0.6)]"
                     >
-                      <Play className="w-3 h-3 fill-current" /> START BOT
+                      <Play className="w-4 h-4 fill-current" /> START BOT
                     </button>
                   ) : (
                     <button
                       onClick={handleStopBot}
-                      className="flex items-center gap-1.5 px-4 py-1.5 bg-red-600 text-white text-xs font-bold rounded hover:bg-red-500 transition-colors shadow-[0_0_10px_rgba(239,68,68,0.3)]"
+                      className="flex items-center gap-2 px-5 py-2 bg-gradient-to-r from-red-600 to-red-500 text-white text-sm font-bold rounded-lg hover:from-red-500 hover:to-red-400 transition-all shadow-[0_0_20px_rgba(239,68,68,0.4)] hover:shadow-[0_0_30px_rgba(239,68,68,0.6)]"
                     >
-                      <Square className="w-3 h-3 fill-current" /> STOP BOT
+                      <Square className="w-4 h-4 fill-current" /> STOP BOT
                     </button>
                   )}
                 </div>
               </div>
 
-              {/* Browser Viewport Simulation */}
-              {isRunning && (
-                <div className="h-48 bg-gray-900 border-b border-gray-800 relative flex items-center justify-center overflow-hidden">
-                  <div className="absolute inset-0 bg-white opacity-[0.02] pointer-events-none"></div>
+              {/* Browser Viewport - Consistent Theme */}
+              <div className="h-[500px] bg-gradient-to-br from-gray-900 via-black to-gray-900 relative flex items-center justify-center overflow-hidden">
+                {/* Subtle Grid Background */}
+                <div className="absolute inset-0 opacity-[0.02]" style={{
+                  backgroundImage: 'linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)',
+                  backgroundSize: '40px 40px',
+                  animation: 'grid-pulse 4s ease-in-out infinite'
+                }}></div>
 
-                  {/* Fake Page Content */}
-                  <div className="text-center space-y-3 p-4">
-                    <Loader2 className="w-12 h-12 mx-auto animate-spin text-neon-blue" />
-                    <div className="h-4 w-48 bg-gray-800 rounded mx-auto"></div>
-                    <div className="h-3 w-32 bg-gray-800 rounded mx-auto"></div>
+                {/* Subtle Scan Lines */}
+                <div className="absolute inset-0 pointer-events-none opacity-[0.03]" style={{
+                  backgroundImage: 'repeating-linear-gradient(0deg, rgba(0,243,255,0.1) 0px, transparent 2px, transparent 4px)',
+                  animation: 'scan-line 10s linear infinite'
+                }}></div>
 
-                    <div className="mt-4 px-4 py-2 bg-dark-800 rounded border border-gray-700 inline-block text-xs text-neon-blue font-mono">
-                      Automation Running...
+                {/* Radial Glow */}
+                <div className="absolute inset-0 opacity-20" style={{
+                  background: 'radial-gradient(circle at center, rgba(0,243,255,0.08) 0%, transparent 70%)'
+                }}></div>
+
+                {isRunning ? (
+                  <div className="text-center space-y-6 p-8 z-10">
+                    {/* Loader - Consistent Theme */}
+                    <div className="relative">
+                      <Loader2 className="w-20 h-20 mx-auto animate-spin text-neon-blue drop-shadow-[0_0_15px_rgba(0,243,255,0.8)]" />
+                      <div className="absolute inset-0 w-20 h-20 mx-auto rounded-full bg-neon-blue/20 animate-ping"></div>
+                    </div>
+
+                    {/* Loading Skeleton */}
+                    <div className="space-y-3">
+                      <div className="h-5 w-64 bg-gray-800 rounded-lg mx-auto animate-pulse shadow-lg"></div>
+                      <div className="h-4 w-48 bg-gray-800 rounded-lg mx-auto animate-pulse shadow-lg delay-75"></div>
+                      <div className="h-4 w-56 bg-gray-800 rounded-lg mx-auto animate-pulse shadow-lg delay-100"></div>
+                    </div>
+
+                    {/* Status Badge */}
+                    <div className="mt-8 px-6 py-3 bg-dark-800/80 backdrop-blur-sm rounded-xl border border-neon-blue/30 inline-block text-sm text-neon-blue font-semibold shadow-[0_0_20px_rgba(0,243,255,0.3)]">
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 bg-neon-blue rounded-full animate-pulse"></div>
+                        Automation Running...
+                      </div>
                     </div>
                   </div>
+                ) : (
+                  <div className="text-center space-y-6 p-8 z-10">
+                    {/* Idle Icon - Subtle System Animation */}
+                    <div className="relative">
+                      {/* Outer Pulse Ring */}
+                      <div className="absolute inset-0 w-28 h-28 mx-auto rounded-full border-2 border-neon-blue/20 animate-ping" style={{ animationDuration: '3s' }}></div>
 
-                  {/* Status Overlay */}
-                  <div className="absolute bottom-2 right-2 px-2 py-1 bg-black/80 text-[10px] text-green-400 font-mono border border-green-500/20 rounded animate-pulse">
-                    Chromium: Active
+                      {/* Main Icon Container */}
+                      <div className="relative w-24 h-24 mx-auto rounded-full bg-gradient-to-br from-gray-800 to-gray-900 border-2 border-gray-700 flex items-center justify-center shadow-2xl" style={{ animation: 'glow-pulse 4s ease-in-out infinite' }}>
+                        {/* System Icon with Subtle Glitch */}
+                        <div className="relative">
+                          <Activity className="w-12 h-12 text-gray-500" style={{ animation: 'glitch 6s infinite', filter: 'drop-shadow(0 0 4px rgba(0,243,255,0.3))' }} />
+                          {/* Ghost layer for depth */}
+                          <Activity className="w-12 h-12 text-neon-blue absolute top-0 left-0" style={{ animation: 'glitch-shift 6s infinite', opacity: 0.15 }} />
+                        </div>
+
+                        {/* Subtle Scan Line */}
+                        <div className="absolute inset-0 overflow-hidden rounded-full">
+                          <div className="absolute w-full h-0.5 bg-gradient-to-r from-transparent via-neon-blue/30 to-transparent" style={{ animation: 'scan 4s linear infinite' }}></div>
+                        </div>
+                      </div>
+
+                      {/* Minimal Corner Indicators */}
+                      <div className="absolute -top-1 -left-1 text-gray-700 text-lg font-mono" style={{ animation: 'blink 2s step-end infinite' }}>[</div>
+                      <div className="absolute -top-1 -right-1 text-gray-700 text-lg font-mono" style={{ animation: 'blink 2s step-end infinite' }}>]</div>
+                      <div className="absolute -bottom-1 -left-1 text-gray-700 text-lg font-mono" style={{ animation: 'blink 2s step-end infinite' }}>[</div>
+                      <div className="absolute -bottom-1 -right-1 text-gray-700 text-lg font-mono" style={{ animation: 'blink 2s step-end infinite' }}>]</div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <h3 className="text-2xl font-bold text-gray-400 font-heading">
+                        <span style={{ animation: 'flicker 4s infinite' }}>Ready to Start</span>
+                      </h3>
+                      <p className="text-sm text-gray-600 max-w-md mx-auto">
+                        Click the START BOT button to begin the automation process
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Status Overlay - Consistent Theme */}
+                <div className="absolute bottom-4 right-4 px-4 py-2 bg-black/90 backdrop-blur-md text-xs text-green-400 font-mono border border-green-500/30 rounded-lg shadow-[0_0_15px_rgba(34,197,94,0.2)]">
+                  <div className="flex items-center gap-2">
+                    <div className={`w-2 h-2 rounded-full ${isRunning ? 'bg-green-400 animate-pulse' : 'bg-gray-600'}`}></div>
+                    Chromium: {isRunning ? 'Active' : 'Idle'}
                   </div>
                 </div>
-              )}
 
-              {/* Error/Success Alerts */}
-              {error && (
-                <div className="bg-red-500/10 border border-red-500/20 p-4 rounded-lg flex items-center gap-2 text-red-400">
-                  <AlertCircle className="w-5 h-5" />
-                  {error}
-                </div>
-              )}
+                {/* Error/Success Alerts - Consistent Theme */}
+                {error && (
+                  <div className="absolute top-4 left-1/2 transform -translate-x-1/2 max-w-2xl w-full bg-red-500/10 backdrop-blur-md border border-red-500/30 px-6 py-4 rounded-xl shadow-[0_0_20px_rgba(239,68,68,0.3)] z-20 animate-in slide-in-from-top">
+                    <div className="flex items-start gap-4">
+                      <div className="flex-shrink-0 mt-0.5">
+                        <AlertCircle className="w-6 h-6 text-red-400" />
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="font-bold text-red-400 mb-1 text-lg">Unable to Start Bot</h4>
+                        <p className="text-red-300 text-sm mb-3">{error.replace('❌ Bot error: ', '').replace('Failed to run bot: ', '')}</p>
+                        {error.includes('credentials') && (
+                          <button
+                            onClick={() => {
+                              setActiveTab('config');
+                              setError(null);
+                            }}
+                            className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium text-sm transition-all"
+                          >
+                            <Key className="w-4 h-4" />
+                            Go to Job Profile Settings
+                          </button>
+                        )}
+                      </div>
+                      <button
+                        onClick={() => setError(null)}
+                        className="flex-shrink-0 text-red-400 hover:text-red-300 transition-colors"
+                      >
+                        <X className="w-5 h-5" />
+                      </button>
+                    </div>
+                  </div>
+                )}
 
-              {success && (
-                <div className="bg-green-500/10 border border-green-500/20 p-4 rounded-lg flex items-center gap-2 text-green-400">
-                  <CheckCircle className="w-5 h-5" />
-                  {success}
-                </div>
-              )}
+                {success && (
+                  <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-green-500/10 backdrop-blur-md border border-green-500/30 px-6 py-4 rounded-xl flex items-center gap-3 text-green-400 shadow-[0_0_20px_rgba(34,197,94,0.3)] z-20 animate-in slide-in-from-top">
+                    <CheckCircle className="w-5 h-5" />
+                    <span className="font-medium">{success}</span>
+                  </div>
+                )}
+              </div>
 
-              {/* Terminal Footer */}
-              <div className="bg-black p-0">
-                <div className="px-4 py-1 bg-gray-900 border-b border-gray-800 text-[10px] text-gray-500 font-mono uppercase tracking-wider flex justify-between">
-                  <span>
+              {/* Terminal Footer - Consistent Theme */}
+              <div className="bg-black border-t border-gray-800 shadow-[0_-10px_30px_rgba(0,0,0,0.5)]">
+                <div className="px-6 py-2 bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 border-b border-gray-700 flex justify-between items-center">
+                  <span className="text-xs text-gray-400 font-mono uppercase tracking-wider flex items-center gap-2">
+                    <div className="w-2 h-2 bg-gray-600 rounded-full"></div>
                     {isFilterRunning ? 'Filter Automation Logs' : 'Bot Automation Logs'} {botLogs.length > 0 && `(${botLogs.length})`}
-                    {isFilterRunning && <span className="ml-2 text-neon-green animate-pulse">● RUNNING</span>}
+                    {isFilterRunning && <span className="ml-2 text-neon-green animate-pulse flex items-center gap-1">
+                      <div className="w-1.5 h-1.5 bg-neon-green rounded-full"></div>
+                      RUNNING
+                    </span>}
                   </span>
-                  <span>{isFilterRunning ? 'node server/autoFilter.js' : 'node server/autoApply.js'}</span>
+                  <span className="text-xs text-gray-600 font-mono">{isFilterRunning ? 'node server/autoFilter.js' : 'node server/autoApply.js'}</span>
                 </div>
                 <div
                   ref={logContainerRef}
-                  className="h-64 overflow-y-auto p-4 font-mono text-sm space-y-1.5 bg-black text-gray-300"
+                  className="h-72 overflow-y-auto p-6 font-mono text-sm space-y-2 bg-black text-gray-300 scrollbar-thin scrollbar-thumb-gray-800 scrollbar-track-gray-900"
                 >
-                  {botLogs.length === 0 && logs.length === 0 && <div className="text-gray-600 italic">// Automation ready. Click 'START BOT' to begin.</div>}
+                  {botLogs.length === 0 && logs.length === 0 && (
+                    <div className="text-gray-600 italic flex items-center gap-2">
+                      <div className="w-1 h-1 bg-gray-700 rounded-full"></div>
+                      Automation ready. Click 'START BOT' to begin.
+                    </div>
+                  )}
 
                   {/* Show bot logs if available, otherwise show context logs */}
                   {botLogs.length > 0 ? (
                     botLogs.map((log, idx) => (
-                      <div key={idx} className={`${log.type === 'error' ? 'text-red-400' :
-                        log.type === 'success' ? 'text-green-400' :
-                          log.type === 'warning' ? 'text-yellow-400' :
+                      <div key={idx} className={`${log.type === 'error' ? 'text-red-400 bg-red-500/5' :
+                        log.type === 'success' ? 'text-green-400 bg-green-500/5' :
+                          log.type === 'warning' ? 'text-yellow-400 bg-yellow-500/5' :
                             'text-gray-300'
-                        } break-words font-mono leading-relaxed flex gap-2`}>
-                        <span className="opacity-30 text-xs w-16 shrink-0">{log.timestamp}</span>
-                        <span>{log.message}</span>
+                        } break-words font-mono leading-relaxed flex gap-3 p-2 rounded hover:bg-white/5 transition-colors`}>
+                        <span className="opacity-40 text-xs w-20 shrink-0 pt-0.5">{log.timestamp}</span>
+                        <span className="flex-1">{log.message}</span>
                       </div>
                     ))
                   ) : (
                     logs.map((log) => (
-                      <div key={log.id} className={`${log.color} break-words font-mono leading-relaxed flex gap-2`}>
-                        <span className="opacity-30 text-xs w-16 shrink-0">{log.timestamp}</span>
-                        <span>{log.text}</span>
+                      <div key={log.id} className={`${log.color} break-words font-mono leading-relaxed flex gap-3 p-2 rounded hover:bg-white/5 transition-colors`}>
+                        <span className="opacity-40 text-xs w-20 shrink-0 pt-0.5">{log.timestamp}</span>
+                        <span className="flex-1">{log.text}</span>
                       </div>
                     ))
                   )}
 
                   {isRunning && (
-                    <div className="flex items-center gap-2 text-neon-green mt-2 animate-pulse pl-[4.5rem]">
-                      <span className="w-1.5 h-4 bg-neon-green"></span>
+                    <div className="flex items-center gap-2 text-neon-green mt-3 animate-pulse pl-[5.5rem]">
+                      <span className="w-2 h-5 bg-neon-green shadow-[0_0_10px_rgba(0,243,255,0.8)]"></span>
                     </div>
                   )}
                 </div>
@@ -804,11 +1198,58 @@ const Dashboard: React.FC = () => {
           <div className="max-w-3xl mx-auto">
             <h2 className="text-2xl font-bold text-white mb-6">Job Profile Settings</h2>
 
+            {/* Profile Completion Progress */}
+            <div className="mb-6 bg-dark-800 border-2 border-yellow-500/30 rounded-xl p-4">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <AlertCircle className="w-5 h-5 text-yellow-400" />
+                  <span className="text-sm font-bold text-white">Profile Completion</span>
+                  <span className="bg-red-500/20 text-red-400 text-[10px] px-2 py-0.5 rounded-full border border-red-500/30 font-semibold">
+                    MANDATORY
+                  </span>
+                </div>
+                <span className={`text-lg font-bold ${profileCompletion === 100 ? 'text-green-400' : 'text-yellow-400'}`}>
+                  {profileCompletion}%
+                </span>
+              </div>
+              <div className="w-full bg-dark-900 rounded-full h-3 overflow-hidden border border-gray-700">
+                <div
+                  className={`h-full transition-all duration-500 ${
+                    profileCompletion === 100
+                      ? 'bg-gradient-to-r from-green-500 to-green-600'
+                      : 'bg-gradient-to-r from-yellow-500 to-orange-500'
+                  }`}
+                  style={{ width: `${profileCompletion}%` }}
+                />
+              </div>
+              {profileCompletion < 100 && (
+                <p className="text-xs text-gray-400 mt-2">
+                  Please complete all required fields to unlock automation features.
+                </p>
+              )}
+              {profileCompletion === 100 && (
+                <p className="text-xs text-green-400 mt-2 flex items-center gap-1">
+                  <CheckCircle className="w-3 h-3" />
+                  Profile completed! You can now use all automation features.
+                </p>
+              )}
+            </div>
+
             {/* Error/Success Alerts */}
             {error && (
-              <div className="bg-red-500/10 border border-red-500/20 p-4 rounded-lg flex items-center gap-2 text-red-400 mb-6">
-                <AlertCircle className="w-5 h-5" />
-                {error}
+              <div className="bg-red-500/10 border border-red-500/20 p-4 rounded-lg mb-6">
+                <div className="flex items-start gap-3">
+                  <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
+                  <div className="flex-1">
+                    <p className="text-red-400 font-medium">{error.replace('❌ Bot error: ', '').replace('Failed to run bot: ', '')}</p>
+                  </div>
+                  <button
+                    onClick={() => setError(null)}
+                    className="flex-shrink-0 text-red-400 hover:text-red-300 transition-colors"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
             )}
 
@@ -822,10 +1263,209 @@ const Dashboard: React.FC = () => {
             <div className="bg-dark-800 border border-white/10 rounded-2xl p-8">
               <form onSubmit={handleSaveConfig} className="space-y-6">
 
+                {/* HIGH PRIORITY: Naukri Credentials Section */}
+                <div className="bg-gradient-to-r from-neon-blue/10 via-neon-purple/10 to-neon-blue/10 p-6 rounded-xl border-2 border-neon-blue/30 shadow-lg shadow-neon-blue/20">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-white font-bold flex items-center gap-2">
+                      <Key className="text-neon-blue w-5 h-5" /> Naukri Account Credentials
+                      <span className="bg-red-500/20 text-red-400 text-[10px] px-2 py-0.5 rounded-full border border-red-500/30 font-semibold ml-2">
+                        REQUIRED
+                      </span>
+                    </h3>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div className="space-y-2">
+                      <label className="text-xs text-gray-300 uppercase font-bold flex items-center gap-1">
+                        Naukri Email <span className="text-red-400">*</span>
+                        {isCredentialsVerified && (
+                          <span className="ml-2 text-[10px] bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded-full border border-blue-500/30 normal-case">
+                            Locked
+                          </span>
+                        )}
+                      </label>
+                      <div className="relative">
+                        <User className="absolute left-3 top-3 w-4 h-4 text-neon-blue" />
+                        <input
+                          type="email"
+                          value={configForm.naukriUsername}
+                          onChange={(e) => setConfigForm({ ...configForm, naukriUsername: e.target.value })}
+                          disabled={isCredentialsVerified}
+                          className={`w-full bg-dark-900 border-2 rounded-lg py-2.5 pl-10 pr-4 text-white text-sm outline-none transition-colors ${
+                            isCredentialsVerified
+                              ? 'border-gray-600 cursor-not-allowed opacity-60'
+                              : 'border-neon-blue/30 focus:border-neon-blue'
+                          }`}
+                          placeholder="your.email@example.com"
+                        />
+                      </div>
+                      {isCredentialsVerified && (
+                        <p className="text-xs text-gray-400 flex items-center gap-1 mt-1">
+                          <AlertCircle className="w-3 h-3" />
+                          Email cannot be changed after verification for security reasons.
+                        </p>
+                      )}
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-xs text-gray-300 uppercase font-bold flex items-center gap-1">
+                        Naukri Password <span className="text-red-400">*</span>
+                        {isCredentialsVerified && (
+                          <span className="ml-2 text-[10px] bg-green-500/20 text-green-400 px-2 py-0.5 rounded-full border border-green-500/30 normal-case">
+                            Editable
+                          </span>
+                        )}
+                      </label>
+                      <div className="relative">
+                        <Key className="absolute left-3 top-3 w-4 h-4 text-neon-blue" />
+                        <input
+                          type={showNaukriPassword ? "text" : "password"}
+                          value={configForm.naukriPassword}
+                          onChange={(e) => setConfigForm({ ...configForm, naukriPassword: e.target.value })}
+                          className="w-full bg-dark-900 border-2 border-neon-blue/30 rounded-lg py-2.5 pl-10 pr-10 text-white text-sm focus:border-neon-blue outline-none transition-colors"
+                          placeholder="••••••••••••"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowNaukriPassword(!showNaukriPassword)}
+                          className="absolute right-3 top-3 text-gray-500 hover:text-neon-blue transition-colors"
+                        >
+                          {showNaukriPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </button>
+                      </div>
+                      {isCredentialsVerified && (
+                        <p className="text-xs text-gray-400 flex items-center gap-1 mt-1">
+                          <AlertCircle className="w-3 h-3" />
+                          {needsReVerification
+                            ? 'Password changed. Re-verification required to use automation.'
+                            : 'You can update your password. Re-verification will be required.'
+                          }
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col md:flex-row gap-3 justify-center md:justify-start mt-4">
+                    {isCredentialsVerified && !needsReVerification ? (
+                      // Show verified status badge (green)
+                      <div className="w-full md:w-auto px-8 py-3 bg-gradient-to-r from-green-500/10 to-emerald-500/10 border-2 border-green-500 text-green-700 dark:text-green-400 font-bold rounded-lg flex items-center justify-center gap-2">
+                        <CheckCircle className="w-5 h-5" />
+                        Credentials Verified
+                      </div>
+                    ) : isCredentialsVerified && needsReVerification ? (
+                      // Show re-verification required badge + button (yellow/orange)
+                      <>
+                        <div className="w-full md:w-auto px-6 py-3 bg-gradient-to-r from-yellow-500/10 to-orange-500/10 border-2 border-yellow-500 text-yellow-600 dark:text-yellow-400 font-bold rounded-lg flex items-center justify-center gap-2">
+                          <AlertCircle className="w-5 h-5" />
+                          Re-verification Required
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (!configForm.naukriUsername || !configForm.naukriPassword) {
+                              setError('Please enter both Naukri email and password');
+                              return;
+                            }
+                            setShowVerificationConfirm(true);
+                          }}
+                          className="w-full md:w-auto px-8 py-3 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-bold rounded-lg transition-all flex items-center justify-center gap-2 shadow-xl shadow-orange-500/40 hover:shadow-2xl hover:shadow-orange-500/50 border-2 border-orange-400"
+                        >
+                          <CheckCircle className="w-5 h-5" />
+                          Re-verify Password
+                        </button>
+                      </>
+                    ) : (
+                      // Show initial verification button (blue)
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (!configForm.naukriUsername || !configForm.naukriPassword) {
+                            setError('Please enter both Naukri email and password');
+                            return;
+                          }
+                          setShowVerificationConfirm(true);
+                        }}
+                        className="w-full md:w-auto px-8 py-3 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-bold rounded-lg transition-all flex items-center justify-center gap-2 shadow-xl shadow-blue-500/40 hover:shadow-2xl hover:shadow-blue-500/50 border-2 border-blue-400"
+                      >
+                        <CheckCircle className="w-5 h-5" />
+                        Verify Naukri Credentials
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Verification Confirmation Modal */}
+                  {showVerificationConfirm && (
+                    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                      <div className="bg-dark-800 border-2 border-yellow-500/30 rounded-2xl p-6 max-w-md w-full shadow-2xl shadow-yellow-500/20">
+                        <div className="flex items-center gap-3 mb-4">
+                          <div className="bg-yellow-500/20 p-2 rounded-lg">
+                            <AlertCircle className="w-6 h-6 text-yellow-400" />
+                          </div>
+                          <h3 className="text-xl font-bold text-white">Confirm Verification</h3>
+                        </div>
+
+                        <div className="space-y-4 mb-6">
+                          <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4">
+                            <p className="text-yellow-200 text-sm font-semibold mb-2">Important Notice:</p>
+                            <ul className="space-y-2 text-sm text-gray-300">
+                              <li className="flex items-start gap-2">
+                                <span className="text-yellow-400 mt-0.5">⚠️</span>
+                                <span>Once submitted, your Naukri credentials <strong className="text-white">cannot be changed later</strong>.</span>
+                              </li>
+                              <li className="flex items-start gap-2">
+                                <span className="text-yellow-400 mt-0.5">⚠️</span>
+                                <span>After successful verification, your Naukri account email will be <strong className="text-white">permanently assigned</strong> to your login email.</span>
+                              </li>
+                            </ul>
+                          </div>
+
+                          <div className="bg-dark-900/50 border border-gray-700 rounded-lg p-3">
+                            <p className="text-xs text-gray-400 mb-1">You are verifying:</p>
+                            <p className="text-sm text-neon-blue font-mono">{configForm.naukriUsername}</p>
+                          </div>
+                        </div>
+
+                        <div className="flex gap-3 mt-6">
+                          <button
+                            type="button"
+                            onClick={() => setShowVerificationConfirm(false)}
+                            disabled={isVerifying}
+                            className="flex-1 px-4 py-3 bg-gray-600 hover:bg-gray-500 text-white font-semibold rounded-lg transition-all border-2 border-gray-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleVerifyCredentials}
+                            disabled={isVerifying}
+                            className="flex-1 px-4 py-3 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-bold rounded-lg transition-all flex items-center justify-center gap-2 shadow-xl shadow-green-500/50 border-2 border-green-400 disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            {isVerifying ? (
+                              <>
+                                <Loader2 className="w-5 h-5 animate-spin" />
+                                Verifying...
+                              </>
+                            ) : verificationStatus === 'success' ? (
+                              <>
+                                <CheckCircle className="w-5 h-5" />
+                                Verified!
+                              </>
+                            ) : (
+                              <>
+                                <CheckCircle className="w-5 h-5" />
+                                Confirm Verification
+                              </>
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
                 {/* Resume Upload Section */}
                 <div className="bg-dark-900/50 p-6 rounded-xl border border-dashed border-gray-600">
                   <h3 className="text-white font-bold mb-4 flex items-center gap-2 text-sm">
-                    <UploadCloud className="text-neon-blue w-4 h-4" /> Resume & Analysis
+                    <UploadCloud className="text-neon-blue w-4 h-4" /> Resume & Analysis <span className="text-red-400 ml-1">*</span>
                   </h3>
 
                   {!configForm.resumeName && !analyzing ? (
@@ -862,45 +1502,12 @@ const Dashboard: React.FC = () => {
                   )}
                 </div>
 
-                {/* Config Fields */}
+                {/* Other Job Profile Fields */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
-                    <label className="text-xs text-gray-400 uppercase font-bold">Naukri Email</label>
-                    <div className="relative">
-                      <User className="absolute left-3 top-3 w-4 h-4 text-gray-500" />
-                      <input
-                        type="email"
-                        value={configForm.naukriUsername}
-                        onChange={(e) => setConfigForm({ ...configForm, naukriUsername: e.target.value })}
-                        className="w-full bg-dark-900 border border-gray-700 rounded-lg py-2.5 pl-10 pr-4 text-white text-sm focus:border-neon-blue outline-none"
-                      />
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-xs text-gray-400 uppercase font-bold">Naukri Password</label>
-                    <div className="relative">
-                      <Key className="absolute left-3 top-3 w-4 h-4 text-gray-500" />
-                      <input
-                        type={showNaukriPassword ? "text" : "password"}
-                        value={configForm.naukriPassword}
-                        onChange={(e) => setConfigForm({ ...configForm, naukriPassword: e.target.value })}
-                        className="w-full bg-dark-900 border border-gray-700 rounded-lg py-2.5 pl-10 pr-10 text-white text-sm focus:border-neon-blue outline-none"
-                        placeholder="••••••••••••"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowNaukriPassword(!showNaukriPassword)}
-                        className="absolute right-3 top-3 text-gray-500 hover:text-gray-300 transition-colors"
-                      >
-                        {showNaukriPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <label className="text-xs text-gray-400 uppercase font-bold">Target Role</label>
+                    <label className="text-xs text-gray-400 uppercase font-bold flex items-center gap-1">
+                      Target Role <span className="text-red-400">*</span>
+                    </label>
                     <input
                       type="text"
                       value={configForm.targetRole}
@@ -925,7 +1532,9 @@ const Dashboard: React.FC = () => {
                 {/* New Fields */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div className="space-y-2">
-                    <label className="text-xs text-gray-400 uppercase font-bold">Current CTC</label>
+                    <label className="text-xs text-gray-400 uppercase font-bold flex items-center gap-1">
+                      Current CTC <span className="text-red-400">*</span>
+                    </label>
                     <div className="relative">
                       <IndianRupee className="absolute left-3 top-3 w-4 h-4 text-gray-500" />
                       <input
@@ -937,7 +1546,9 @@ const Dashboard: React.FC = () => {
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <label className="text-xs text-gray-400 uppercase font-bold">Expected CTC</label>
+                    <label className="text-xs text-gray-400 uppercase font-bold flex items-center gap-1">
+                      Expected CTC <span className="text-red-400">*</span>
+                    </label>
                     <div className="relative">
                       <IndianRupee className="absolute left-3 top-3 w-4 h-4 text-gray-500" />
                       <input
@@ -949,7 +1560,9 @@ const Dashboard: React.FC = () => {
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <label className="text-xs text-gray-400 uppercase font-bold">Notice Period</label>
+                    <label className="text-xs text-gray-400 uppercase font-bold flex items-center gap-1">
+                      Notice Period <span className="text-red-400">*</span>
+                    </label>
                     <div className="relative">
                       <Clock className="absolute left-3 top-3 w-4 h-4 text-gray-500" />
                       <select
@@ -967,7 +1580,9 @@ const Dashboard: React.FC = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-xs text-gray-400 uppercase font-bold">Search Keywords</label>
+                  <label className="text-xs text-gray-400 uppercase font-bold flex items-center gap-1">
+                    Search Keywords <span className="text-red-400">*</span>
+                  </label>
                   <div className="relative">
                     <Search className="absolute left-3 top-3 w-4 h-4 text-gray-500" />
                     <textarea
@@ -979,15 +1594,59 @@ const Dashboard: React.FC = () => {
                   </div>
                 </div>
 
+                {/* Automation Settings */}
+                <div className="bg-dark-900/50 p-6 rounded-xl border border-dashed border-gray-600">
+                  <h3 className="text-white font-bold mb-4 flex items-center gap-2 text-sm">
+                    <Activity className="text-neon-blue w-4 h-4" /> Automation Settings
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <label className="text-xs text-gray-400 uppercase font-bold">Search Years of Experience</label>
+                      <input
+                        type="number"
+                        min="0"
+                        max="50"
+                        step="1"
+                        value={configForm.yearsOfExperience ?? 0}
+                        onChange={(e) => {
+                          const value = parseInt(e.target.value);
+                          if (!isNaN(value) && value >= 0 && value <= 50) {
+                            setConfigForm({ ...configForm, yearsOfExperience: value });
+                          }
+                        }}
+                        className="w-full bg-dark-900 border border-gray-700 rounded-lg py-2.5 px-4 text-white text-sm focus:border-neon-blue outline-none"
+                        placeholder="0"
+                      />
+                      <p className="text-[10px] text-gray-500">Used for job filtering and match calculation</p>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-xs text-gray-400 uppercase font-bold">Max Pages to Process</label>
+                      <input
+                        type="number"
+                        min="1"
+                        max="50"
+                        value={configForm.maxPages || 5}
+                        onChange={(e) => setConfigForm({ ...configForm, maxPages: parseInt(e.target.value) || 5 })}
+                        className="w-full bg-dark-900 border border-gray-700 rounded-lg py-2.5 px-4 text-white text-sm focus:border-neon-blue outline-none"
+                        placeholder="5"
+                      />
+                      <p className="text-xs text-gray-500">Number of job listing pages to process (1-50)</p>
+                    </div>
+                  </div>
+                </div>
+
                 {/* Availability Field */}
                 <div className="space-y-2">
-                  <label className="text-xs text-gray-400 uppercase font-bold">Face-to-Face Availability</label>
+                  <label className="text-xs text-gray-400 uppercase font-bold flex items-center gap-1">
+                    Face-to-Face Availability <span className="text-red-400">*</span>
+                  </label>
                   <div className="relative">
                     <Calendar className="absolute left-3 top-3 w-4 h-4 text-gray-500" />
                     <select
                       className="w-full bg-dark-900 border border-gray-700 rounded-lg py-2.5 pl-9 pr-2 text-white text-sm focus:border-neon-purple outline-none appearance-none cursor-pointer"
                       value={configForm.availability}
                       onChange={e => setConfigForm({ ...configForm, availability: e.target.value })}
+                      required
                     >
                       <option value="Flexible">Flexible</option>
                       <option value="Available">Available</option>
@@ -1118,13 +1777,15 @@ const Dashboard: React.FC = () => {
                         label,
                         icon: Icon,
                         options,
-                        placeholder
+                        placeholder,
+                        comingSoon
                       }: {
                         filterKey: string;
                         label: string;
                         icon: any;
                         options: any[];
                         placeholder: string;
+                        comingSoon?: boolean;
                       }) => {
                         const selected = (selectedFilters as any)[filterKey] || [];
                         const isOpen = openFilterDropdown === filterKey;
@@ -1138,15 +1799,24 @@ const Dashboard: React.FC = () => {
 
                         return (
                           <div className="space-y-2 relative">
-                            <label className="text-xs text-gray-400 uppercase font-bold flex items-center gap-1">
+                            <label className="text-xs text-gray-400 uppercase font-bold flex items-center gap-2">
                               <Icon className="w-3 h-3" /> {label}
+                              {comingSoon && (
+                                <span className="bg-yellow-500/20 text-yellow-400 text-[10px] px-2 py-0.5 rounded-full border border-yellow-500/30 font-semibold">
+                                  Coming Soon
+                                </span>
+                              )}
                             </label>
                             <div
-                              className="w-full bg-dark-900 border border-gray-700 rounded-lg py-2.5 px-3 text-white text-sm cursor-pointer hover:border-neon-green transition-colors min-h-[42px]"
-                              onClick={() => setOpenFilterDropdown(isOpen ? null : filterKey)}
+                              className={`w-full bg-dark-900 border border-gray-700 rounded-lg py-2.5 px-3 text-white text-sm min-h-[42px] ${
+                                comingSoon
+                                  ? 'opacity-50 cursor-not-allowed'
+                                  : 'cursor-pointer hover:border-neon-green transition-colors'
+                              }`}
+                              onClick={() => !comingSoon && setOpenFilterDropdown(isOpen ? null : filterKey)}
                             >
                               {selected.length === 0 ? (
-                                <span className="text-gray-500">{placeholder}</span>
+                                <span className="text-gray-500">{comingSoon ? 'Not Available Yet' : placeholder}</span>
                               ) : (
                                 <span className="text-neon-green">{selected.length} selected</span>
                               )}
@@ -1202,12 +1872,11 @@ const Dashboard: React.FC = () => {
                           <MultiSelectFilter filterKey="functionalAreaGid" label="Functional Area" icon={Briefcase} options={filters.functionalAreaGid || []} placeholder="All Functional Areas" />
                           <MultiSelectFilter filterKey="industryTypeGid" label="Industry" icon={Building2} options={filters.industryTypeGid || []} placeholder="All Industries" />
                           <MultiSelectFilter filterKey="glbl_RoleCat" label="Role Category" icon={Briefcase} options={filters.glbl_RoleCat || []} placeholder="All Role Categories" />
-                          <MultiSelectFilter filterKey="ugCourseGid" label="UG Qualification" icon={GraduationCap} options={filters.ugCourseGid || []} placeholder="All UG Qualifications" />
-                          <MultiSelectFilter filterKey="pgCourseGid" label="PG Qualification" icon={GraduationCap} options={filters.pgCourseGid || []} placeholder="All PG Qualifications" />
+                          <MultiSelectFilter filterKey="ugCourseGid" label="UG Qualification" icon={GraduationCap} options={filters.ugCourseGid || []} placeholder="All UG Qualifications" comingSoon={true} />
+                          <MultiSelectFilter filterKey="pgCourseGid" label="PG Qualification" icon={GraduationCap} options={filters.pgCourseGid || []} placeholder="All PG Qualifications" comingSoon={true} />
                           <MultiSelectFilter filterKey="business_size" label="Company Type" icon={Building2} options={filters.business_size || []} placeholder="All Company Types" />
                           <MultiSelectFilter filterKey="employement" label="Employment Type" icon={Briefcase} options={filters.employement || []} placeholder="All Employment Types" />
                           <MultiSelectFilter filterKey="topGroupId" label="Top Companies" icon={Building2} options={filters.topGroupId || []} placeholder="All Companies" />
-                          <MultiSelectFilter filterKey="featuredCompanies" label="Featured Companies" icon={Star} options={filters.featuredCompanies || []} placeholder="All Featured Companies" />
                         </>
                       );
                     })()}
@@ -1232,8 +1901,7 @@ const Dashboard: React.FC = () => {
                             business_size: [],
                             employement: [],
                             glbl_RoleCat: [],
-                            topGroupId: [],
-                            featuredCompanies: []
+                            topGroupId: []
                           })}
                           className="text-xs text-red-400 hover:text-red-300 transition-colors"
                         >
@@ -1278,16 +1946,17 @@ const Dashboard: React.FC = () => {
                             {filters.glbl_RoleCat?.find((o: any) => o.id === id)?.label || id}
                           </span>
                         ))}
-                        {selectedFilters.ugCourseGid?.map((id: string) => (
+                        {/* UG and PG filters hidden - Coming Soon */}
+                        {/* {selectedFilters.ugCourseGid?.map((id: string) => (
                           <span key={`ug-${id}`} className="bg-cyan-500/10 text-cyan-400 text-xs px-2 py-1 rounded border border-cyan-500/30">
                             {filters.ugCourseGid?.find((o: any) => o.id === id)?.label || id}
                           </span>
-                        ))}
-                        {selectedFilters.pgCourseGid?.map((id: string) => (
+                        ))} */}
+                        {/* {selectedFilters.pgCourseGid?.map((id: string) => (
                           <span key={`pg-${id}`} className="bg-indigo-500/10 text-indigo-400 text-xs px-2 py-1 rounded border border-indigo-500/30">
                             {filters.pgCourseGid?.find((o: any) => o.id === id)?.label || id}
                           </span>
-                        ))}
+                        ))} */}
                         {selectedFilters.business_size?.map((id: string) => (
                           <span key={`biz-${id}`} className="bg-emerald-500/10 text-emerald-400 text-xs px-2 py-1 rounded border border-emerald-500/30">
                             {filters.business_size?.find((o: any) => o.id === id)?.label || id}
@@ -1303,19 +1972,42 @@ const Dashboard: React.FC = () => {
                             {filters.topGroupId?.find((o: any) => o.id === id)?.label || id}
                           </span>
                         ))}
-                        {selectedFilters.featuredCompanies?.map((id: string) => (
-                          <span key={`feat-${id}`} className="bg-amber-500/10 text-amber-400 text-xs px-2 py-1 rounded border border-amber-500/30">
-                            {filters.featuredCompanies?.find((o: any) => o.id === id)?.label || id}
-                          </span>
-                        ))}
                       </div>
                     </div>
                   )}
                 </div>
 
-                <button className="w-full bg-neon-blue text-black font-bold py-3 rounded-lg hover:bg-white transition-colors flex items-center justify-center gap-2 mt-4 shadow-lg shadow-neon-blue/20">
-                  <Save className="w-5 h-5" /> Save Configuration
-                </button>
+                {/* Save Button with Completion Check */}
+                <div className="space-y-3 mt-6">
+                  {!isProfileComplete && (
+                    <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-3 flex items-start gap-2">
+                      <AlertCircle className="w-4 h-4 text-yellow-400 mt-0.5 flex-shrink-0" />
+                      <p className="text-xs text-yellow-200">
+                        <strong>Profile Incomplete ({profileCompletion}%):</strong> Please fill in all required fields to enable the Save button and unlock automation features.
+                      </p>
+                    </div>
+                  )}
+
+                  <button
+                    type="submit"
+                    disabled={!isProfileComplete}
+                    className={`w-full font-bold py-3 rounded-lg transition-all flex items-center justify-center gap-2 shadow-lg ${
+                      isProfileComplete
+                        ? 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white shadow-green-500/30 hover:shadow-xl cursor-pointer'
+                        : 'bg-gray-700 text-gray-400 cursor-not-allowed opacity-60 shadow-none'
+                    }`}
+                  >
+                    {isProfileComplete ? (
+                      <>
+                        <Save className="w-5 h-5" /> Save Configuration
+                      </>
+                    ) : (
+                      <>
+                        <AlertCircle className="w-5 h-5" /> Complete Profile to Save
+                      </>
+                    )}
+                  </button>
+                </div>
               </form>
             </div>
           </div>
@@ -1688,59 +2380,699 @@ const Dashboard: React.FC = () => {
 
       case 'history':
         return (
-          <div className="max-w-5xl mx-auto">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold text-white">Application History</h2>
-              <button
-                onClick={downloadReport}
-                className="bg-dark-800 border border-white/20 text-white px-4 py-2 rounded-lg hover:bg-white/10 flex items-center gap-2 text-sm"
-              >
-                <Download className="w-4 h-4" /> Download XLSX
-              </button>
+          <div className="max-w-7xl mx-auto space-y-6">
+            {/* Header */}
+            <div className="flex justify-between items-center">
+              <div>
+                <h2 className="text-3xl font-bold bg-gradient-to-r from-neon-blue to-neon-purple bg-clip-text text-transparent">
+                  Application History
+                </h2>
+                {historyData && (
+                  <p className="text-gray-400 mt-2 text-sm">
+                    Total: {historyData.totalRecords} applications | Page {historyData.currentPage} of {historyData.totalPages}
+                  </p>
+                )}
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setShowFilters(!showFilters)}
+                  className="bg-dark-800 border border-neon-purple/30 text-neon-purple px-4 py-2 rounded-lg hover:bg-neon-purple/10 flex items-center gap-2 text-sm transition-all"
+                >
+                  <Filter className="w-4 h-4" /> {showFilters ? 'Hide' : 'Show'} Filters
+                </button>
+                <button
+                  onClick={downloadReport}
+                  className="bg-dark-800 border border-neon-blue/30 text-neon-blue px-4 py-2 rounded-lg hover:bg-neon-blue/10 flex items-center gap-2 text-sm transition-all"
+                >
+                  <Download className="w-4 h-4" /> Download XLSX
+                </button>
+              </div>
             </div>
 
-            <div className="bg-dark-800 border border-white/10 rounded-xl overflow-hidden">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="bg-black/40 text-gray-400 text-xs uppercase border-b border-white/10">
-                    <th className="p-4">Date</th>
-                    <th className="p-4">Role</th>
-                    <th className="p-4">Company</th>
-                    <th className="p-4">Score</th>
-                    <th className="p-4">Status</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-white/5">
-                  {reports.length === 0 ? (
-                    <tr>
-                      <td colSpan={5} className="p-8 text-center text-gray-500 italic">No applications processed yet.</td>
-                    </tr>
-                  ) : (
-                    reports.map((report) => (
-                      <tr key={report.id} className="hover:bg-white/5 transition-colors">
-                        <td className="p-4 text-gray-300 font-mono text-xs">{report.date}</td>
-                        <td className="p-4 text-white font-medium">{report.jobTitle}</td>
-                        <td className="p-4 text-gray-400">{report.company}</td>
-                        <td className="p-4">
-                          <span className={`px-2 py-1 rounded text-xs font-bold ${report.matchScore >= 80 ? 'bg-green-500/10 text-green-400' : 'bg-yellow-500/10 text-yellow-400'}`}>
-                            {report.matchScore}%
+            {/* Filter Panel */}
+            {showFilters && (
+              <div className="bg-dark-800 border border-white/10 rounded-xl p-6 space-y-4">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-lg font-semibold text-white">Filters</h3>
+                  <button
+                    onClick={handleClearFilters}
+                    className="text-sm text-gray-400 hover:text-white transition-colors"
+                  >
+                    Clear All
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                  {/* Match Status */}
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-2">Match Status</label>
+                    <select
+                      value={historyFilters.matchStatus}
+                      onChange={(e) => handleFilterChange('matchStatus', e.target.value)}
+                      className="w-full bg-dark-900 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:border-neon-blue focus:outline-none"
+                    >
+                      <option value="">All</option>
+                      <option value="Good Match">Good Match</option>
+                      <option value="Poor Match">Poor Match</option>
+                    </select>
+                  </div>
+
+                  {/* Apply Type */}
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-2">Apply Type</label>
+                    <select
+                      value={historyFilters.applyType}
+                      onChange={(e) => handleFilterChange('applyType', e.target.value)}
+                      className="w-full bg-dark-900 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:border-neon-blue focus:outline-none"
+                    >
+                      <option value="">All</option>
+                      <option value="Direct Apply">Direct Apply</option>
+                      <option value="External Apply">External Apply</option>
+                      <option value="No Apply Button">No Apply Button</option>
+                    </select>
+                  </div>
+
+                  {/* Page Number */}
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-2">Page Number</label>
+                    <input
+                      type="number"
+                      value={historyFilters.pageNumber}
+                      onChange={(e) => handleFilterChange('pageNumber', e.target.value)}
+                      placeholder="Any page"
+                      className="w-full bg-dark-900 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:border-neon-blue focus:outline-none"
+                    />
+                  </div>
+
+                  {/* Early Applicant */}
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-2">Early Applicant</label>
+                    <select
+                      value={historyFilters.earlyApplicant}
+                      onChange={(e) => handleFilterChange('earlyApplicant', e.target.value)}
+                      className="w-full bg-dark-900 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:border-neon-blue focus:outline-none"
+                    >
+                      <option value="">All</option>
+                      <option value="true">Yes</option>
+                      <option value="false">No</option>
+                    </select>
+                  </div>
+
+                  {/* Skills Match */}
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-2">Skills Match</label>
+                    <select
+                      value={historyFilters.keySkillsMatch}
+                      onChange={(e) => handleFilterChange('keySkillsMatch', e.target.value)}
+                      className="w-full bg-dark-900 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:border-neon-blue focus:outline-none"
+                    >
+                      <option value="">All</option>
+                      <option value="true">Yes</option>
+                      <option value="false">No</option>
+                    </select>
+                  </div>
+
+                  {/* Location Match */}
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-2">Location Match</label>
+                    <select
+                      value={historyFilters.locationMatch}
+                      onChange={(e) => handleFilterChange('locationMatch', e.target.value)}
+                      className="w-full bg-dark-900 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:border-neon-blue focus:outline-none"
+                    >
+                      <option value="">All</option>
+                      <option value="true">Yes</option>
+                      <option value="false">No</option>
+                    </select>
+                  </div>
+
+                  {/* Experience Match */}
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-2">Experience Match</label>
+                    <select
+                      value={historyFilters.experienceMatch}
+                      onChange={(e) => handleFilterChange('experienceMatch', e.target.value)}
+                      className="w-full bg-dark-900 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:border-neon-blue focus:outline-none"
+                    >
+                      <option value="">All</option>
+                      <option value="true">Yes</option>
+                      <option value="false">No</option>
+                    </select>
+                  </div>
+
+                  {/* Min Score */}
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-2">Min Score</label>
+                    <input
+                      type="number"
+                      min="0"
+                      max="5"
+                      value={historyFilters.minScore}
+                      onChange={(e) => handleFilterChange('minScore', e.target.value)}
+                      placeholder="0"
+                      className="w-full bg-dark-900 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:border-neon-blue focus:outline-none"
+                    />
+                  </div>
+
+                  {/* Max Score */}
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-2">Max Score</label>
+                    <input
+                      type="number"
+                      min="0"
+                      max="5"
+                      value={historyFilters.maxScore}
+                      onChange={(e) => handleFilterChange('maxScore', e.target.value)}
+                      placeholder="5"
+                      className="w-full bg-dark-900 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:border-neon-blue focus:outline-none"
+                    />
+                  </div>
+
+                  {/* Start Date */}
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-2">Start Date</label>
+                    <input
+                      type="date"
+                      value={historyFilters.startDate}
+                      onChange={(e) => handleFilterChange('startDate', e.target.value)}
+                      className="w-full bg-dark-900 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:border-neon-blue focus:outline-none"
+                    />
+                  </div>
+
+                  {/* End Date */}
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-2">End Date</label>
+                    <input
+                      type="date"
+                      value={historyFilters.endDate}
+                      onChange={(e) => handleFilterChange('endDate', e.target.value)}
+                      className="w-full bg-dark-900 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:border-neon-blue focus:outline-none"
+                    />
+                  </div>
+                </div>
+
+                {/* Apply Button */}
+                <div className="flex justify-end gap-2 pt-4 border-t border-white/10">
+                  <button
+                    onClick={() => setShowFilters(false)}
+                    className="px-4 py-2 bg-dark-700 text-gray-300 rounded-lg hover:bg-dark-600 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleApplyFilters}
+                    className="px-6 py-2 bg-neon-blue text-black font-semibold rounded-lg hover:bg-white transition-colors"
+                  >
+                    Apply Filters
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Loading State */}
+            {historyLoading && (
+              <div className="text-center py-12 bg-dark-800 rounded-xl border border-white/10">
+                <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-neon-blue"></div>
+                <p className="mt-4 text-gray-400">Loading history...</p>
+              </div>
+            )}
+
+            {/* Error State */}
+            {historyError && (
+              <div className="bg-red-900/20 border border-red-500 rounded-lg p-4">
+                <p className="text-red-400">Error: {historyError}</p>
+              </div>
+            )}
+
+            {/* No Data */}
+            {!historyLoading && !historyError && historyData && historyData.records.length === 0 && (
+              <div className="bg-dark-800 border border-white/10 rounded-xl p-12 text-center">
+                <FileText className="w-16 h-16 text-gray-600 mx-auto mb-4" />
+                <p className="text-gray-400 text-lg">No application history found</p>
+                <p className="text-gray-500 mt-2 text-sm">Run automation to start tracking your applications</p>
+              </div>
+            )}
+
+            {/* Data Table */}
+            {!historyLoading && !historyError && historyData && historyData.records.length > 0 && (
+              <>
+                <div className="bg-dark-800 border border-white/10 rounded-xl overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse">
+                      <thead className="bg-black/40">
+                        <tr className="text-gray-400 text-xs uppercase border-b border-white/10">
+                          <th className="px-4 py-3 font-semibold">Date & Time</th>
+                          <th className="px-4 py-3 font-semibold">Job Title</th>
+                          <th className="px-4 py-3 font-semibold">Company</th>
+                          <th className="px-4 py-3 font-semibold">Location</th>
+                          <th className="px-4 py-3 font-semibold">Experience</th>
+                          <th className="px-4 py-3 font-semibold">Salary</th>
+                          <th className="px-4 py-3 text-center font-semibold">Score</th>
+                          <th className="px-4 py-3 font-semibold">Status</th>
+                          <th className="px-4 py-3 font-semibold">Apply Type</th>
+                          <th className="px-4 py-3 font-semibold">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-white/5">
+                        {historyData.records.map((record: any) => (
+                          <tr
+                            key={record.id}
+                            className="hover:bg-white/5 transition-colors"
+                          >
+                            <td className="px-4 py-3 text-sm text-gray-300 font-mono">
+                              {formatDate(record.datetime)}
+                            </td>
+                            <td className="px-4 py-3 text-sm">
+                              <div className="flex flex-col">
+                                <span className="text-white font-medium">{record.jobTitle || 'Unknown Position'}</span>
+                                {record.earlyApplicant && (
+                                  <span className="text-xs text-green-400 mt-1">🔥 Early Applicant</span>
+                                )}
+                              </div>
+                            </td>
+                            <td className="px-4 py-3 text-sm">
+                              <div className="flex flex-col">
+                                <span className="text-white font-medium">{record.companyName || 'Unknown Company'}</span>
+                                {record.companyRating && (
+                                  <span className="text-xs text-yellow-400 mt-1">⭐ {record.companyRating}</span>
+                                )}
+                              </div>
+                            </td>
+                            <td className="px-4 py-3 text-sm text-gray-300">
+                              {record.location || 'N/A'}
+                            </td>
+                            <td className="px-4 py-3 text-sm text-gray-300">
+                              {record.experienceRequired || 'N/A'}
+                            </td>
+                            <td className="px-4 py-3 text-sm text-gray-300">
+                              {record.salary || 'Not Disclosed'}
+                            </td>
+                            <td className="px-4 py-3 text-sm text-center">
+                              <div className="flex items-center gap-2">
+                                <div className="flex-1 bg-dark-900 rounded-full h-2 overflow-hidden">
+                                  <div
+                                    className={`h-full ${
+                                      record.matchScore >= 4 ? 'bg-green-500' : record.matchScore >= 3 ? 'bg-yellow-500' : 'bg-red-500'
+                                    }`}
+                                    style={{ width: `${(record.matchScore / record.matchScoreTotal) * 100}%` }}
+                                  ></div>
+                                </div>
+                                <span className="font-bold text-neon-purple whitespace-nowrap">
+                                  {record.matchScore}/{record.matchScoreTotal}
+                                </span>
+                              </div>
+                            </td>
+                            <td className="px-4 py-3 text-sm">
+                              <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                                record.matchStatus === 'Good Match'
+                                  ? 'bg-green-900/30 text-green-400 border border-green-500/50'
+                                  : 'bg-red-900/30 text-red-400 border border-red-500/50'
+                              }`}>
+                                {record.matchStatus}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3 text-sm">
+                              <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                                record.applyType === 'Direct Apply'
+                                  ? 'bg-blue-900/30 text-blue-400 border border-blue-500/50'
+                                  : record.applyType === 'External Apply'
+                                  ? 'bg-purple-900/30 text-purple-400 border border-purple-500/50'
+                                  : 'bg-gray-900/30 text-gray-400 border border-gray-500/50'
+                              }`}>
+                                {record.applyType}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3 text-sm">
+                              <button
+                                onClick={() => setSelectedApplication(record)}
+                                className="text-neon-blue hover:text-white transition-colors font-medium"
+                              >
+                                View Details
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                {/* Pagination */}
+                <div className="flex items-center justify-between px-4">
+                  <div className="text-gray-400 text-sm">
+                    Showing {(historyData.currentPage - 1) * historyLimit + 1} - {Math.min(historyData.currentPage * historyLimit, historyData.totalRecords)} of {historyData.totalRecords}
+                  </div>
+
+                  <div className="flex gap-2">
+                    {/* Previous Button */}
+                    <button
+                      onClick={() => handleHistoryPageChange(historyPage - 1)}
+                      disabled={historyPage === 1}
+                      className={`px-4 py-2 rounded-lg transition-all ${
+                        historyPage === 1
+                          ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
+                          : 'bg-neon-blue/10 border border-neon-blue/30 text-neon-blue hover:bg-neon-blue/20'
+                      }`}
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                    </button>
+
+                    {/* Page Numbers */}
+                    <div className="flex gap-1">
+                      {Array.from({ length: Math.min(5, historyData.totalPages) }, (_, i) => {
+                        let pageNum;
+                        if (historyData.totalPages <= 5) {
+                          pageNum = i + 1;
+                        } else if (historyPage <= 3) {
+                          pageNum = i + 1;
+                        } else if (historyPage >= historyData.totalPages - 2) {
+                          pageNum = historyData.totalPages - 4 + i;
+                        } else {
+                          pageNum = historyPage - 2 + i;
+                        }
+
+                        return (
+                          <button
+                            key={pageNum}
+                            onClick={() => handleHistoryPageChange(pageNum)}
+                            className={`px-4 py-2 rounded-lg transition-all ${
+                              historyPage === pageNum
+                                ? 'bg-neon-blue text-black font-bold'
+                                : 'bg-dark-700 hover:bg-dark-600 text-gray-300 border border-white/10'
+                            }`}
+                          >
+                            {pageNum}
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    {/* Next Button */}
+                    <button
+                      onClick={() => handleHistoryPageChange(historyPage + 1)}
+                      disabled={historyPage === historyData.totalPages}
+                      className={`px-4 py-2 rounded-lg transition-all ${
+                        historyPage === historyData.totalPages
+                          ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
+                          : 'bg-neon-blue/10 border border-neon-blue/30 text-neon-blue hover:bg-neon-blue/20'
+                      }`}
+                    >
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* Application Detail Modal */}
+            {selectedApplication && (
+              <div
+                className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+                onClick={() => setSelectedApplication(null)}
+              >
+                <div
+                  className="bg-white rounded-xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto border border-gray-200"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {/* Modal Header */}
+                  <div className="sticky top-0 bg-gradient-to-r from-blue-600 to-purple-600 border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+                    <h2 className="text-2xl font-bold text-white">
+                      Application Details
+                    </h2>
+                    <button
+                      onClick={() => setSelectedApplication(null)}
+                      className="p-2 hover:bg-white/20 rounded-lg transition-colors"
+                      aria-label="Close modal"
+                    >
+                      <X className="w-6 h-6 text-white hover:text-gray-200" />
+                    </button>
+                  </div>
+
+                  {/* Modal Content */}
+                  <div className="p-6 space-y-6 bg-gray-50">
+                    {/* Job Information Card */}
+                    <div className="bg-white rounded-lg p-5 border border-gray-200 shadow-sm">
+                      <h3 className="text-lg font-semibold text-blue-600 mb-4 flex items-center gap-2">
+                        <span className="w-2 h-2 bg-blue-600 rounded-full"></span>
+                        Company Information
+                      </h3>
+                      <div>
+                        <p className="text-sm text-gray-600 mb-3">Original Job Posting</p>
+                        <a
+                          href={selectedApplication.companyUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors shadow-sm hover:shadow-md font-medium text-sm"
+                        >
+                          <ExternalLink className="w-4 h-4" />
+                          View on Naukri.com
+                        </a>
+                      </div>
+                    </div>
+
+                    {/* Date & Time Card */}
+                    <div className="bg-white rounded-lg p-5 border border-gray-200 shadow-sm">
+                      <h3 className="text-lg font-semibold text-purple-600 mb-4 flex items-center gap-2">
+                        <span className="w-2 h-2 bg-purple-600 rounded-full"></span>
+                        Application Date
+                      </h3>
+                      <div>
+                        <p className="text-gray-900 font-medium text-base">{formatDate(selectedApplication.datetime)}</p>
+                      </div>
+                    </div>
+
+                    {/* Match Criteria Card */}
+                    <div className="bg-white rounded-lg p-5 border border-gray-200 shadow-sm">
+                      <h3 className="text-lg font-semibold text-green-600 mb-4 flex items-center gap-2">
+                        <span className="w-2 h-2 bg-green-600 rounded-full"></span>
+                        Match Criteria
+                      </h3>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div className="text-center">
+                          <p className="text-sm text-gray-600 mb-2">Early Applicant</p>
+                          <span
+                            className={`inline-block px-3 py-1 rounded-full text-sm font-semibold ${
+                              selectedApplication.earlyApplicant
+                                ? 'bg-green-100 text-green-700 border border-green-300'
+                                : 'bg-gray-100 text-gray-600 border border-gray-300'
+                            }`}
+                          >
+                            {formatBoolean(selectedApplication.earlyApplicant)}
                           </span>
-                        </td>
-                        <td className="p-4">
-                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${report.status === 'Applied'
-                            ? 'bg-green-900/20 text-green-400 border-green-500/30'
-                            : 'bg-red-900/20 text-red-400 border-red-500/30'
-                            }`}>
-                            <span className={`w-1.5 h-1.5 rounded-full ${report.status === 'Applied' ? 'bg-green-500' : 'bg-red-500'}`}></span>
-                            {report.status}
+                        </div>
+                        <div className="text-center">
+                          <p className="text-sm text-gray-600 mb-2">Key Skills Match</p>
+                          <span
+                            className={`inline-block px-3 py-1 rounded-full text-sm font-semibold ${
+                              selectedApplication.keySkillsMatch
+                                ? 'bg-green-100 text-green-700 border border-green-300'
+                                : 'bg-gray-100 text-gray-600 border border-gray-300'
+                            }`}
+                          >
+                            {formatBoolean(selectedApplication.keySkillsMatch)}
                           </span>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-sm text-gray-600 mb-2">Location Match</p>
+                          <span
+                            className={`inline-block px-3 py-1 rounded-full text-sm font-semibold ${
+                              selectedApplication.locationMatch
+                                ? 'bg-green-100 text-green-700 border border-green-300'
+                                : 'bg-gray-100 text-gray-600 border border-gray-300'
+                            }`}
+                          >
+                            {formatBoolean(selectedApplication.locationMatch)}
+                          </span>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-sm text-gray-600 mb-2">Experience Match</p>
+                          <span
+                            className={`inline-block px-3 py-1 rounded-full text-sm font-semibold ${
+                              selectedApplication.experienceMatch
+                                ? 'bg-green-100 text-green-700 border border-green-300'
+                                : 'bg-gray-100 text-gray-600 border border-gray-300'
+                            }`}
+                          >
+                            {formatBoolean(selectedApplication.experienceMatch)}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Match Score & Status Card */}
+                    <div className="bg-white rounded-lg p-5 border border-gray-200 shadow-sm">
+                      <h3 className="text-lg font-semibold text-blue-600 mb-4 flex items-center gap-2">
+                        <span className="w-2 h-2 bg-blue-600 rounded-full"></span>
+                        Match Score & Status
+                      </h3>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                          <p className="text-sm text-gray-600 mb-1">Match Score</p>
+                          <p className="text-2xl font-bold text-purple-600">
+                            {selectedApplication.matchScore}/{selectedApplication.matchScoreTotal}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-600 mb-1">Match Status</p>
+                          <span
+                            className={`inline-block px-3 py-1 rounded-full text-sm font-semibold ${
+                              selectedApplication.matchStatus === 'Good Match'
+                                ? 'bg-green-100 text-green-700 border border-green-300'
+                                : 'bg-red-100 text-red-700 border border-red-300'
+                            }`}
+                          >
+                            {selectedApplication.matchStatus}
+                          </span>
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-600 mb-1">Apply Type</p>
+                          <span className="inline-block px-3 py-1 rounded-full text-sm font-semibold bg-blue-100 text-blue-700 border border-blue-300">
+                            {selectedApplication.applyType}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Job Details */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="bg-white rounded-lg p-5 border border-gray-200 shadow-sm">
+                        <h3 className="text-lg font-semibold text-purple-600 mb-4 flex items-center gap-2">
+                          <span className="w-2 h-2 bg-purple-600 rounded-full"></span>
+                          Job Information
+                        </h3>
+                        <div className="space-y-3">
+                          <div>
+                            <p className="text-xs text-gray-600">Job Title</p>
+                            <p className="text-sm text-gray-900 font-medium">{selectedApplication.jobTitle || 'N/A'}</p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-gray-600">Company</p>
+                            <p className="text-sm text-gray-900 font-medium">{selectedApplication.companyName || 'N/A'}</p>
+                          </div>
+                          {selectedApplication.companyRating && (
+                            <div>
+                              <p className="text-xs text-gray-600">Company Rating</p>
+                              <p className="text-sm text-yellow-600 font-medium">⭐ {selectedApplication.companyRating}</p>
+                            </div>
+                          )}
+                          <div>
+                            <p className="text-xs text-gray-600">Location</p>
+                            <p className="text-sm text-gray-900">{selectedApplication.location || 'N/A'}</p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-gray-600">Experience Required</p>
+                            <p className="text-sm text-gray-900">{selectedApplication.experienceRequired || 'N/A'}</p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-gray-600">Salary</p>
+                            <p className="text-sm text-gray-900">{selectedApplication.salary || 'Not Disclosed'}</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="bg-white rounded-lg p-5 border border-gray-200 shadow-sm">
+                        <h3 className="text-lg font-semibold text-green-600 mb-4 flex items-center gap-2">
+                          <span className="w-2 h-2 bg-green-600 rounded-full"></span>
+                          Additional Details
+                        </h3>
+                        <div className="space-y-3">
+                          {selectedApplication.role && (
+                            <div>
+                              <p className="text-xs text-gray-600">Role</p>
+                              <p className="text-sm text-gray-900">{selectedApplication.role}</p>
+                            </div>
+                          )}
+                          {selectedApplication.roleCategory && (
+                            <div>
+                              <p className="text-xs text-gray-600">Role Category</p>
+                              <p className="text-sm text-gray-900">{selectedApplication.roleCategory}</p>
+                            </div>
+                          )}
+                          {selectedApplication.industryType && (
+                            <div>
+                              <p className="text-xs text-gray-600">Industry Type</p>
+                              <p className="text-sm text-gray-900">{selectedApplication.industryType}</p>
+                            </div>
+                          )}
+                          {selectedApplication.employmentType && (
+                            <div>
+                              <p className="text-xs text-gray-600">Employment Type</p>
+                              <p className="text-sm text-gray-900">{selectedApplication.employmentType}</p>
+                            </div>
+                          )}
+                          {selectedApplication.postedDate && (
+                            <div>
+                              <p className="text-xs text-gray-600">Posted</p>
+                              <p className="text-sm text-gray-900">{selectedApplication.postedDate}</p>
+                            </div>
+                          )}
+                          {selectedApplication.openings && (
+                            <div>
+                              <p className="text-xs text-gray-600">Openings</p>
+                              <p className="text-sm text-gray-900">{selectedApplication.openings}</p>
+                            </div>
+                          )}
+                          {selectedApplication.applicants && (
+                            <div>
+                              <p className="text-xs text-gray-600">Applicants</p>
+                              <p className="text-sm text-gray-900">{selectedApplication.applicants}</p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Key Skills */}
+                    {selectedApplication.keySkills && (
+                      <div className="bg-white rounded-lg p-5 border border-gray-200 shadow-sm">
+                        <h3 className="text-lg font-semibold text-blue-600 mb-4 flex items-center gap-2">
+                          <span className="w-2 h-2 bg-blue-600 rounded-full"></span>
+                          Key Skills
+                        </h3>
+                        <div className="flex flex-wrap gap-2">
+                          {selectedApplication.keySkills.split(',').map((skill: string, idx: number) => (
+                            <span
+                              key={idx}
+                              className="px-3 py-1 bg-blue-50 text-blue-700 border border-blue-200 rounded-full text-xs font-medium"
+                            >
+                              {skill.trim()}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Job Highlights */}
+                    {selectedApplication.jobHighlights && (
+                      <div className="bg-white rounded-lg p-5 border border-gray-200 shadow-sm">
+                        <h3 className="text-lg font-semibold text-purple-600 mb-4 flex items-center gap-2">
+                          <span className="w-2 h-2 bg-purple-600 rounded-full"></span>
+                          Job Highlights
+                        </h3>
+                        <div className="space-y-2">
+                          {selectedApplication.jobHighlights.split(',').map((highlight: string, idx: number) => (
+                            <div key={idx} className="flex items-start gap-2">
+                              <div className="w-1.5 h-1.5 rounded-full bg-purple-600 mt-2"></div>
+                              <p className="text-sm text-gray-700">{highlight.trim()}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Action Button */}
+                    <div className="flex justify-end pt-4">
+                      <button
+                        onClick={() => setSelectedApplication(null)}
+                        className="px-6 py-3 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg font-semibold transition-all shadow-sm"
+                      >
+                        Close
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         );
 
@@ -1945,15 +3277,83 @@ const Dashboard: React.FC = () => {
           </div>
         );
 
+      case 'auto-profile-update':
+        return (
+          <div className="max-w-4xl mx-auto">
+            <h2 className="text-2xl font-bold text-white mb-6">Auto Profile Update – Coming Soon</h2>
+
+            {/* Coming Soon Card */}
+            <div className="bg-dark-800 border-2 border-yellow-500/30 rounded-2xl p-8">
+              <div className="flex justify-center mb-6">
+                <div className="relative">
+                  <div className="w-20 h-20 bg-gradient-to-br from-yellow-500/20 to-orange-500/20 rounded-full flex items-center justify-center border-2 border-yellow-500/30">
+                    <RotateCw className="w-10 h-10 text-yellow-400 animate-spin" style={{ animationDuration: '3s' }} />
+                  </div>
+                  <div className="absolute -top-2 -right-2 bg-yellow-500 text-dark-900 text-xs font-bold px-3 py-1 rounded-full shadow-lg">
+                    SOON
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-6 text-center max-w-3xl mx-auto">
+                <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-6">
+                  <p className="text-gray-200 text-lg leading-relaxed mb-4">
+                    We are working on a new feature that will <strong className="text-white">automatically visit and update your Naukri profile</strong> at a scheduled time every day.
+                  </p>
+
+                  <p className="text-gray-300 leading-relaxed mb-4">
+                    Once enabled, the system will <strong className="text-white">randomly update your profile</strong> during the selected time window, helping keep your profile active and refreshed.
+                  </p>
+
+                  <p className="text-gray-400 leading-relaxed">
+                    This feature is currently under development and will be available soon.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
+                  <div className="bg-dark-900/50 border border-gray-700 rounded-lg p-5">
+                    <Clock className="w-10 h-10 text-neon-blue mb-3 mx-auto" />
+                    <h4 className="text-white font-bold mb-2 text-sm">Scheduled Updates</h4>
+                    <p className="text-gray-400 text-xs leading-relaxed">Automatic daily profile visits at your chosen time window</p>
+                  </div>
+
+                  <div className="bg-dark-900/50 border border-gray-700 rounded-lg p-5">
+                    <Zap className="w-10 h-10 text-yellow-400 mb-3 mx-auto" />
+                    <h4 className="text-white font-bold mb-2 text-sm">Random Timing</h4>
+                    <p className="text-gray-400 text-xs leading-relaxed">Profile updates at random times within your window</p>
+                  </div>
+
+                  <div className="bg-dark-900/50 border border-gray-700 rounded-lg p-5">
+                    <CheckCircle className="w-10 h-10 text-green-400 mb-3 mx-auto" />
+                    <h4 className="text-white font-bold mb-2 text-sm">Stay Active</h4>
+                    <p className="text-gray-400 text-xs leading-relaxed">Keep your Naukri profile fresh and visible</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+
+      case 'suggest-earn':
+        return <SuggestAndEarn />;
+
+      case 'settings':
+        return <AppSettings />;
+
       default:
         return <div>Select a menu item</div>;
     }
   };
 
   return (
-    <DashboardLayout activeTab={activeTab} setActiveTab={setActiveTab}>
-      {renderContent()}
-    </DashboardLayout>
+    <>
+      {!user.onboardingCompleted && (
+        <OnboardingFlow onComplete={completeOnboarding} />
+      )}
+      <DashboardLayout activeTab={activeTab} setActiveTab={setActiveTab}>
+        {renderContent()}
+      </DashboardLayout>
+    </>
   );
 };
 

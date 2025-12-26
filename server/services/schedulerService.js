@@ -3,7 +3,7 @@ import schedule from 'node-schedule';
 import JobSettings from '../models/JobSettings.js';
 import { startAutomation } from '../autoApply.js';
 import User from '../models/User.js';
-import { setUserAnswersData } from '../aiAnswer.js';
+import { setUserData, initializeSkillsFromDB } from '../aiAnswer.js';
 
 // Track active jobs to avoiding duplicates
 const activeJobs = new Map();
@@ -27,7 +27,7 @@ async function runScheduledTask(userId) {
         // Load data needed for automation
         const user = await User.findByPk(userId);
 
-        setUserAnswersData({
+        setUserData({
             name: user?.firstName || 'User',
             currentCTC: jobSettings.currentCTC,
             expectedCTC: jobSettings.expectedCTC,
@@ -35,6 +35,15 @@ async function runScheduledTask(userId) {
             location: jobSettings.location,
             yearsOfExperience: jobSettings.yearsOfExperience,
             naukriEmail: jobSettings.naukriEmail,
+        });
+
+        // Load skills from database for intelligent answering
+        await initializeSkillsFromDB(userId, {
+            host: process.env.DB_HOST || 'localhost',
+            port: process.env.DB_PORT || 3306,
+            user: process.env.DB_USER || 'root',
+            password: process.env.DB_PASSWORD || '',
+            database: process.env.DB_NAME || 'jobautomate',
         });
 
         // Run automation

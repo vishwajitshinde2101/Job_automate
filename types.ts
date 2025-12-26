@@ -14,6 +14,8 @@ export interface PricingPlan {
   duration: string;
   features: string[];
   isPopular?: boolean;
+  comingSoon?: boolean;
+  subtitle?: string;
 }
 
 export interface Step {
@@ -29,10 +31,12 @@ export interface User {
   isLoggedIn: boolean;
   plan?: PricingPlan;
   config?: JobConfig;
+  onboardingCompleted?: boolean;
 }
 
 export interface JobConfig {
   naukriUsername: string;
+  naukriPassword?: string;
   targetRole: string;
   experience: string;
   location: string;

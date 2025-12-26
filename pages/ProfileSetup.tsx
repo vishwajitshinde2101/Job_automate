@@ -64,9 +64,8 @@ const ProfileSetup: React.FC = () => {
 
         setFormData(newFormData);
         lastSavedRef.current = newFormData;
-        console.log('Loaded existing job settings:', settings);
       } catch (err: any) {
-        console.error('Failed to fetch job settings:', err.message);
+        setError('Unable to load your profile settings. Please refresh the page and try again.');
       } finally {
         setPageLoading(false);
       }
@@ -100,21 +99,20 @@ const ProfileSetup: React.FC = () => {
           naukriPassword: dataToSave.naukriPassword,
           targetRole: dataToSave.targetRole,
           location: dataToSave.location,
+          yearsOfExperience: dataToSave.experience,
           currentCTC: dataToSave.currentSalary,
           expectedCTC: dataToSave.expectedSalary,
           noticePeriod: dataToSave.noticePeriod,
           searchKeywords: dataToSave.keywords,
         };
 
-        const response = await updateJobSettings(payload);
-        console.log('Auto-saved settings:', response);
+        await updateJobSettings(payload);
         lastSavedRef.current = dataToSave;
         setAutoSaveStatus('saved');
 
         // Clear saved status after 2 seconds
         setTimeout(() => setAutoSaveStatus('idle'), 2000);
       } catch (err: any) {
-        console.error('Auto-save error:', err);
         setAutoSaveStatus('error');
         setTimeout(() => setAutoSaveStatus('idle'), 3000);
       }
@@ -175,24 +173,22 @@ const ProfileSetup: React.FC = () => {
       const payload = {
         targetRole: formData.targetRole,
         location: formData.location,
+        yearsOfExperience: formData.experience,
         currentCTC: formData.currentSalary,
         expectedCTC: formData.expectedSalary,
         noticePeriod: formData.noticePeriod,
         searchKeywords: formData.keywords,
       };
 
-      const response = await updateJobSettings(payload);
-      console.log('Job settings saved:', response);
+      await updateJobSettings(payload);
 
       // If resume file selected, upload it
       if (resumeFile) {
         try {
-          const resumeResponse = await uploadResume(resumeFile);
-          console.log('Resume uploaded:', resumeResponse);
+          await uploadResume(resumeFile);
           setSuccess('Profile settings and resume saved successfully!');
         } catch (resumeErr: any) {
-          setSuccess('Profile settings saved (resume upload failed)');
-          console.error('Resume upload error:', resumeErr);
+          setSuccess('Profile settings saved, but resume upload failed. Please try uploading your resume again.');
         }
       } else {
         setSuccess('Profile settings saved successfully!');
@@ -204,8 +200,7 @@ const ProfileSetup: React.FC = () => {
         navigate('/dashboard');
       }, 1500);
     } catch (err: any) {
-      setError(err.message || 'Failed to save profile settings');
-      console.error('Submit error:', err);
+      setError(err.message || 'Failed to save profile settings. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -318,16 +313,17 @@ const ProfileSetup: React.FC = () => {
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-xs text-gray-400">Total Experience</label>
+                    <label className="text-xs text-gray-400">Search Years of Experience</label>
                     <div className="relative">
                       <Clock className="absolute left-3 top-3 w-4 h-4 text-gray-500" />
                       <input
                         className="w-full bg-dark-900 border border-gray-700 rounded-lg py-2.5 pl-10 pr-4 text-white text-sm focus:border-neon-blue outline-none"
-                        placeholder="e.g. 2 Years"
+                        placeholder="e.g. 3 years"
                         value={formData.experience}
                         onChange={e => handleFieldChange('experience', e.target.value)}
                       />
                     </div>
+                    <p className="text-xs text-gray-500">Format: "X years" (e.g., "3 years", "5 years")</p>
                   </div>
 
                   <div className="space-y-2">

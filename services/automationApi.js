@@ -63,7 +63,6 @@ async function apiCall(endpoint, method = 'GET', body = null, includeAuth = true
 
         return await response.json();
     } catch (error) {
-        console.error(`API Error: ${endpoint}`, error);
         throw error;
     }
 }
@@ -329,19 +328,15 @@ export async function saveUserFilters(filters) {
  * @param {number} interval - Poll interval in ms (default 2000)
  */
 export async function pollLogs(onUpdate, interval = 2000) {
-    let isCompleted = false;
-
     const pollInterval = setInterval(async () => {
         try {
             const { logs, isRunning } = await getAutomationLogs();
             onUpdate(logs);
 
             if (!isRunning && logs.length > 0) {
-                isCompleted = true;
                 clearInterval(pollInterval);
             }
         } catch (error) {
-            console.error('Poll error:', error);
             clearInterval(pollInterval);
         }
     }, interval);
@@ -371,5 +366,48 @@ export async function startAndMonitorAutomation(options, onLogUpdate) {
             stopPolling();
             resolve(startResult);
         }, 1000);
+    });
+}
+
+/**
+ * Complete user onboarding
+ * Marks the user's onboarding as completed in the database
+ */
+export async function completeOnboarding() {
+    return await apiCall('/auth/complete-onboarding', 'POST');
+}
+
+/**
+ * Get job application results with pagination
+ * @param {number} page - Page number (default: 1)
+ * @param {number} limit - Results per page (default: 20)
+ */
+export async function getJobResults(page = 1, limit = 20) {
+    return await apiCall(`/job-results?page=${page}&limit=${limit}`, 'GET');
+}
+
+/**
+ * Get dashboard statistics
+ * Returns aggregated stats for the dashboard
+ */
+export async function getDashboardStats() {
+    return await apiCall('/job-results/stats', 'GET');
+}
+
+/**
+ * ======================== AUTH/VERIFICATION ENDPOINTS ========================
+ */
+
+/**
+ * Verify Naukri credentials by attempting login
+ * SECURITY: Only performs login check - no data scraping or job actions
+ * @param {string} naukriUsername - Naukri email/username
+ * @param {string} naukriPassword - Naukri password
+ * @returns {Promise<{success: boolean, message: string, verified: boolean}>}
+ */
+export async function verifyNaukriCredentials(naukriUsername, naukriPassword) {
+    return await apiCall('/auth/verify-naukri-credentials', 'POST', {
+        naukriUsername,
+        naukriPassword
     });
 }

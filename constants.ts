@@ -87,23 +87,39 @@ export const PRICING_PLANS: PricingPlan[] = [
     duration: '1 Month',
     features: [
       'Unlimited Job Applications',
-      'Basic Match Score Algo',
+      'Basic Match Score Algorithm',
       'Daily Excel Report',
       'Standard Support'
     ]
   },
   {
     id: 'pro',
-    name: 'Pro Automation',
+    name: 'Pro Automation Plan',
     price: '₹499',
     duration: '2 Months',
     isPopular: true,
     features: [
       'Unlimited Job Applications',
-      'Advanced Match Score Algo',
+      'Advanced Match Score Algorithm',
       'Advanced Keyword Matching',
       'Daily Excel Report',
       '24/7 Priority Support'
+    ]
+  },
+  {
+    id: 'advanced',
+    name: 'Advanced Automation',
+    price: '₹999',
+    duration: 'Coming Soon',
+    comingSoon: true,
+    subtitle: 'For serious job seekers who want unfair advantage',
+    features: [
+      '✔ Everything in Pro Automation',
+      '✔ Interview Prep Automation',
+      '✔ HR Outreach on Autopilot',
+      '✔ Email + Profile Auto Updates',
+      '✔ Deep Automation Insights (Locked)',
+      '🔒 Advanced Controls (Unlock on Upgrade)'
     ]
   }
 ];

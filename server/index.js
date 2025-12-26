@@ -15,11 +15,14 @@ import { initDatabase } from './db/config.js';
 import automationRoutes from './routes/automation.js';
 import credentialsRoutes from './routes/credentials.js';
 import authRoutes from './routes/auth.js';
+import adminRoutes from './routes/admin.js';
 import jobSettingsRoutes from './routes/jobSettings.js';
 import skillsRoutes from './routes/skills.js';
 import filtersRoutes from './routes/filters.js';
 import subscriptionRoutes from './routes/subscription.js';
 import plansRoutes from './routes/plans.js';
+import jobResultsRoutes from './routes/jobResults.js';
+import suggestionsRoutes from './routes/suggestions.js';
 import { initScheduler } from './services/schedulerService.js';
 
 // Import models to ensure they're loaded
@@ -31,6 +34,9 @@ import './models/UserFilter.js';
 import './models/Plan.js';
 import './models/PlanFeature.js';
 import './models/UserSubscription.js';
+import './models/JobApplicationResult.js';
+import './models/Suggestion.js';
+import './models/DiscountCoupon.js';
 
 dotenv.config();
 
@@ -91,6 +97,7 @@ app.get('/api/health', (req, res) => {
 
 // API Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/admin', adminRoutes);
 app.use('/api/job-settings', jobSettingsRoutes);
 app.use('/api/skills', skillsRoutes);
 app.use('/api/automation', automationRoutes);
@@ -98,6 +105,8 @@ app.use('/api/credentials', credentialsRoutes);
 app.use('/api/filters', filtersRoutes);
 app.use('/api/subscription', subscriptionRoutes);
 app.use('/api/plans', plansRoutes);
+app.use('/api/job-results', jobResultsRoutes);
+app.use('/api/suggestions', suggestionsRoutes);
 
 // ============= ERROR HANDLING =============
 
@@ -154,7 +163,11 @@ const startServer = async () => {
             console.log(`   GET    /api/subscription/plans       - Get all plans`);
             console.log(`   POST   /api/subscription/create-order - Create Razorpay order (auth)`);
             console.log(`   POST   /api/subscription/verify-payment - Verify payment (auth)`);
-            console.log(`   GET    /api/subscription/status      - Get subscription status (auth)\n`);
+            console.log(`   GET    /api/subscription/status      - Get subscription status (auth)`);
+            console.log(`   POST   /api/job-results/bulk         - Bulk save job results (auth)`);
+            console.log(`   GET    /api/job-results              - Get job results (auth)`);
+            console.log(`   GET    /api/job-results/stats        - Get job statistics (auth)`);
+            console.log(`   DELETE /api/job-results              - Delete all job results (auth)\n`);
         });
     } catch (error) {
         console.error('Failed to start server:', error);

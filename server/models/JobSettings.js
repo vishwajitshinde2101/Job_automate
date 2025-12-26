@@ -30,6 +30,19 @@ const JobSettings = sequelize.define('JobSettings', {
         type: DataTypes.STRING,
         allowNull: true,
     },
+    credentialsVerified: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false,
+        allowNull: false,
+        field: 'credentials_verified',
+        comment: 'Whether Naukri credentials have been verified',
+    },
+    lastVerified: {
+        type: DataTypes.DATE,
+        allowNull: true,
+        field: 'last_verified',
+        comment: 'Timestamp of last successful verification',
+    },
     // Job Profile Settings
     targetRole: {
         type: DataTypes.STRING,
@@ -58,6 +71,14 @@ const JobSettings = sequelize.define('JobSettings', {
         type: DataTypes.TEXT,
         allowNull: true,
     },
+    // Automation Settings
+    maxPages: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        defaultValue: 5,
+        field: 'max_pages',
+        comment: 'Maximum pages to process during automation',
+    },
     // Face-to-Face Availability
     availability: {
         type: DataTypes.STRING,
@@ -79,10 +100,13 @@ const JobSettings = sequelize.define('JobSettings', {
         type: DataTypes.INTEGER,
         defaultValue: 0,
     },
-    // Experience extracted from resume
+    // Years of experience for job search filtering (numeric value)
     yearsOfExperience: {
-        type: DataTypes.STRING,
-        allowNull: true,
+        type: DataTypes.TINYINT.UNSIGNED,
+        allowNull: false,
+        defaultValue: 0,
+        field: 'years_of_experience',
+        comment: 'Years of experience for job search filtering',
     },
     // Scheduling
     scheduledTime: {

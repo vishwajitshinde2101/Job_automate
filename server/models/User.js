@@ -33,6 +33,24 @@ const User = sequelize.define('User', {
         type: DataTypes.STRING,
         allowNull: true,
     },
+    phone: {
+        type: DataTypes.STRING(20),
+        allowNull: true,
+    },
+    isActive: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: true,
+    },
+    role: {
+        type: DataTypes.ENUM('user', 'admin'),
+        defaultValue: 'user',
+        allowNull: false,
+    },
+    onboardingCompleted: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false,
+        allowNull: false,
+    },
     createdAt: {
         type: DataTypes.DATE,
         defaultValue: DataTypes.NOW,
@@ -43,6 +61,7 @@ const User = sequelize.define('User', {
     },
 }, {
     tableName: 'users',
+    underscored: true, // Map camelCase fields to snake_case columns
     hooks: {
         beforeCreate: async (user) => {
             if (user.password) {

@@ -50,30 +50,27 @@
       }
     </script>
     <style>
+      /* Minimal inline styles - main theme handled by index.css */
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      html {
+        scroll-behavior: smooth;
+      }
+
+      /* Initial load - prevent flash */
       body {
-        background-color: #020617;
-        color: #e2e8f0;
-        overflow-x: hidden;
+        opacity: 0;
+        animation: fadeIn 0.3s ease-in forwards;
       }
-      /* Custom scrollbar */
-      ::-webkit-scrollbar {
-        width: 8px;
-      }
-      ::-webkit-scrollbar-track {
-        background: #0f172a;
-      }
-      ::-webkit-scrollbar-thumb {
-        background: #334155;
-        border-radius: 4px;
-      }
-      ::-webkit-scrollbar-thumb:hover {
-        background: #475569;
-      }
-      .neon-text {
-        text-shadow: 0 0 10px rgba(0, 243, 255, 0.5);
-      }
-      .neon-border {
-        box-shadow: 0 0 10px rgba(0, 243, 255, 0.2);
+
+      @keyframes fadeIn {
+        to {
+          opacity: 1;
+        }
       }
     </style>
   <script type="importmap">
