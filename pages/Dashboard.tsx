@@ -489,7 +489,7 @@ const Dashboard: React.FC = () => {
       // Show info message
       setBotLogs([{
         timestamp: new Date().toLocaleTimeString(),
-        message: '🚀 Starting bot with your saved profile...',
+        message: '🚀 Starting automation with your saved profile...',
         type: 'info'
       }]);
 
@@ -504,13 +504,13 @@ const Dashboard: React.FC = () => {
         }
 
         if (result.success) {
-          setSuccess(`✅ Bot completed! Applied to ${result.jobsApplied} jobs`);
+          setSuccess(`✅ Automation completed! Applied to ${result.jobsApplied} jobs`);
         } else {
-          setError(`❌ Bot error: ${result.error}`);
+          setError(`❌ Automation error: ${result.error}`);
         }
         setIsRunning(false);
       }).catch((err: any) => {
-        setError(`Failed to run bot: ${err.message}`);
+        setError(`Failed to run automation: ${err.message}`);
         setBotLogs(prev => [...prev, {
           timestamp: new Date().toLocaleTimeString(),
           message: `❌ Error: ${err.message}`,
@@ -544,7 +544,7 @@ const Dashboard: React.FC = () => {
       }, 2000); // Poll every 2 seconds
 
     } catch (err: any) {
-      setError(`Failed to start bot: ${err.message}`);
+      setError(`Failed to start automation: ${err.message}`);
       setBotLogs(prev => [...prev, {
         timestamp: new Date().toLocaleTimeString(),
         message: `❌ Error: ${err.message}`,
@@ -584,9 +584,9 @@ const Dashboard: React.FC = () => {
         type: 'success'
       }]);
 
-      setSuccess('Bot stopped successfully');
+      setSuccess('Automation stopped successfully');
     } catch (err: any) {
-      setError(`Failed to stop bot: ${err.message}`);
+      setError(`Failed to stop automation: ${err.message}`);
       setBotLogs(prev => [...prev, {
         timestamp: new Date().toLocaleTimeString(),
         message: `❌ Stop error: ${err.message}`,
@@ -951,14 +951,14 @@ const Dashboard: React.FC = () => {
                       onClick={handleStartBot}
                       className="flex items-center gap-2 px-5 py-2 bg-gradient-to-r from-neon-blue to-blue-500 text-black text-sm font-bold rounded-lg hover:from-white hover:to-neon-blue transition-all shadow-[0_0_20px_rgba(0,243,255,0.4)] hover:shadow-[0_0_30px_rgba(0,243,255,0.6)]"
                     >
-                      <Play className="w-4 h-4 fill-current" /> START BOT
+                      <Play className="w-4 h-4 fill-current" /> START AUTOMATION
                     </button>
                   ) : (
                     <button
                       onClick={handleStopBot}
                       className="flex items-center gap-2 px-5 py-2 bg-gradient-to-r from-red-600 to-red-500 text-white text-sm font-bold rounded-lg hover:from-red-500 hover:to-red-400 transition-all shadow-[0_0_20px_rgba(239,68,68,0.4)] hover:shadow-[0_0_30px_rgba(239,68,68,0.6)]"
                     >
-                      <Square className="w-4 h-4 fill-current" /> STOP BOT
+                      <Square className="w-4 h-4 fill-current" /> STOP AUTOMATION
                     </button>
                   )}
                 </div>
@@ -1041,7 +1041,7 @@ const Dashboard: React.FC = () => {
                         <span style={{ animation: 'flicker 4s infinite' }}>Ready to Start</span>
                       </h3>
                       <p className="text-sm text-gray-600 max-w-md mx-auto">
-                        Click the START BOT button to begin the automation process
+                        Click the START AUTOMATION button to begin the automation process
                       </p>
                     </div>
                   </div>
@@ -1063,8 +1063,8 @@ const Dashboard: React.FC = () => {
                         <AlertCircle className="w-6 h-6 text-red-400" />
                       </div>
                       <div className="flex-1">
-                        <h4 className="font-bold text-red-400 mb-1 text-lg">Unable to Start Bot</h4>
-                        <p className="text-red-300 text-sm mb-3">{error.replace('❌ Bot error: ', '').replace('Failed to run bot: ', '')}</p>
+                        <h4 className="font-bold text-red-400 mb-1 text-lg">Unable to Start Automation</h4>
+                        <p className="text-red-300 text-sm mb-3">{error.replace('❌ Automation error: ', '').replace('Failed to run automation: ', '').replace('Failed to start automation: ', '').replace('❌ Bot error: ', '').replace('Failed to run bot: ', '').replace('Failed to start bot: ', '')}</p>
                         {error.includes('credentials') && (
                           <button
                             onClick={() => {
@@ -1101,7 +1101,7 @@ const Dashboard: React.FC = () => {
                 <div className="px-6 py-2 bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 border-b border-gray-700 flex justify-between items-center">
                   <span className="text-xs text-gray-400 font-mono uppercase tracking-wider flex items-center gap-2">
                     <div className="w-2 h-2 bg-gray-600 rounded-full"></div>
-                    {isFilterRunning ? 'Filter Automation Logs' : 'Bot Automation Logs'} {botLogs.length > 0 && `(${botLogs.length})`}
+                    {isFilterRunning ? 'Filter Automation Logs' : 'Automation Logs'} {botLogs.length > 0 && `(${botLogs.length})`}
                     {isFilterRunning && <span className="ml-2 text-neon-green animate-pulse flex items-center gap-1">
                       <div className="w-1.5 h-1.5 bg-neon-green rounded-full"></div>
                       RUNNING
@@ -1116,7 +1116,7 @@ const Dashboard: React.FC = () => {
                   {botLogs.length === 0 && logs.length === 0 && (
                     <div className="text-gray-600 italic flex items-center gap-2">
                       <div className="w-1 h-1 bg-gray-700 rounded-full"></div>
-                      Automation ready. Click 'START BOT' to begin.
+                      Automation ready. Click 'START AUTOMATION' to begin.
                     </div>
                   )}
 
@@ -1241,7 +1241,7 @@ const Dashboard: React.FC = () => {
                 <div className="flex items-start gap-3">
                   <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
                   <div className="flex-1">
-                    <p className="text-red-400 font-medium">{error.replace('❌ Bot error: ', '').replace('Failed to run bot: ', '')}</p>
+                    <p className="text-red-400 font-medium">{error.replace('❌ Automation error: ', '').replace('Failed to run automation: ', '').replace('Failed to start automation: ', '').replace('Failed to stop automation: ', '').replace('❌ Bot error: ', '').replace('Failed to run bot: ', '')}</p>
                   </div>
                   <button
                     onClick={() => setError(null)}
@@ -1766,7 +1766,7 @@ const Dashboard: React.FC = () => {
                   </div>
 
                   <p className="text-xs text-gray-400">
-                    Select filters to narrow down your job search. These will be applied when running the bot.
+                    Select filters to narrow down your job search. These will be applied when running automation.
                   </p>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -2371,7 +2371,7 @@ const Dashboard: React.FC = () => {
                     </div>
                     <span className="text-white font-medium text-sm">Schedule Automation</span>
                   </div>
-                  <p className="text-xs text-gray-400">Run bot at 9 AM for 40% better response rates</p>
+                  <p className="text-xs text-gray-400">Run automation at 9 AM for 40% better response rates</p>
                 </div>
               </div>
             </div>

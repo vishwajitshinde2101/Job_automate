@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Check, Zap, Crown, Rocket, AlertCircle, CheckCircle, Loader2, ArrowRight } from 'lucide-react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { Check, Zap, Crown, Rocket, AlertCircle, CheckCircle, Loader2, ArrowRight, UserPlus } from 'lucide-react';
 import { getPlans, createOrder, initiatePayment, getSubscriptionStatus } from '../services/subscriptionApi';
+import { useApp } from '../context/AppContext';
 
 interface PlanFeature {
   id: string;
@@ -28,8 +29,17 @@ interface Subscription {
   status: string;
 }
 
+interface SignupData {
+  firstName: string;
+  lastName: string;
+  email: string;
+  password: string;
+}
+
 const Pricing: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { login } = useApp();
   const [plans, setPlans] = useState<Plan[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -37,9 +47,14 @@ const Pricing: React.FC = () => {
   const [success, setSuccess] = useState<string | null>(null);
   const [currentSubscription, setCurrentSubscription] = useState<Subscription | null>(null);
 
+  // Check if coming from signup flow
+  const locationState = location.state as { fromSignup?: boolean; signupData?: SignupData } | null;
+  const isSignupFlow = locationState?.fromSignup && locationState?.signupData;
+  const signupData = locationState?.signupData;
+
   // Check if user is logged in
   const isLoggedIn = !!localStorage.getItem('token');
-  const userInfo = JSON.parse(localStorage.getItem('user') || '{}');
+  const userInfo = isSignupFlow ? signupData : JSON.parse(localStorage.getItem('user') || '{}');
 
   useEffect(() => {
     loadPlans();
@@ -76,27 +91,178 @@ const Pricing: React.FC = () => {
   };
 
   const handleSelectPlan = async (plan: Plan) => {
+    // SIGNUP FLOW: User is signing up - no account yet
+    if (isSignupFlow && signupData) {
+      console.log('[Pricing] Signup flow detected - creating order for new user');
+      setProcessingPlanId(plan.id);
+      setError(null);
+      setSuccess(null);
+
+      try {
+        // Create guest order (no authentication required)
+        console.log('[Pricing] Creating guest order for plan:', plan.id);
+        const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+        const response = await fetch(`${API_BASE_URL}/subscription/create-guest-order`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ planId: plan.id }),
+        });
+
+        const orderResult = await response.json();
+        console.log('[Pricing] Guest order result:', orderResult);
+
+        if (!orderResult.success) {
+          throw new Error(orderResult.error || 'Failed to create order');
+        }
+
+        if (!orderResult.data || !orderResult.data.orderId) {
+          throw new Error('Invalid order data received from server');
+        }
+
+        console.log('[Pricing] Guest order created:', orderResult.data.orderId);
+        console.log('[Pricing] Initiating payment for signup...');
+
+        // Load Razorpay SDK
+        const { loadRazorpayScript } = await import('../services/subscriptionApi');
+        const scriptLoaded = await loadRazorpayScript();
+
+        if (!scriptLoaded) {
+          throw new Error('Failed to load Razorpay SDK. Please check your internet connection.');
+        }
+
+        console.log('[Pricing] Razorpay SDK loaded, opening payment modal...');
+
+        // Handle payment directly for signup flow (NO verification call)
+        const options = {
+          key: orderResult.data.keyId,
+          amount: orderResult.data.amount,
+          currency: orderResult.data.currency,
+          name: 'JobAutoApply',
+          description: orderResult.data.planName || 'Subscription Plan',
+          order_id: orderResult.data.orderId,
+          handler: async function (razorpayResponse: any) {
+            console.log('[Pricing] Payment completed!', razorpayResponse);
+            console.log('[Pricing] Creating account with payment details...');
+
+            try {
+              // Complete signup with payment details
+              const signupResponse = await fetch(`${API_BASE_URL}/auth/signup-with-payment`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  ...signupData,
+                  planId: plan.id,
+                  razorpay_order_id: razorpayResponse.razorpay_order_id,
+                  razorpay_payment_id: razorpayResponse.razorpay_payment_id,
+                  razorpay_signature: razorpayResponse.razorpay_signature,
+                }),
+              });
+
+              const signupDataResponse = await signupResponse.json();
+              console.log('[Pricing] Signup response:', signupDataResponse);
+
+              if (!signupResponse.ok || !signupDataResponse.success) {
+                throw new Error(signupDataResponse.error || 'Failed to create account');
+              }
+
+              console.log('[Pricing] Account created successfully!');
+              console.log('[Pricing] Storing token and logging in...');
+
+              // Store token and auto-login
+              localStorage.setItem('token', signupDataResponse.token);
+              localStorage.setItem('user', JSON.stringify(signupDataResponse.user));
+
+              login(
+                signupDataResponse.user.firstName || 'User',
+                signupDataResponse.user.email,
+                signupDataResponse.user.onboardingCompleted
+              );
+
+              console.log('[Pricing] Login successful, showing success message');
+
+              setSuccess(`Welcome ${signupDataResponse.user.firstName}! Your account is ready.`);
+              setProcessingPlanId(null);
+
+              // Redirect to dashboard
+              console.log('[Pricing] Redirecting to dashboard in 2 seconds...');
+              setTimeout(() => {
+                console.log('[Pricing] Navigating to dashboard now');
+                navigate('/dashboard');
+              }, 2000);
+            } catch (signupError: any) {
+              console.error('[Pricing] Signup error:', signupError);
+              setError(signupError.message || 'Payment successful but account creation failed. Please contact support.');
+              setProcessingPlanId(null);
+            }
+          },
+          prefill: {
+            name: `${signupData.firstName} ${signupData.lastName}`,
+            email: signupData.email,
+          },
+          theme: {
+            color: '#6366f1',
+          },
+          modal: {
+            ondismiss: function () {
+              console.log('[Pricing] Payment modal dismissed by user');
+              setError('Payment cancelled. Please try again.');
+              setProcessingPlanId(null);
+            },
+          },
+        };
+
+        const razorpay = new (window as any).Razorpay(options);
+
+        razorpay.on('payment.failed', function (response: any) {
+          console.error('[Pricing] Payment failed:', response.error);
+          setError(response.error.description || 'Payment failed. Please try again.');
+          setProcessingPlanId(null);
+        });
+
+        razorpay.open();
+      } catch (err: any) {
+        console.error('[Pricing] Error in signup payment flow:', err);
+        setError(err.message || 'An error occurred. Please try again.');
+        setProcessingPlanId(null);
+      }
+      return;
+    }
+
+    // NORMAL FLOW: User already logged in
     if (!isLoggedIn) {
+      console.log('[Pricing] User not logged in, redirecting to login');
       navigate('/login', { state: { from: '/pricing', planId: plan.id } });
       return;
     }
 
+    console.log('[Pricing] Starting payment flow for plan:', plan.name);
     setProcessingPlanId(plan.id);
     setError(null);
     setSuccess(null);
 
     try {
       // Create order
+      console.log('[Pricing] Creating order for plan ID:', plan.id);
       const orderResult = await createOrder(plan.id);
+      console.log('[Pricing] Order creation result:', orderResult);
+
       if (!orderResult.success) {
         throw new Error(orderResult.error || 'Failed to create order');
       }
+
+      if (!orderResult.data || !orderResult.data.orderId) {
+        throw new Error('Invalid order data received from server');
+      }
+
+      console.log('[Pricing] Order created successfully:', orderResult.data.orderId);
+      console.log('[Pricing] Initiating Razorpay payment...');
 
       // Initiate payment
       initiatePayment(
         orderResult.data,
         userInfo,
         (successResult) => {
+          console.log('[Pricing] Payment successful:', successResult);
           setSuccess('Payment successful! Your subscription is now active.');
           setProcessingPlanId(null);
           loadSubscriptionStatus();
@@ -104,12 +270,14 @@ const Pricing: React.FC = () => {
           setTimeout(() => navigate('/dashboard'), 2000);
         },
         (failureResult) => {
-          setError(failureResult.error || 'Payment failed');
+          console.error('[Pricing] Payment failed:', failureResult);
+          setError(failureResult.error || 'Payment failed. Please try again.');
           setProcessingPlanId(null);
         }
       );
     } catch (err: any) {
-      setError(err.message);
+      console.error('[Pricing] Error in payment flow:', err);
+      setError(err.message || 'An error occurred. Please try again.');
       setProcessingPlanId(null);
     }
   };
@@ -150,15 +318,36 @@ const Pricing: React.FC = () => {
       {/* Header */}
       <div className="pt-20 pb-12 text-center">
         <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
-          Choose Your Plan
+          {isSignupFlow ? 'Complete Your Signup' : 'Choose Your Plan'}
         </h1>
         <p className="text-gray-400 text-lg max-w-2xl mx-auto px-4">
-          Automate your job applications and land your dream job faster
+          {isSignupFlow
+            ? 'Select a plan to activate your account and start automating'
+            : 'Automate your job applications and land your dream job faster'}
         </p>
       </div>
 
+      {/* Signup Flow Banner */}
+      {isSignupFlow && signupData && (
+        <div className="max-w-4xl mx-auto px-4 mb-8">
+          <div className="bg-gradient-to-r from-green-500/20 to-emerald-500/20 border border-green-500/50 rounded-xl p-4">
+            <div className="flex items-center gap-3">
+              <UserPlus className="w-6 h-6 text-green-400" />
+              <div>
+                <p className="text-white font-medium">
+                  Creating account for {signupData.firstName} {signupData.lastName}
+                </p>
+                <p className="text-gray-400 text-sm">
+                  Select a plan below and complete payment to activate your account
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Current Subscription Banner */}
-      {currentSubscription && (
+      {currentSubscription && !isSignupFlow && (
         <div className="max-w-4xl mx-auto px-4 mb-8">
           <div className="bg-indigo-500/20 border border-indigo-500/50 rounded-xl p-4 flex items-center justify-between">
             <div className="flex items-center gap-3">

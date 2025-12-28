@@ -121,14 +121,22 @@ export async function getSubscriptionHistory() {
 export function loadRazorpayScript() {
     return new Promise((resolve) => {
         if (window.Razorpay) {
+            console.log('[Razorpay] SDK already loaded');
             resolve(true);
             return;
         }
 
+        console.log('[Razorpay] Loading SDK from CDN...');
         const script = document.createElement('script');
         script.src = 'https://checkout.razorpay.com/v1/checkout.js';
-        script.onload = () => resolve(true);
-        script.onerror = () => resolve(false);
+        script.onload = () => {
+            console.log('[Razorpay] SDK loaded successfully');
+            resolve(true);
+        };
+        script.onerror = () => {
+            console.error('[Razorpay] Failed to load SDK from CDN');
+            resolve(false);
+        };
         document.body.appendChild(script);
     });
 }
@@ -137,9 +145,26 @@ export function loadRazorpayScript() {
  * Initialize Razorpay payment
  */
 export async function initiatePayment(orderData, userInfo, onSuccess, onFailure) {
+    console.log('[Razorpay] Initiating payment with order data:', {
+        orderId: orderData.orderId,
+        amount: orderData.amount,
+        currency: orderData.currency,
+        planName: orderData.planName
+    });
+
+    // Validate required data
+    if (!orderData || !orderData.orderId || !orderData.keyId) {
+        const error = 'Invalid order data - missing orderId or keyId';
+        console.error('[Razorpay]', error);
+        onFailure({ error });
+        return;
+    }
+
     const scriptLoaded = await loadRazorpayScript();
     if (!scriptLoaded) {
-        onFailure({ error: 'Failed to load Razorpay SDK' });
+        const error = 'Failed to load Razorpay SDK. Please check your internet connection.';
+        console.error('[Razorpay]', error);
+        onFailure({ error });
         return;
     }
 
@@ -151,12 +176,15 @@ export async function initiatePayment(orderData, userInfo, onSuccess, onFailure)
         description: orderData.planName || 'Subscription Plan',
         order_id: orderData.orderId,
         handler: async function (response) {
+            console.log('[Razorpay] Payment completed, verifying signature...');
             // Payment successful - verify on backend
             const verifyResult = await verifyPayment({
                 razorpay_order_id: response.razorpay_order_id,
                 razorpay_payment_id: response.razorpay_payment_id,
                 razorpay_signature: response.razorpay_signature,
             });
+
+            console.log('[Razorpay] Verification result:', verifyResult);
 
             if (verifyResult.success) {
                 onSuccess(verifyResult);
@@ -165,7 +193,7 @@ export async function initiatePayment(orderData, userInfo, onSuccess, onFailure)
             }
         },
         prefill: {
-            name: userInfo?.name || '',
+            name: userInfo?.name || userInfo?.firstName || '',
             email: userInfo?.email || '',
             contact: userInfo?.phone || '',
         },
@@ -177,19 +205,28 @@ export async function initiatePayment(orderData, userInfo, onSuccess, onFailure)
         },
         modal: {
             ondismiss: function () {
+                console.log('[Razorpay] Payment modal dismissed by user');
                 onFailure({ error: 'Payment cancelled by user' });
             },
         },
     };
 
-    const razorpay = new window.Razorpay(options);
-    razorpay.on('payment.failed', function (response) {
-        onFailure({
-            error: response.error.description,
-            code: response.error.code,
+    console.log('[Razorpay] Opening payment modal with key:', orderData.keyId);
+
+    try {
+        const razorpay = new window.Razorpay(options);
+        razorpay.on('payment.failed', function (response) {
+            console.error('[Razorpay] Payment failed:', response.error);
+            onFailure({
+                error: response.error.description || 'Payment failed',
+                code: response.error.code,
+            });
         });
-    });
-    razorpay.open();
+        razorpay.open();
+    } catch (err) {
+        console.error('[Razorpay] Error creating Razorpay instance:', err);
+        onFailure({ error: 'Failed to initialize payment. Please try again.' });
+    }
 }
 
 export default {

@@ -32,40 +32,44 @@ const Auth: React.FC<AuthProps> = ({ type }) => {
       const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
 
       if (type === 'signup') {
-        // Call Signup API
-        const response = await fetch(`${API_BASE_URL}/auth/signup`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            firstName: formData.firstName,
-            lastName: formData.lastName,
-            email: formData.email,
-            password: formData.password,
-          }),
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-          throw new Error(data.error || 'Signup failed');
+        // NEW FLOW: Don't create account yet, go to plan selection first
+        // Validate signup data
+        if (!formData.firstName || !formData.lastName || !formData.email || !formData.password) {
+          throw new Error('Please fill in all fields');
         }
 
-        // Store token in localStorage
-        localStorage.setItem('token', data.token);
-        localStorage.setItem('user', JSON.stringify(data.user));
+        if (!acceptedTerms) {
+          throw new Error('Please accept the Terms & Conditions');
+        }
 
-        // Update context with onboarding status
-        login(data.user.firstName || 'User', formData.email, data.user.onboardingCompleted);
+        // Check if email format is valid
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(formData.email)) {
+          throw new Error('Please enter a valid email address');
+        }
+
+        // Check password strength
+        if (formData.password.length < 6) {
+          throw new Error('Password must be at least 6 characters long');
+        }
+
+        console.log('[Signup] Form validated, proceeding to plan selection');
         setLoading(false);
 
-        // Show welcome popup
-        setWelcomeName(data.user.firstName || 'User');
-        setShowWelcome(true);
-
-        // Navigate to pricing page after signup to select subscription
-        setTimeout(() => {
-          navigate('/pricing');
-        }, 2000);
+        // Navigate to pricing page with signup data
+        // Account will be created AFTER successful payment
+        navigate('/pricing', {
+          replace: true,
+          state: {
+            fromSignup: true,
+            signupData: {
+              firstName: formData.firstName,
+              lastName: formData.lastName,
+              email: formData.email,
+              password: formData.password,
+            }
+          }
+        });
       } else {
         // Call Login API
         const response = await fetch(`${API_BASE_URL}/auth/login`, {
