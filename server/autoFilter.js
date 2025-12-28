@@ -342,9 +342,7 @@ async function fetchUserFiltersFromDB(userId) {
                 }
 
                 appliedCount++;
-            }
-
-            else if (f.dbKey === 'citiesGid') {  // Location filter Working
+            } else if (f.dbKey === 'citiesGid') {  // Location filter Working
                 const locationLabels = savedFilterLabel.split(',').map(l => l.trim()).filter(l => l);
                 if (locationLabels.length > 0) {
                     console.log(`\n🔧 Applying Location filter: ${locationLabels.join(' | ')}`);
@@ -354,7 +352,7 @@ async function fetchUserFiltersFromDB(userId) {
                     if (viewMore) {
                         await viewMore.click();
                         await page.waitForSelector('div.styles_expanded-filters-container__iPSSS', { timeout: 5000 });
-                        await delay(1000);
+                        await delay(2000);
                     }
 
                     // Click checkboxes in expanded modal
@@ -375,14 +373,14 @@ async function fetchUserFiltersFromDB(userId) {
                                 clickTarget.click();
                             }
                         }, label);
-                        await delay(500);
+                        await delay(2000);
                     }
 
                     // Click Apply button
                     const applyBtn = await page.$('div.styles_filter-apply-btn__MDAUd');
                     if (applyBtn) {
                         await applyBtn.click();
-                        await delay(1000);
+                        await delay(3000);
                     }
 
                     appliedCount++;
@@ -965,123 +963,123 @@ async function applyFilterAuto(page, filterId, displayName, filterLabels) {
 }
 
 
-async function applyDepartmentFilter(page, departmentLabels) {
-    if (!departmentLabels || departmentLabels.length === 0) return false;
-    console.log(`📝 Departments to select: ${departmentLabels.join(' | ')}`);
+// async function applyDepartmentFilter(page, departmentLabels) {
+//     if (!departmentLabels || departmentLabels.length === 0) return false;
+//     console.log(`📝 Departments to select: ${departmentLabels.join(' | ')}`);
 
-    const filterId = "functionalAreaGid";
+//     const filterId = "functionalAreaGid";
 
-    try {
-        // Click View More (if exists)
-        const viewMore = await page.$(`div[data-filter-id="${filterId}"] a.styles_read-more-link__DU4hQ`);
-        if (viewMore) {
-            await viewMore.click();
-            console.log("🔹 Clicked 'View More'");
-            await page.waitForSelector('div.styles_expanded-filters-container__iPSSS', { timeout: 5000 });
-            await delay(1000); // wait for modal to appear
-        }
+//     try {
+//         // Click View More (if exists)
+//         const viewMore = await page.$(`div[data-filter-id="${filterId}"] a.styles_read-more-link__DU4hQ`);
+//         if (viewMore) {
+//             await viewMore.click();
+//             console.log("🔹 Clicked 'View More'");
+//             await page.waitForSelector('div.styles_expanded-filters-container__iPSSS', { timeout: 5000 });
+//             await delay(1000); // wait for modal to appear
+//         }
 
-        // Wait for modal container to be visible
-        await page.waitForFunction(
-            () => !!document.querySelector('div.styles_expanded-filters-container__iPSSS'),
-            { timeout: 5000 }
-        );
+//         // Wait for modal container to be visible
+//         await page.waitForFunction(
+//             () => !!document.querySelector('div.styles_expanded-filters-container__iPSSS'),
+//             { timeout: 5000 }
+//         );
 
-        // Select checkboxes one by one
-        for (const label of departmentLabels) {
-            const clicked = await page.evaluate((text) => {
-                const modal = document.querySelector('div.styles_expanded-filters-container__iPSSS');
-                if (!modal) return false;
+//         // Select checkboxes one by one
+//         for (const label of departmentLabels) {
+//             const clicked = await page.evaluate((text) => {
+//                 const modal = document.querySelector('div.styles_expanded-filters-container__iPSSS');
+//                 if (!modal) return false;
 
-                // find input by label text
-                const input = Array.from(modal.querySelectorAll('input[type="checkbox"]')).find(inp => {
-                    const parentLabel = inp.closest('label');
-                    const span = parentLabel?.querySelector('span[title]');
-                    const labelText = span?.title?.trim() || parentLabel?.innerText?.trim() || '';
-                    return labelText.toLowerCase() === text.toLowerCase();
-                });
+//                 // find input by label text
+//                 const input = Array.from(modal.querySelectorAll('input[type="checkbox"]')).find(inp => {
+//                     const parentLabel = inp.closest('label');
+//                     const span = parentLabel?.querySelector('span[title]');
+//                     const labelText = span?.title?.trim() || parentLabel?.innerText?.trim() || '';
+//                     return labelText.toLowerCase() === text.toLowerCase();
+//                 });
 
-                if (input && !input.checked) {
-                    const labelEl = input.closest('label') || input;
-                    labelEl.click();
-                    return true;
-                }
-                return false;
-            }, label);
+//                 if (input && !input.checked) {
+//                     const labelEl = input.closest('label') || input;
+//                     labelEl.click();
+//                     return true;
+//                 }
+//                 return false;
+//             }, label);
 
-            if (clicked) console.log(`✅ Selected: ${label}`);
-            else console.log(`⚠️ Not found or already selected: ${label}`);
+//             if (clicked) console.log(`✅ Selected: ${label}`);
+//             else console.log(`⚠️ Not found or already selected: ${label}`);
 
-            await delay(500); // small delay between clicks
-        }
+//             await delay(500); // small delay between clicks
+//         }
 
-        // Click Apply button inside modal
-        const applyBtn = await page.$('div.styles_filter-apply-btn__MDAUd');
-        if (applyBtn) {
-            await applyBtn.click();
-            console.log("🟢 Department filter applied");
-            await delay(1000);
-        }
+//         // Click Apply button inside modal
+//         const applyBtn = await page.$('div.styles_filter-apply-btn__MDAUd');
+//         if (applyBtn) {
+//             await applyBtn.click();
+//             console.log("🟢 Department filter applied");
+//             await delay(1000);
+//         }
 
-        return true;
+//         return true;
 
-    } catch (err) {
-        console.log(`⚠️ Failed to apply department filter: ${err.message}`);
-        return false;
-    }
-}
+//     } catch (err) {
+//         console.log(`⚠️ Failed to apply department filter: ${err.message}`);
+//         return false;
+//     }
+// }
 
 
-async function applyLocationFilter(page, cityLabels) {
-    if (!cityLabels || cityLabels.length === 0) return false;
+// async function applyLocationFilter(page, cityLabels) {
+//     if (!cityLabels || cityLabels.length === 0) return false;
 
-    console.log(`📝 Cities to select: ${cityLabels.join(' | ')}`);
-    const filterId = "citiesGid";
+//     console.log(`📝 Cities to select: ${cityLabels.join(' | ')}`);
+//     const filterId = "citiesGid";
 
-    // Click "View More" if exists
-    const viewMore = await page.$(`div[data-filter-id="${filterId}"] a.styles_read-more-link__DU4hQ`);
-    if (viewMore) {
-        await viewMore.click();
-        await page.waitForSelector('div.styles_expanded-filters-container__iPSSS', { timeout: 5000 });
-        await page.waitForFunction(
-            () => !!document.querySelector('div.styles_expanded-filters-container__iPSSS'),
-            { timeout: 5000 }
-        );
-        await delay(1000);
-    }
+//     // Click "View More" if exists
+//     const viewMore = await page.$(`div[data-filter-id="${filterId}"] a.styles_read-more-link__DU4hQ`);
+//     if (viewMore) {
+//         await viewMore.click();
+//         await page.waitForSelector('div.styles_expanded-filters-container__iPSSS', { timeout: 5000 });
+//         await page.waitForFunction(
+//             () => !!document.querySelector('div.styles_expanded-filters-container__iPSSS'),
+//             { timeout: 5000 }
+//         );
+//         await delay(1000);
+//     }
 
-    // Select checkboxes
-    for (const city of cityLabels) {
-        const clicked = await page.evaluate((text) => {
-            const modal = document.querySelector('div.styles_expanded-filters-container__iPSSS');
-            if (!modal) return false;
+//     // Select checkboxes
+//     for (const city of cityLabels) {
+//         const clicked = await page.evaluate((text) => {
+//             const modal = document.querySelector('div.styles_expanded-filters-container__iPSSS');
+//             if (!modal) return false;
 
-            const input = Array.from(modal.querySelectorAll('input[type="checkbox"]'))
-                .find(inp => inp.closest('label')?.querySelector('span[title]')?.title?.trim().toLowerCase() === text.toLowerCase());
+//             const input = Array.from(modal.querySelectorAll('input[type="checkbox"]'))
+//                 .find(inp => inp.closest('label')?.querySelector('span[title]')?.title?.trim().toLowerCase() === text.toLowerCase());
 
-            if (input && !input.checked) {
-                input.closest('label').click();
-                return true;
-            }
-            return false;
-        }, city);
+//             if (input && !input.checked) {
+//                 input.closest('label').click();
+//                 return true;
+//             }
+//             return false;
+//         }, city);
 
-        if (clicked) console.log(`✅ Selected city: ${city}`);
-        else console.log(`⚠️ Not found or already selected: ${city}`);
+//         if (clicked) console.log(`✅ Selected city: ${city}`);
+//         else console.log(`⚠️ Not found or already selected: ${city}`);
 
-        await delay(500);
-    }
+//         await delay(500);
+//     }
 
-    // Click Apply
-    const applyBtn = await page.$('div.styles_filter-apply-btn__MDAUd');
-    if (applyBtn) {
-        await applyBtn.click();
-        await delay(1000);
-        console.log('🟢 Applied city filter');
-    }
+//     // Click Apply
+//     const applyBtn = await page.$('div.styles_filter-apply-btn__MDAUd');
+//     if (applyBtn) {
+//         await applyBtn.click();
+//         await delay(1000);
+//         console.log('🟢 Applied city filter');
+//     }
 
-    return true;
-}
+//     return true;
+// }
 
 
 // Apply Freshness filter robustly
