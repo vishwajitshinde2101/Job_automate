@@ -286,55 +286,65 @@ async function fetchUserFiltersFromDB(userId) {
                     .map(v => v.trim())
                     .filter(Boolean);
 
-                if (modes.length === 0) return;
+                if (modes.length === 0) continue;
 
                 console.log(`🏠 Applying Work Mode: ${modes.join(' | ')}`);
 
                 for (const mode of modes) {
                     const selected = await page.evaluate((modeText) => {
-                        const container = document.querySelector(
-                            'div[data-filter-id="wfhType"]'
-                        );
-                        if (!container) return false;
+                        try {
+                            const container = document.querySelector(
+                                'div[data-filter-id="wfhType"]'
+                            );
+                            if (!container) return false;
 
-                        const labelSpan = Array.from(
-                            container.querySelectorAll('span[title]')
-                        ).find(s =>
-                            s.title.trim().toLowerCase() === modeText.toLowerCase()
-                        );
+                            const spans = Array.from(
+                                container.querySelectorAll('span[title]')
+                            );
 
-                        if (!labelSpan) return false;
+                            const normalize = t =>
+                                t
+                                    .replace(/\(\d+.*?\)/g, '')
+                                    .replace(/\s+/g, ' ')
+                                    .trim()
+                                    .toLowerCase();
 
-                        const checkboxWrapper = labelSpan.closest('.styles_chckBoxCont__t_dRs');
-                        if (!checkboxWrapper) return false;
+                            const span = spans.find(s =>
+                                normalize(s.title).includes(normalize(modeText))
+                            );
+                            if (!span) return false;
 
-                        const checkbox = checkboxWrapper.querySelector('input[type="checkbox"]');
-                        const icon = checkboxWrapper.querySelector('i');
+                            const label = span.closest('label');
+                            if (!label) return false;
 
-                        if (!checkbox || !icon) return false;
+                            const inputId = label.getAttribute('for');
+                            const checkbox = document.getElementById(inputId);
+                            if (!checkbox) return false;
 
-                        // already checked
-                        if (checkbox.checked) return true;
+                            if (checkbox.checked) return true;
 
-                        checkboxWrapper.scrollIntoView({ block: 'center' });
+                            label.scrollIntoView({ block: 'center' });
+                            label.click();
 
-                        // 🔥 real clickable element
-                        icon.click();
-
-                        return true;
+                            return true;
+                        } catch {
+                            return false;
+                        }
                     }, mode);
 
                     if (selected) {
-                        console.log(`✅ wfhType selected: ${mode}`);
+                        console.log(`✅ Work mode selected: ${mode}`);
                     } else {
-                        console.warn(`❌ wfhType not found: ${mode}`);
+                        console.warn(`❌ Work mode not found: ${mode}`);
                     }
 
-                    await delay(500);
+                    await delay(1200); // React settle
                 }
 
                 appliedCount++;
-            } else if (f.dbKey === 'citiesGid') {  // Location filter Working
+            }
+
+            else if (f.dbKey === 'citiesGid') {  // Location filter Working
                 const locationLabels = savedFilterLabel.split(',').map(l => l.trim()).filter(l => l);
                 if (locationLabels.length > 0) {
                     console.log(`\n🔧 Applying Location filter: ${locationLabels.join(' | ')}`);
@@ -762,16 +772,6 @@ async function fetchUserFiltersFromDB(userId) {
             await delay(500);
         }
     }
-    //  else if (f.dbKey === 'industryTypeGid') {
-    //             await applyIndustryFilter(page, savedFilterLabel);
-    //         } else if (f.dbKey === 'citiesGid') {
-    //             await applyLocationFilter(page, savedFilterLabel);
-    //         } else if (f.dbKey === 'wfhType') {
-    //             await applyWorkTypeFilter(page, savedFilterLabel);
-    //         } else if (f.dbKey === 'citiesGid') {
-    //     await applyLocationFilter(page, savedFilterLabel);
-    // } 
-
 
     // 6️⃣ Print final URL
     console.log("\n===============================");
