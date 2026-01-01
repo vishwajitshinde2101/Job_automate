@@ -93,6 +93,7 @@ router.get('/user', authenticateToken, async (req, res) => {
                 glbl_RoleCat: userFilters.glbl_RoleCat || '',
                 topGroupId: userFilters.topGroupId || '',
                 featuredCompanies: userFilters.featuredCompanies || '',
+                finalUrl: userFilters.finalUrl || '',
             },
         });
     } catch (error) {
@@ -124,6 +125,7 @@ router.post('/user', authenticateToken, async (req, res) => {
             glbl_RoleCat,
             topGroupId,
             featuredCompanies,
+            finalUrl,
         } = req.body;
 
         // Upsert - create or update
@@ -142,6 +144,7 @@ router.post('/user', authenticateToken, async (req, res) => {
             glbl_RoleCat: glbl_RoleCat || null,
             topGroupId: topGroupId || null,
             featuredCompanies: featuredCompanies || null,
+            finalUrl: finalUrl || null,
         });
 
         res.json({

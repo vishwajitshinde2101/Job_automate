@@ -39,6 +39,7 @@ router.post('/bulk', authenticateToken, async (req, res) => {
             matchScoreTotal: 5,
             matchStatus: result.matchStatus,
             applyType: result.applyType,
+            applicationStatus: result.applicationStatus || null,
         }));
 
         // Bulk insert into database
@@ -70,6 +71,7 @@ router.get('/', authenticateToken, async (req, res) => {
             limit = 50,
             matchStatus,
             applyType,
+            applicationStatus,
             pageNumber,
             earlyApplicant,
             keySkillsMatch,
@@ -91,6 +93,11 @@ router.get('/', authenticateToken, async (req, res) => {
         // Filter by apply type
         if (applyType) {
             where.applyType = applyType;
+        }
+
+        // Filter by application status
+        if (applicationStatus) {
+            where.applicationStatus = applicationStatus;
         }
 
         // Filter by page number

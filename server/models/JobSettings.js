@@ -108,6 +108,12 @@ const JobSettings = sequelize.define('JobSettings', {
         field: 'years_of_experience',
         comment: 'Years of experience for job search filtering',
     },
+    // Date of Birth
+    dob: {
+        type: DataTypes.DATEONLY,
+        allowNull: true,
+        comment: 'Date of Birth in YYYY-MM-DD format',
+    },
     // Scheduling
     scheduledTime: {
         type: DataTypes.DATE,

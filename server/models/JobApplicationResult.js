@@ -88,6 +88,12 @@ const JobApplicationResult = sequelize.define(
             allowNull: false,
             field: 'apply_type',
         },
+        applicationStatus: {
+            type: DataTypes.ENUM('Applied', 'Skipped'),
+            allowNull: true,
+            field: 'application_status',
+            comment: 'Whether job was Applied or Skipped during automation',
+        },
         // Additional job details fields
         jobTitle: {
             type: DataTypes.STRING(255),
@@ -201,6 +207,7 @@ const JobApplicationResult = sequelize.define(
             { fields: ['match_score'] },
             { fields: ['match_status'] },
             { fields: ['apply_type'] },
+            { fields: ['application_status'] },
             { fields: ['job_title'] },
             { fields: ['company_name'] },
             { fields: ['location'] },

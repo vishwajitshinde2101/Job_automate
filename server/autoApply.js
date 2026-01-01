@@ -674,7 +674,7 @@ async function scrapeJobDetails(jobPage) {
             detailLabels.forEach(detail => {
                 const label = detail.querySelector('label')?.innerText.trim();
                 const value = detail.querySelector('span')?.innerText.trim() ||
-                             detail.querySelector('a')?.innerText.trim();
+                    detail.querySelector('a')?.innerText.trim();
 
                 if (label?.includes('Role:')) role = value;
                 if (label?.includes('Industry Type:')) industryType = value;
@@ -1021,9 +1021,29 @@ export async function startAutomation(options = {}) {
                 const externalApply = await jobPage.$('#company-site-button');
                 const applyBtn = await jobPage.$('#apply-button');
 
+                // Determine apply type
                 let applyType = 'No Apply Button';
                 if (externalApply) applyType = 'External Apply';
                 else if (applyBtn) applyType = 'Direct Apply';
+
+                // Default status
+                let applicationStatus = 'Skipped';
+
+                if (applyBtn && canApply) {
+                    try {
+                        // Click Apply button
+                        await applyBtn.click();
+                        await jobPage.waitForTimeout(1000); // small wait to ensure click registers
+
+                        // Mark as Applied ONLY after click
+                        applicationStatus = 'Applied';
+                    } catch (err) {
+                        // Click failed → treat as Skipped
+                        applicationStatus = 'Skipped';
+                    }
+
+                }
+                addLog('applicationStatus :: ', applicationStatus);
 
                 // Save job result with scraped details
                 jobResults.push({
@@ -1040,6 +1060,7 @@ export async function startAutomation(options = {}) {
                     MatchScore: `${matchResult.matchScore}/${matchResult.matchScoreTotal}`,
                     matchStatus: matchResult.matchStatus,
                     applyType: applyType,
+                    applicationStatus: applicationStatus,
 
                     // Scraped job details
                     jobTitle: scrapedDetails.jobTitle,
@@ -1106,6 +1127,7 @@ export async function startAutomation(options = {}) {
                     matchScoreTotal: 5,
                     matchStatus: result.matchStatus,
                     applyType: result.applyType,
+                    applicationStatus: result.applicationStatus || null,
                     // Job details from scraping
                     jobTitle: result.jobTitle || null,
                     companyName: result.companyName || null,

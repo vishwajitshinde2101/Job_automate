@@ -180,6 +180,7 @@ router.post('/', authenticateToken, async (req, res) => {
             availability,
             maxPages,
             yearsOfExperience,
+            dob,
         } = req.body;
 
         // Validate yearsOfExperience if provided
@@ -221,6 +222,7 @@ router.post('/', authenticateToken, async (req, res) => {
         if (availability !== undefined) updateData.availability = availability;
         if (maxPages !== undefined) updateData.maxPages = maxPages;
         if (yearsOfExperience !== undefined) updateData.yearsOfExperience = parseInt(yearsOfExperience);
+        if (dob !== undefined) updateData.dob = dob || null;
 
         // Update only if there are fields to update
         if (Object.keys(updateData).length > 0) {
@@ -306,6 +308,7 @@ router.get('/answers-data', authenticateToken, async (req, res) => {
             naukriPassword: jobSettings.naukriPassword || 'Not set',
             resumeText: jobSettings.resumeText || 'No resume',
             availability: jobSettings.availability || 'Flexible',
+            dob: jobSettings.dob || null,
             skills: skillsData,
         });
     } catch (error) {

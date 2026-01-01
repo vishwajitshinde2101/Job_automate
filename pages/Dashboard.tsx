@@ -13,7 +13,7 @@ import { getPlans, Plan } from '../services/plansApi';
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
-  const { user, logout, logs, reports, isAutomating, startAutomation, stopAutomation, scheduleAutomation, downloadReport, updateConfig, completeOnboarding } = useApp();
+  const { user, logout, logs, reports, isAutomating, startAutomation, stopAutomation, updateConfig, completeOnboarding } = useApp();
   const logContainerRef = useRef<HTMLDivElement>(null);
   // New users without Naukri credentials should see Job Profile tab first
   const [activeTab, setActiveTab] = useState(!user.config?.naukriUsername ? 'config' : 'overview');
@@ -189,7 +189,7 @@ const Dashboard: React.FC = () => {
           };
 
           // Convert saved comma-separated labels back to arrays of IDs
-          // Freshness stays as single string, all others are arrays
+          // Freshness stays as single string, all others are arrays, finalUrl is string
           setSelectedFilters({
             freshness: savedData.freshness || '',
             salaryRange: findIdsByLabels('salaryRange', savedData.salaryRange),
@@ -203,6 +203,7 @@ const Dashboard: React.FC = () => {
             employement: findIdsByLabels('employement', savedData.employement),
             glbl_RoleCat: findIdsByLabels('glbl_RoleCat', savedData.glbl_RoleCat),
             topGroupId: findIdsByLabels('topGroupId', savedData.topGroupId),
+            finalUrl: savedData.finalUrl || '',
           });
         }
       }
@@ -228,7 +229,8 @@ const Dashboard: React.FC = () => {
     resumeName: '',
     resumeScore: 0,
     maxPages: 5,
-    yearsOfExperience: 0
+    yearsOfExperience: 0,
+    dob: ''
   });
 
   // Calculate Job Profile completion percentage (excluding Job Search Filters and Location)
@@ -262,7 +264,7 @@ const Dashboard: React.FC = () => {
     experience: ''
   });
 
-  // Filters state - freshness is single-select (string), all others are multi-select (arrays)
+  // Filters state - freshness is single-select (string), all others are multi-select (arrays), finalUrl is string
   const [filters, setFilters] = useState<any>({});
   const [selectedFilters, setSelectedFilters] = useState<{
     freshness: string;
@@ -277,6 +279,7 @@ const Dashboard: React.FC = () => {
     employement: string[];
     glbl_RoleCat: string[];
     topGroupId: string[];
+    finalUrl: string;
   }>({
     freshness: '',
     salaryRange: [],
@@ -289,7 +292,8 @@ const Dashboard: React.FC = () => {
     business_size: [],
     employement: [],
     glbl_RoleCat: [],
-    topGroupId: []
+    topGroupId: [],
+    finalUrl: ''
   });
   const [filtersLoading, setFiltersLoading] = useState(false);
   const [openFilterDropdown, setOpenFilterDropdown] = useState<string | null>(null);
@@ -316,6 +320,7 @@ const Dashboard: React.FC = () => {
   const [historyFilters, setHistoryFilters] = useState({
     matchStatus: '',
     applyType: '',
+    applicationStatus: '',
     pageNumber: '',
     earlyApplicant: '',
     keySkillsMatch: '',
@@ -346,6 +351,7 @@ const Dashboard: React.FC = () => {
         availability: configForm.availability,
         maxPages: configForm.maxPages,
         yearsOfExperience: configForm.yearsOfExperience ?? 0,
+        dob: configForm.dob || null,
       };
 
       // Call API to save configuration
@@ -382,6 +388,7 @@ const Dashboard: React.FC = () => {
         employement: idsToLabels('employement', selectedFilters.employement),
         glbl_RoleCat: idsToLabels('glbl_RoleCat', selectedFilters.glbl_RoleCat),
         topGroupId: idsToLabels('topGroupId', selectedFilters.topGroupId),
+        finalUrl: selectedFilters.finalUrl || '',  // Final URL is single string value
       };
 
       await saveUserFilters(filtersToSave);
@@ -389,92 +396,12 @@ const Dashboard: React.FC = () => {
       // Also update local context
       updateConfig(configForm);
 
-      setSuccess('✅ Configuration saved! Starting filter automation...');
-
-      // Run autoFilter.js with the saved filters
-      try {
-        const filterResult = await runFilter();
-        if (filterResult.success) {
-          setSuccess('✅ Filter automation started! Check logs below.');
-          setIsFilterRunning(true);
-          setBotLogs([{
-            timestamp: new Date().toLocaleTimeString(),
-            message: '🚀 Filter automation started...',
-            type: 'info'
-          }]);
-
-          // Switch to overview tab to show logs
-          setActiveTab('overview');
-
-          // Start polling for filter logs
-          if (filterPollRef.current) {
-            clearInterval(filterPollRef.current);
-          }
-
-          filterPollRef.current = setInterval(async () => {
-            try {
-              const logsResult = await getFilterLogs();
-              if (logsResult.logs && logsResult.logs.length > 0) {
-                setBotLogs(logsResult.logs);
-              }
-
-              // Stop polling if final URL received (completed) or automation stopped
-              if (logsResult.completed || !logsResult.isRunning) {
-                setIsFilterRunning(false);
-                if (filterPollRef.current) {
-                  clearInterval(filterPollRef.current);
-                  filterPollRef.current = null;
-                }
-
-                // Show success message with final URL
-                if (logsResult.finalUrl) {
-                  setSuccess(`✅ Filters applied! Final URL saved to database.`);
-                }
-              }
-            } catch (pollErr) {
-              // Silent error - polling will retry
-            }
-          }, 1000);
-
-        } else {
-          setError(`⚠️ Config saved but filter automation failed: ${filterResult.error}`);
-        }
-      } catch (filterErr: any) {
-        setSuccess('✅ Configuration saved! (Filter automation could not start)');
-      }
+      setSuccess('✅ Configuration saved successfully!');
 
       // Auto-clear success message after 5 seconds
       setTimeout(() => setSuccess(null), 5000);
     } catch (err: any) {
       setError(`❌ Failed to save configuration: ${err.message}`);
-    }
-  };
-
-  // Schedule state
-  const [showScheduleModal, setShowScheduleModal] = useState(false);
-  const [scheduleDateTime, setScheduleDateTime] = useState('');
-
-  const handleScheduleClick = () => {
-    setShowScheduleModal(true);
-  };
-
-  const handleConfirmSchedule = async () => {
-    if (!scheduleDateTime) {
-      setError('Please select a date and time');
-      return;
-    }
-
-    try {
-      await scheduleAutomation(scheduleDateTime);
-      setSuccess(`✅ Automation scheduled for ${new Date(scheduleDateTime).toLocaleString()}`);
-      setShowScheduleModal(false);
-      setBotLogs(prev => [...prev, {
-        timestamp: new Date().toLocaleTimeString(),
-        message: `📅 Scheduled run for ${new Date(scheduleDateTime).toLocaleString()}`,
-        type: 'info'
-      }]);
-    } catch (err: any) {
-      setError(`❌ Failed to schedule: ${err.message}`);
     }
   };
 
@@ -644,7 +571,8 @@ const Dashboard: React.FC = () => {
           resumeName: result.resumeFileName || '',
           resumeScore: result.resumeScore || 0,
           maxPages: result.maxPages || 5,
-          yearsOfExperience: result.yearsOfExperience ?? 0
+          yearsOfExperience: result.yearsOfExperience ?? 0,
+          dob: result.dob || ''
         });
 
         // Set verification status from database
@@ -702,6 +630,7 @@ const Dashboard: React.FC = () => {
       // Add filters if they have values
       if (historyFilters.matchStatus) params.append('matchStatus', historyFilters.matchStatus);
       if (historyFilters.applyType) params.append('applyType', historyFilters.applyType);
+      if (historyFilters.applicationStatus) params.append('applicationStatus', historyFilters.applicationStatus);
       if (historyFilters.pageNumber) params.append('pageNumber', historyFilters.pageNumber);
       if (historyFilters.earlyApplicant) params.append('earlyApplicant', historyFilters.earlyApplicant);
       if (historyFilters.keySkillsMatch) params.append('keySkillsMatch', historyFilters.keySkillsMatch);
@@ -787,6 +716,7 @@ const Dashboard: React.FC = () => {
     setHistoryFilters({
       matchStatus: '',
       applyType: '',
+      applicationStatus: '',
       pageNumber: '',
       earlyApplicant: '',
       keySkillsMatch: '',
@@ -939,13 +869,6 @@ const Dashboard: React.FC = () => {
 
                 {/* Run Controls - Consistent Theme */}
                 <div className="flex gap-3 mr-2">
-                  <button
-                    onClick={handleScheduleClick}
-                    className="flex items-center gap-2 px-4 py-2 bg-gray-700 text-white text-sm font-semibold rounded-lg hover:bg-gray-600 transition-all border border-gray-600 shadow-md hover:shadow-lg"
-                  >
-                    <Calendar className="w-4 h-4" /> Schedule
-                  </button>
-
                   {!isRunning ? (
                     <button
                       onClick={handleStartBot}
@@ -1149,47 +1072,6 @@ const Dashboard: React.FC = () => {
                 </div>
               </div>
             </div>
-
-            {/* Schedule Modal */}
-            {showScheduleModal && (
-              <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
-                <div className="bg-dark-800 border border-white/10 rounded-xl p-6 w-full max-w-sm shadow-2xl relative">
-                  <button
-                    onClick={() => setShowScheduleModal(false)}
-                    className="absolute top-4 right-4 text-gray-400 hover:text-white"
-                  >
-                    <X className="w-5 h-5" />
-                  </button>
-
-                  <h3 className="text-xl font-bold text-white mb-2 flex items-center gap-2">
-                    <Calendar className="text-neon-blue" /> Schedule Run
-                  </h3>
-                  <p className="text-gray-400 text-sm mb-6">
-                    Pick a date and time for the automation to start.
-                  </p>
-
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <label className="text-xs font-bold text-gray-400 uppercase">Start Time</label>
-                      <input
-                        type="datetime-local"
-                        className="w-full bg-dark-900 border border-gray-700 rounded-lg px-4 py-3 text-white focus:border-neon-blue outline-none"
-                        value={scheduleDateTime}
-                        onChange={(e) => setScheduleDateTime(e.target.value)}
-                        min={new Date().toISOString().slice(0, 16)}
-                      />
-                    </div>
-
-                    <button
-                      onClick={handleConfirmSchedule}
-                      className="w-full bg-neon-blue text-black font-bold py-3 rounded-lg hover:bg-white transition-colors flex items-center justify-center gap-2"
-                    >
-                      Confirm Schedule
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
           </div>
         );
 
@@ -1503,7 +1385,7 @@ const Dashboard: React.FC = () => {
                 </div>
 
                 {/* Other Job Profile Fields */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div className="space-y-2">
                     <label className="text-xs text-gray-400 uppercase font-bold flex items-center gap-1">
                       Target Role <span className="text-red-400">*</span>
@@ -1526,6 +1408,22 @@ const Dashboard: React.FC = () => {
                         className="w-full bg-dark-900 border border-gray-700 rounded-lg py-2.5 pl-10 pr-4 text-white text-sm focus:border-neon-blue outline-none"
                       />
                     </div>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-xs text-gray-400 uppercase font-bold flex items-center gap-1">
+                      Date of Birth
+                    </label>
+                    <div className="relative">
+                      <Calendar className="absolute left-3 top-3 w-4 h-4 text-gray-500" />
+                      <input
+                        type="date"
+                        value={configForm.dob}
+                        onChange={(e) => setConfigForm({ ...configForm, dob: e.target.value })}
+                        className="w-full bg-dark-900 border border-gray-700 rounded-lg py-2.5 pl-10 pr-4 text-white text-sm focus:border-neon-blue outline-none"
+                        placeholder="DD/MM/YYYY"
+                      />
+                    </div>
+                    <p className="text-[10px] text-gray-500">Format: DD/MM/YYYY</p>
                   </div>
                 </div>
 
@@ -1757,224 +1655,85 @@ const Dashboard: React.FC = () => {
                   <div className="flex items-center justify-between">
                     <h3 className="text-white font-bold flex items-center gap-2 text-sm">
                       <Filter className="text-neon-green w-4 h-4" /> Job Search Filters
-                    </h3>
-                    {filtersLoading && (
-                      <span className="text-xs text-gray-400 flex items-center gap-1">
-                        <Loader2 className="w-3 h-3 animate-spin" /> Loading filters...
+                      <span className="bg-yellow-500/20 text-yellow-400 text-[10px] px-2 py-0.5 rounded-full border border-yellow-500/30 font-semibold">
+                        Coming Soon
                       </span>
-                    )}
+                    </h3>
                   </div>
 
-                  <p className="text-xs text-gray-400">
-                    Select filters to narrow down your job search. These will be applied when running automation.
-                  </p>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {/* Multi-select Filter Component */}
-                    {(() => {
-                      const MultiSelectFilter = ({
-                        filterKey,
-                        label,
-                        icon: Icon,
-                        options,
-                        placeholder,
-                        comingSoon
-                      }: {
-                        filterKey: string;
-                        label: string;
-                        icon: any;
-                        options: any[];
-                        placeholder: string;
-                        comingSoon?: boolean;
-                      }) => {
-                        const selected = (selectedFilters as any)[filterKey] || [];
-                        const isOpen = openFilterDropdown === filterKey;
-
-                        const toggleOption = (id: string) => {
-                          const newSelected = selected.includes(id)
-                            ? selected.filter((s: string) => s !== id)
-                            : [...selected, id];
-                          setSelectedFilters({ ...selectedFilters, [filterKey]: newSelected });
-                        };
-
-                        return (
-                          <div className="space-y-2 relative">
-                            <label className="text-xs text-gray-400 uppercase font-bold flex items-center gap-2">
-                              <Icon className="w-3 h-3" /> {label}
-                              {comingSoon && (
-                                <span className="bg-yellow-500/20 text-yellow-400 text-[10px] px-2 py-0.5 rounded-full border border-yellow-500/30 font-semibold">
-                                  Coming Soon
-                                </span>
-                              )}
-                            </label>
-                            <div
-                              className={`w-full bg-dark-900 border border-gray-700 rounded-lg py-2.5 px-3 text-white text-sm min-h-[42px] ${
-                                comingSoon
-                                  ? 'opacity-50 cursor-not-allowed'
-                                  : 'cursor-pointer hover:border-neon-green transition-colors'
-                              }`}
-                              onClick={() => !comingSoon && setOpenFilterDropdown(isOpen ? null : filterKey)}
-                            >
-                              {selected.length === 0 ? (
-                                <span className="text-gray-500">{comingSoon ? 'Not Available Yet' : placeholder}</span>
-                              ) : (
-                                <span className="text-neon-green">{selected.length} selected</span>
-                              )}
-                            </div>
-                            {isOpen && options && options.length > 0 && (
-                              <div className="absolute z-50 w-full mt-1 bg-dark-800 border border-gray-600 rounded-lg shadow-xl max-h-48 overflow-y-auto">
-                                {options.map((opt: any) => (
-                                  <label
-                                    key={opt.id}
-                                    className="flex items-center gap-2 px-3 py-2 hover:bg-dark-700 cursor-pointer text-sm"
-                                  >
-                                    <input
-                                      type="checkbox"
-                                      checked={selected.includes(opt.id)}
-                                      onChange={() => toggleOption(opt.id)}
-                                      className="w-4 h-4 rounded border-gray-600 bg-dark-900 text-neon-green focus:ring-neon-green focus:ring-offset-0"
-                                    />
-                                    <span className="text-gray-200 flex-1">{opt.label}</span>
-                                    {opt.count && <span className="text-gray-500 text-xs">({opt.count})</span>}
-                                  </label>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                        );
-                      };
-
-                      return (
-                        <>
-                          {/* Freshness - Single Select Dropdown */}
-                          <div className="space-y-2">
-                            <label className="text-xs text-gray-400 uppercase font-bold flex items-center gap-1">
-                              <Clock className="w-3 h-3" /> Freshness
-                            </label>
-                            <select
-                              className="w-full bg-dark-900 border border-gray-700 rounded-lg py-2.5 px-3 text-white text-sm focus:border-neon-green outline-none appearance-none cursor-pointer"
-                              value={selectedFilters.freshness}
-                              onChange={e => setSelectedFilters({ ...selectedFilters, freshness: e.target.value })}
-                            >
-                              <option value="">Any Freshness</option>
-                              <option value="Last 1 day">Last 1 Day</option>
-                              <option value="Last 3 days">Last 3 Days</option>
-                              <option value="Last 7 days">Last 7 Days</option>
-                              <option value="Last 15 days">Last 15 Days</option>
-                              <option value="Last 30 days">Last 30 Days</option>
-                            </select>
-                          </div>
-
-                          {/* All other filters - Multi-Select */}
-                          <MultiSelectFilter filterKey="salaryRange" label="Salary Range" icon={IndianRupee} options={filters.salaryRange || []} placeholder="All Salary Ranges" />
-                          <MultiSelectFilter filterKey="wfhType" label="Work Type" icon={Home} options={filters.wfhType || []} placeholder="All Work Types" />
-                          <MultiSelectFilter filterKey="citiesGid" label="City" icon={MapPin} options={filters.citiesGid || []} placeholder="All Cities" />
-                          <MultiSelectFilter filterKey="functionalAreaGid" label="Functional Area" icon={Briefcase} options={filters.functionalAreaGid || []} placeholder="All Functional Areas" />
-                          <MultiSelectFilter filterKey="industryTypeGid" label="Industry" icon={Building2} options={filters.industryTypeGid || []} placeholder="All Industries" />
-                          <MultiSelectFilter filterKey="glbl_RoleCat" label="Role Category" icon={Briefcase} options={filters.glbl_RoleCat || []} placeholder="All Role Categories" />
-                          <MultiSelectFilter filterKey="ugCourseGid" label="UG Qualification" icon={GraduationCap} options={filters.ugCourseGid || []} placeholder="All UG Qualifications" comingSoon={true} />
-                          <MultiSelectFilter filterKey="pgCourseGid" label="PG Qualification" icon={GraduationCap} options={filters.pgCourseGid || []} placeholder="All PG Qualifications" comingSoon={true} />
-                          <MultiSelectFilter filterKey="business_size" label="Company Type" icon={Building2} options={filters.business_size || []} placeholder="All Company Types" />
-                          <MultiSelectFilter filterKey="employement" label="Employment Type" icon={Briefcase} options={filters.employement || []} placeholder="All Employment Types" />
-                          <MultiSelectFilter filterKey="topGroupId" label="Top Companies" icon={Building2} options={filters.topGroupId || []} placeholder="All Companies" />
-                        </>
-                      );
-                    })()}
+                  {/* Job Search URL Input */}
+                  <div className="space-y-2">
+                    <label className="text-xs text-gray-400 uppercase font-bold flex items-center gap-2">
+                      <Globe className="w-3 h-3" /> Enter Your Search URL
+                    </label>
+                    <input
+                      type="url"
+                      value={selectedFilters.finalUrl}
+                      onChange={(e) => setSelectedFilters({ ...selectedFilters, finalUrl: e.target.value })}
+                      className="w-full bg-dark-900 border border-gray-700 rounded-lg py-2.5 px-4 text-white text-sm focus:border-neon-green outline-none"
+                      placeholder="https://www.naukri.com/..."
+                    />
+                    <p className="text-[10px] text-gray-500">
+                      Paste your customized job search URL from Naukri.com. This URL will be used when running automation.
+                    </p>
                   </div>
 
-                  {/* Selected Filters Summary */}
-                  {(selectedFilters.freshness || Object.entries(selectedFilters).some(([k, v]) => k !== 'freshness' && Array.isArray(v) && v.length > 0)) && (
-                    <div className="mt-4 pt-4 border-t border-gray-700">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs text-gray-400">Selected Filters:</span>
-                        <button
-                          type="button"
-                          onClick={() => setSelectedFilters({
-                            freshness: '',
-                            salaryRange: [],
-                            wfhType: [],
-                            citiesGid: [],
-                            functionalAreaGid: [],
-                            industryTypeGid: [],
-                            ugCourseGid: [],
-                            pgCourseGid: [],
-                            business_size: [],
-                            employement: [],
-                            glbl_RoleCat: [],
-                            topGroupId: []
-                          })}
-                          className="text-xs text-red-400 hover:text-red-300 transition-colors"
-                        >
-                          Clear All
-                        </button>
+                  {/* Coming Soon Filters List */}
+                  <div className="bg-dark-800/50 p-4 rounded-lg border border-gray-700/50">
+                    <p className="text-xs text-gray-400 mb-3">
+                      The following filters will be available soon for advanced job search customization:
+                    </p>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                      <div className="flex items-center gap-2 text-gray-500 text-xs">
+                        <Clock className="w-3 h-3" />
+                        <span>Freshness</span>
                       </div>
-                      <div className="flex flex-wrap gap-2 mt-2">
-                        {/* Freshness - single value */}
-                        {selectedFilters.freshness && (
-                          <span className="bg-neon-blue/10 text-neon-blue text-xs px-2 py-1 rounded border border-neon-blue/30">
-                            {selectedFilters.freshness}
-                          </span>
-                        )}
-                        {/* Multi-select filters - show each selected item */}
-                        {selectedFilters.salaryRange?.map((id: string) => (
-                          <span key={`sal-${id}`} className="bg-neon-green/10 text-neon-green text-xs px-2 py-1 rounded border border-neon-green/30">
-                            {filters.salaryRange?.find((o: any) => o.id === id)?.label || id}
-                          </span>
-                        ))}
-                        {selectedFilters.wfhType?.map((id: string) => (
-                          <span key={`wfh-${id}`} className="bg-neon-blue/10 text-neon-blue text-xs px-2 py-1 rounded border border-neon-blue/30">
-                            {filters.wfhType?.find((o: any) => o.id === id)?.label || id}
-                          </span>
-                        ))}
-                        {selectedFilters.citiesGid?.map((id: string) => (
-                          <span key={`city-${id}`} className="bg-neon-purple/10 text-neon-purple text-xs px-2 py-1 rounded border border-neon-purple/30">
-                            {filters.citiesGid?.find((o: any) => o.id === id)?.label || id}
-                          </span>
-                        ))}
-                        {selectedFilters.functionalAreaGid?.map((id: string) => (
-                          <span key={`func-${id}`} className="bg-yellow-500/10 text-yellow-400 text-xs px-2 py-1 rounded border border-yellow-500/30">
-                            {filters.functionalAreaGid?.find((o: any) => o.id === id)?.label || id}
-                          </span>
-                        ))}
-                        {selectedFilters.industryTypeGid?.map((id: string) => (
-                          <span key={`ind-${id}`} className="bg-orange-500/10 text-orange-400 text-xs px-2 py-1 rounded border border-orange-500/30">
-                            {filters.industryTypeGid?.find((o: any) => o.id === id)?.label || id}
-                          </span>
-                        ))}
-                        {selectedFilters.glbl_RoleCat?.map((id: string) => (
-                          <span key={`role-${id}`} className="bg-pink-500/10 text-pink-400 text-xs px-2 py-1 rounded border border-pink-500/30">
-                            {filters.glbl_RoleCat?.find((o: any) => o.id === id)?.label || id}
-                          </span>
-                        ))}
-                        {/* UG and PG filters hidden - Coming Soon */}
-                        {/* {selectedFilters.ugCourseGid?.map((id: string) => (
-                          <span key={`ug-${id}`} className="bg-cyan-500/10 text-cyan-400 text-xs px-2 py-1 rounded border border-cyan-500/30">
-                            {filters.ugCourseGid?.find((o: any) => o.id === id)?.label || id}
-                          </span>
-                        ))} */}
-                        {/* {selectedFilters.pgCourseGid?.map((id: string) => (
-                          <span key={`pg-${id}`} className="bg-indigo-500/10 text-indigo-400 text-xs px-2 py-1 rounded border border-indigo-500/30">
-                            {filters.pgCourseGid?.find((o: any) => o.id === id)?.label || id}
-                          </span>
-                        ))} */}
-                        {selectedFilters.business_size?.map((id: string) => (
-                          <span key={`biz-${id}`} className="bg-emerald-500/10 text-emerald-400 text-xs px-2 py-1 rounded border border-emerald-500/30">
-                            {filters.business_size?.find((o: any) => o.id === id)?.label || id}
-                          </span>
-                        ))}
-                        {selectedFilters.employement?.map((id: string) => (
-                          <span key={`emp-${id}`} className="bg-rose-500/10 text-rose-400 text-xs px-2 py-1 rounded border border-rose-500/30">
-                            {filters.employement?.find((o: any) => o.id === id)?.label || id}
-                          </span>
-                        ))}
-                        {selectedFilters.topGroupId?.map((id: string) => (
-                          <span key={`top-${id}`} className="bg-sky-500/10 text-sky-400 text-xs px-2 py-1 rounded border border-sky-500/30">
-                            {filters.topGroupId?.find((o: any) => o.id === id)?.label || id}
-                          </span>
-                        ))}
+                      <div className="flex items-center gap-2 text-gray-500 text-xs">
+                        <IndianRupee className="w-3 h-3" />
+                        <span>Salary Range</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-gray-500 text-xs">
+                        <Home className="w-3 h-3" />
+                        <span>Work Type</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-gray-500 text-xs">
+                        <MapPin className="w-3 h-3" />
+                        <span>City</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-gray-500 text-xs">
+                        <Briefcase className="w-3 h-3" />
+                        <span>Functional Area</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-gray-500 text-xs">
+                        <Building2 className="w-3 h-3" />
+                        <span>Industry</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-gray-500 text-xs">
+                        <Briefcase className="w-3 h-3" />
+                        <span>Role Category</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-gray-500 text-xs">
+                        <GraduationCap className="w-3 h-3" />
+                        <span>UG Qualification</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-gray-500 text-xs">
+                        <GraduationCap className="w-3 h-3" />
+                        <span>PG Qualification</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-gray-500 text-xs">
+                        <Building2 className="w-3 h-3" />
+                        <span>Company Type</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-gray-500 text-xs">
+                        <Briefcase className="w-3 h-3" />
+                        <span>Employment Type</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-gray-500 text-xs">
+                        <Building2 className="w-3 h-3" />
+                        <span>Top Companies</span>
                       </div>
                     </div>
-                  )}
+                  </div>
                 </div>
 
                 {/* Save Button with Completion Check */}
@@ -2400,12 +2159,6 @@ const Dashboard: React.FC = () => {
                 >
                   <Filter className="w-4 h-4" /> {showFilters ? 'Hide' : 'Show'} Filters
                 </button>
-                <button
-                  onClick={downloadReport}
-                  className="bg-dark-800 border border-neon-blue/30 text-neon-blue px-4 py-2 rounded-lg hover:bg-neon-blue/10 flex items-center gap-2 text-sm transition-all"
-                >
-                  <Download className="w-4 h-4" /> Download XLSX
-                </button>
               </div>
             </div>
 
@@ -2449,6 +2202,20 @@ const Dashboard: React.FC = () => {
                       <option value="Direct Apply">Direct Apply</option>
                       <option value="External Apply">External Apply</option>
                       <option value="No Apply Button">No Apply Button</option>
+                    </select>
+                  </div>
+
+                  {/* Application Status */}
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-2">Application Status</label>
+                    <select
+                      value={historyFilters.applicationStatus}
+                      onChange={(e) => handleFilterChange('applicationStatus', e.target.value)}
+                      className="w-full bg-dark-900 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:border-neon-blue focus:outline-none"
+                    >
+                      <option value="">All</option>
+                      <option value="Applied">Applied</option>
+                      <option value="Skipped">Skipped</option>
                     </select>
                   </div>
 
@@ -2630,6 +2397,7 @@ const Dashboard: React.FC = () => {
                           <th className="px-4 py-3 text-center font-semibold">Score</th>
                           <th className="px-4 py-3 font-semibold">Status</th>
                           <th className="px-4 py-3 font-semibold">Apply Type</th>
+                          <th className="px-4 py-3 font-semibold text-center">App Status</th>
                           <th className="px-4 py-3 font-semibold">Actions</th>
                         </tr>
                       </thead>
@@ -2701,6 +2469,19 @@ const Dashboard: React.FC = () => {
                               }`}>
                                 {record.applyType}
                               </span>
+                            </td>
+                            <td className="px-4 py-3 text-sm text-center">
+                              {record.applicationStatus ? (
+                                <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                                  record.applicationStatus === 'Applied'
+                                    ? 'bg-green-900/30 text-green-400 border border-green-500/50'
+                                    : 'bg-yellow-900/30 text-yellow-400 border border-yellow-500/50'
+                                }`}>
+                                  {record.applicationStatus}
+                                </span>
+                              ) : (
+                                <span className="text-gray-500 text-xs">N/A</span>
+                              )}
                             </td>
                             <td className="px-4 py-3 text-sm">
                               <button

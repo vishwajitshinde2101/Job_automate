@@ -140,6 +140,24 @@ function extractExperience(text) {
 }
 
 /**
+ * Format date from YYYY-MM-DD to DD/MM/YYYY
+ * @param {string} dateString - Date in YYYY-MM-DD format
+ * @returns {string} Date in DD/MM/YYYY format
+ */
+function formatDateToDDMMYYYY(dateString) {
+    if (!dateString) return null;
+    try {
+        const date = new Date(dateString);
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = date.getFullYear();
+        return `${day}/${month}/${year}`;
+    } catch (error) {
+        return null;
+    }
+}
+
+/**
  * Generate answer for interview question using OpenAI + Database
  * Fetches dynamic data from user's database profile
  * @param {string} question - Interview question
@@ -173,6 +191,27 @@ export async function getAnswer(question) {
         const location = userAnswersData?.location;
         const yearsOfExperience = userAnswersData?.yearsOfExperience;
         const naukriEmail = userAnswersData?.naukriEmail;
+        const dob = userAnswersData?.dob;
+
+        // STEP 2.5: Check for city residence questions (e.g., "Are you currently residing in Pune?")
+        const residingPattern = /(?:residing|living|staying|located|reside|live|stay)\s+(?:in|at)\s+([a-zA-Z\s]+?)(?:\?|$)/i;
+        const residingMatch = question.match(residingPattern);
+
+        if (residingMatch) {
+            const askedCity = residingMatch[1].trim().toLowerCase();
+            if (!location || location.trim() === '') {
+                return ''; // No location data available
+            }
+            const storedLocation = location.toLowerCase();
+            // Check if stored location contains the asked city
+            if (storedLocation.includes(askedCity) || askedCity.includes(storedLocation)) {
+                console.log(`✓ Question: "${question}" → "Yes" (city match)`);
+                return 'Yes';
+            } else {
+                console.log(`✓ Question: "${question}" → "No" (city mismatch)`);
+                return 'No';
+            }
+        }
 
         // STEP 3: Predefined answers for common questions (using dynamic DB values)
         const commonAnswers = {
@@ -183,13 +222,30 @@ export async function getAnswer(question) {
             email: () => naukriEmail,
             phone: () => 'Will be shared during interview',
 
+            // Date of Birth
+            dob: () => dob ? formatDateToDDMMYYYY(dob) : null,
+            dateofbirth: () => dob ? formatDateToDDMMYYYY(dob) : null,
+            birthdate: () => dob ? formatDateToDDMMYYYY(dob) : null,
+            birthday: () => dob ? formatDateToDDMMYYYY(dob) : null,
+            age: () => {
+                if (!dob) return null;
+                const birthDate = new Date(dob);
+                const today = new Date();
+                let age = today.getFullYear() - birthDate.getFullYear();
+                const monthDiff = today.getMonth() - birthDate.getMonth();
+                if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+                    age--;
+                }
+                return `${age} years`;
+            },
+
             // Experience
             experience: () => `${yearsOfExperience} years`,
             totalExperience: () => `${yearsOfExperience} years`,
 
             // Location
-            location: () => `${location}, India`,
-            city: () => location,
+            location: () => location ? `${location}, India` : '',
+            city: () => location || '',
             state: () => 'Maharashtra',
             country: () => 'India',
 
@@ -205,12 +261,12 @@ export async function getAnswer(question) {
             },
 
             // Salary
-            currentSalary: () => `${currentCTC} LPA`,
-            salary: () => `${currentCTC} LPA`,
-            currentctc: () => `${currentCTC} LPA`,
+            currentSalary: () => currentCTC ? `${currentCTC} LPA` : '',
+            salary: () => currentCTC ? `${currentCTC} LPA` : '',
+            currentctc: () => currentCTC ? `${currentCTC} LPA` : '',
 
-            expectedSalary: () => `${expectedCTC} LPA`,
-            expectedctc: () => `${expectedCTC} LPA`,
+            expectedSalary: () => expectedCTC ? `${expectedCTC} LPA` : '',
+            expectedctc: () => expectedCTC ? `${expectedCTC} LPA` : '',
 
             // Interview
             faceToFace: () => userAnswersData?.availability || 'Not available currently',
