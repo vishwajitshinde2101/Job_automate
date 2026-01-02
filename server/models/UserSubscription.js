@@ -10,12 +10,12 @@ import Plan from './Plan.js';
 
 const UserSubscription = sequelize.define('UserSubscription', {
     id: {
-        type: DataTypes.UUID,
-        defaultValue: DataTypes.UUIDV4,
+        type: DataTypes.INTEGER,
+        autoIncrement: true,
         primaryKey: true,
     },
     userId: {
-        type: DataTypes.UUID,
+        type: DataTypes.STRING(36),
         allowNull: false,
         references: {
             model: User,
@@ -23,7 +23,7 @@ const UserSubscription = sequelize.define('UserSubscription', {
         },
     },
     planId: {
-        type: DataTypes.UUID,
+        type: DataTypes.INTEGER,
         allowNull: false,
         references: {
             model: Plan,
@@ -59,7 +59,7 @@ const UserSubscription = sequelize.define('UserSubscription', {
         defaultValue: 'pending',
     },
 }, {
-    tableName: 'user_subscriptions',
+    tableName: 'user_plans',
     timestamps: true,
     underscored: true,
 });

@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Shield, BarChart, Users, CreditCard, LogOut, Settings, DollarSign } from 'lucide-react';
+import { Shield, BarChart, Users, CreditCard, LogOut, DollarSign } from 'lucide-react';
 import AdminOverview from './AdminOverview';
 import AdminUsers from './AdminUsers';
 import AdminPlans from './AdminPlans';
 import AdminMoneyManagement from './AdminMoneyManagement';
 
-type TabType = 'overview' | 'users' | 'plans' | 'money' | 'settings';
+type TabType = 'overview' | 'users' | 'plans' | 'money';
 
 const AdminDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabType>('overview');
@@ -17,7 +17,6 @@ const AdminDashboard: React.FC = () => {
     { id: 'users' as TabType, label: 'User Management', icon: Users },
     { id: 'plans' as TabType, label: 'Plan Management', icon: CreditCard },
     { id: 'money' as TabType, label: 'Money Management', icon: DollarSign },
-    { id: 'settings' as TabType, label: 'Settings', icon: Settings },
   ];
 
   const handleLogout = () => {
@@ -95,17 +94,6 @@ const AdminDashboard: React.FC = () => {
         {activeTab === 'users' && <AdminUsers />}
         {activeTab === 'plans' && <AdminPlans />}
         {activeTab === 'money' && <AdminMoneyManagement />}
-        {activeTab === 'settings' && (
-          <div className="p-8">
-            <div className="bg-dark-800 border border-white/10 rounded-lg p-12 text-center">
-              <Settings className="w-16 h-16 text-gray-500 mx-auto mb-4" />
-              <h2 className="text-2xl font-bold text-white mb-2">Settings</h2>
-              <p className="text-gray-400">
-                System settings and configurations will be available here.
-              </p>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );

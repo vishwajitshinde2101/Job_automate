@@ -11,9 +11,9 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const DB_NAME = process.env.DB_NAME || 'jobautomate';
-const DB_USER = process.env.DB_USER || 'root';
-const DB_PASSWORD = process.env.DB_PASSWORD || 'root';
-const DB_HOST = process.env.DB_HOST || 'localhost';
+const DB_USER = process.env.DB_USER || 'admin';
+const DB_PASSWORD = process.env.DB_PASSWORD || 'YsjlUaX5yFJGtZqjmrSj';
+const DB_HOST = process.env.DB_HOST || 'database-1.c72i2s6muax7.ap-south-1.rds.amazonaws.com';
 const DB_PORT = process.env.DB_PORT || 3306;
 
 const sequelize = new Sequelize(
@@ -85,9 +85,9 @@ export const initDatabase = async () => {
         console.log('✅ MySQL Connection established successfully');
 
         // Note: Using migrations instead of auto-sync for production safety
-        // Only sync without altering existing tables
-        await sequelize.sync({ alter: false });
-        console.log('✅ Database connection verified');
+        // Skip sync since we manage schema through migrations
+        // await sequelize.sync({ alter: false });
+        console.log('✅ Database connection verified (using migrations for schema management)');
 
         return sequelize;
     } catch (error) {

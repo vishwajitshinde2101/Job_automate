@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Plus, Edit2, Trash2, Check, X, Crown, Clock, RefreshCw } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 interface PlanFeature {
   id: string;
@@ -42,6 +43,7 @@ const AdminPlans: React.FC = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingPlan, setEditingPlan] = useState<Plan | null>(null);
   const [newFeature, setNewFeature] = useState('');
+  const [isUpdating, setIsUpdating] = useState(false);
 
   const [formData, setFormData] = useState<PlanFormData>({
     name: '',
@@ -154,19 +156,21 @@ const AdminPlans: React.FC = () => {
   const createPlan = async () => {
     // Validation
     if (!formData.name || !formData.description) {
-      alert('Please fill in all required fields (Name, Description)');
+      toast.error('Please fill in all required fields (Name, Description)');
       return;
     }
 
     if (formData.price < 0) {
-      alert('Price cannot be negative');
+      toast.error('Price cannot be negative');
       return;
     }
 
     if (formData.durationDays <= 0) {
-      alert('Duration must be greater than 0');
+      toast.error('Duration must be greater than 0');
       return;
     }
+
+    const loadingToast = toast.loading('Creating plan...');
 
     try {
       const token = localStorage.getItem('adminToken');
@@ -179,18 +183,19 @@ const AdminPlans: React.FC = () => {
         body: JSON.stringify(formData),
       });
 
+      const data = await response.json();
+
       if (response.ok) {
-        alert('Plan created successfully!');
+        toast.success('Plan created successfully!', { id: loadingToast });
         setShowCreateModal(false);
         resetForm();
         fetchPlans();
       } else {
-        const error = await response.json();
-        alert(`Failed to create plan: ${error.message || 'Unknown error'}`);
+        toast.error(data.error || 'Failed to create plan', { id: loadingToast });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to create plan:', error);
-      alert('Failed to create plan');
+      toast.error(error.message || 'Network error', { id: loadingToast });
     }
   };
 
@@ -198,44 +203,56 @@ const AdminPlans: React.FC = () => {
     if (!editingPlan) return;
 
     // Validation
-    if (!formData.name || !formData.description) {
-      alert('Please fill in all required fields (Name, Description)');
+    if (!formData.name.trim()) {
+      toast.error('Plan name is required');
       return;
     }
-
+    if (!formData.description.trim()) {
+      toast.error('Description is required');
+      return;
+    }
     if (formData.price < 0) {
-      alert('Price cannot be negative');
+      toast.error('Price cannot be negative');
+      return;
+    }
+    if (formData.durationDays <= 0) {
+      toast.error('Duration must be greater than 0 days');
+      return;
+    }
+    if (formData.features.some(f => !f.trim())) {
+      toast.error('Features cannot be empty');
       return;
     }
 
-    if (formData.durationDays <= 0) {
-      alert('Duration must be greater than 0');
-      return;
-    }
+    setIsUpdating(true);
+    const loadingToast = toast.loading('Updating plan...');
 
     try {
       const token = localStorage.getItem('adminToken');
       const response = await fetch(`http://localhost:5000/api/admin/plans/${editingPlan.id}`, {
         method: 'PUT',
         headers: {
-          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify(formData),
       });
 
+      const data = await response.json();
+
       if (response.ok) {
-        alert('Plan updated successfully!');
+        toast.success('Plan updated successfully!', { id: loadingToast });
         setShowEditModal(false);
         resetForm();
-        fetchPlans();
+        await fetchPlans();
       } else {
-        const error = await response.json();
-        alert(`Failed to update plan: ${error.message || 'Unknown error'}`);
+        toast.error(data.error || 'Failed to update plan', { id: loadingToast });
       }
-    } catch (error) {
-      console.error('Failed to update plan:', error);
-      alert('Failed to update plan');
+    } catch (error: any) {
+      console.error('Update plan error:', error);
+      toast.error(error.message || 'Network error', { id: loadingToast });
+    } finally {
+      setIsUpdating(false);
     }
   };
 
@@ -260,27 +277,30 @@ const AdminPlans: React.FC = () => {
   };
 
   const deletePlan = async (planId: string, planName: string) => {
-    if (!confirm(`Are you sure you want to delete "${planName}"? This action cannot be undone.`)) return;
+    if (!confirm(`Are you sure you want to delete "${planName}"? This action cannot be undone.`)) {
+      return;
+    }
+
+    const loadingToast = toast.loading('Deleting plan...');
 
     try {
       const token = localStorage.getItem('adminToken');
       const response = await fetch(`http://localhost:5000/api/admin/plans/${planId}`, {
         method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
+        headers: { 'Authorization': `Bearer ${token}` },
       });
 
+      const data = await response.json();
+
       if (response.ok) {
-        alert('Plan deleted successfully!');
-        fetchPlans();
+        toast.success('Plan deleted successfully', { id: loadingToast });
+        await fetchPlans();
       } else {
-        const data = await response.json();
-        alert(data.message || 'Failed to delete plan');
+        toast.error(data.error || 'Failed to delete plan', { id: loadingToast });
       }
-    } catch (error) {
-      console.error('Failed to delete plan:', error);
-      alert('Failed to delete plan');
+    } catch (error: any) {
+      console.error('Delete plan error:', error);
+      toast.error(error.message || 'Network error', { id: loadingToast });
     }
   };
 
@@ -786,18 +806,37 @@ const AdminPlans: React.FC = () => {
             <div className="flex gap-3 mt-6 pt-4 border-t border-white/10">
               <button
                 onClick={() => {
-                  setShowEditModal(false);
-                  resetForm();
+                  if (!isUpdating) {
+                    setShowEditModal(false);
+                    resetForm();
+                  }
                 }}
-                className="flex-1 px-4 py-2 bg-gray-500/10 text-gray-400 rounded-lg hover:bg-gray-500/20 transition-all"
+                disabled={isUpdating}
+                className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors ${
+                  isUpdating
+                    ? 'bg-gray-600 cursor-not-allowed text-gray-400'
+                    : 'bg-gray-700 text-white hover:bg-gray-600'
+                }`}
               >
                 Cancel
               </button>
               <button
                 onClick={updatePlan}
-                className="flex-1 px-4 py-2 bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600 rounded-lg text-white font-medium transition-all"
+                disabled={isUpdating}
+                className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors ${
+                  isUpdating
+                    ? 'bg-gray-400 cursor-not-allowed'
+                    : 'bg-gradient-to-r from-red-500 to-orange-500 text-white hover:from-red-600 hover:to-orange-600'
+                }`}
               >
-                Save Changes
+                {isUpdating ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    Saving...
+                  </span>
+                ) : (
+                  'Save Changes'
+                )}
               </button>
             </div>
           </div>

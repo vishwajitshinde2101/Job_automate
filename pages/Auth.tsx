@@ -26,15 +26,20 @@ const Auth: React.FC<AuthProps> = ({ type }) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    setLoading(true);
 
     try {
       const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
 
       if (type === 'signup') {
         // NEW FLOW: Don't create account yet, go to plan selection first
+        // Trim all fields
+        const trimmedFirstName = formData.firstName?.trim() || '';
+        const trimmedLastName = formData.lastName?.trim() || '';
+        const trimmedEmail = formData.email?.trim() || '';
+        const trimmedPassword = formData.password?.trim() || '';
+
         // Validate signup data
-        if (!formData.firstName || !formData.lastName || !formData.email || !formData.password) {
+        if (!trimmedFirstName || !trimmedLastName || !trimmedEmail || !trimmedPassword) {
           throw new Error('Please fill in all fields');
         }
 
@@ -44,40 +49,60 @@ const Auth: React.FC<AuthProps> = ({ type }) => {
 
         // Check if email format is valid
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(formData.email)) {
+        if (!emailRegex.test(trimmedEmail)) {
           throw new Error('Please enter a valid email address');
         }
 
         // Check password strength
-        if (formData.password.length < 6) {
+        if (trimmedPassword.length < 6) {
           throw new Error('Password must be at least 6 characters long');
         }
 
         console.log('[Signup] Form validated, proceeding to plan selection');
         setLoading(false);
 
-        // Navigate to pricing page with signup data
+        // Navigate to pricing page with signup data (trimmed values)
         // Account will be created AFTER successful payment
         navigate('/pricing', {
           replace: true,
           state: {
             fromSignup: true,
             signupData: {
-              firstName: formData.firstName,
-              lastName: formData.lastName,
-              email: formData.email,
-              password: formData.password,
+              firstName: trimmedFirstName,
+              lastName: trimmedLastName,
+              email: trimmedEmail,
+              password: trimmedPassword,
             }
           }
         });
       } else {
-        // Call Login API
+        // LOGIN FLOW: Trim and validate before API call
+        const trimmedEmail = formData.email?.trim() || '';
+        const trimmedPassword = formData.password?.trim() || '';
+
+        if (!trimmedEmail) {
+          throw new Error('Email is required');
+        }
+
+        if (!trimmedPassword) {
+          throw new Error('Password is required');
+        }
+
+        // Email format validation
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(trimmedEmail)) {
+          throw new Error('Please enter a valid email address');
+        }
+
+        setLoading(true);
+
+        // Call Login API with trimmed values
         const response = await fetch(`${API_BASE_URL}/auth/login`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            email: formData.email,
-            password: formData.password,
+            email: trimmedEmail,
+            password: trimmedPassword,
           }),
         });
 

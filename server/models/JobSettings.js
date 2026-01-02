@@ -124,6 +124,47 @@ const JobSettings = sequelize.define('JobSettings', {
         defaultValue: 'pending',
         allowNull: true,
     },
+    // Profile Update Scheduler
+    profileUpdateEnabled: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false,
+        allowNull: true,
+        field: 'profile_update_enabled',
+        comment: 'Is auto profile update enabled',
+    },
+    profileUpdateFrequency: {
+        type: DataTypes.INTEGER,
+        defaultValue: 1,
+        allowNull: true,
+        field: 'profile_update_frequency',
+        comment: 'Update frequency in days',
+    },
+    profileUpdateScheduleTime: {
+        type: DataTypes.TIME,
+        defaultValue: '09:00:00',
+        allowNull: true,
+        field: 'profile_update_schedule_time',
+        comment: 'Time of day to run the update (HH:MM:SS)',
+    },
+    profileUpdateNextRun: {
+        type: DataTypes.DATE,
+        allowNull: true,
+        field: 'profile_update_next_run',
+        comment: 'Next scheduled profile update time',
+    },
+    profileUpdateLastStatus: {
+        type: DataTypes.STRING(50),
+        defaultValue: 'idle',
+        allowNull: true,
+        field: 'profile_update_last_status',
+        comment: 'Last update status: idle, success, failed, scheduled',
+    },
+    lastProfileUpdate: {
+        type: DataTypes.DATE,
+        allowNull: true,
+        field: 'last_profile_update',
+        comment: 'Timestamp of last Naukri profile update',
+    },
     // Timestamps
     createdAt: {
         type: DataTypes.DATE,

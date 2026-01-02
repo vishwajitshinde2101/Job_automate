@@ -183,13 +183,43 @@ router.post('/', authenticateToken, async (req, res) => {
             dob,
         } = req.body;
 
+        // Validate that provided fields are non-empty
+        const fieldLabels = {
+            naukriEmail: 'Naukri Email',
+            naukriPassword: 'Naukri Password',
+            targetRole: 'Target Role',
+            location: 'Preferred Location',
+            currentCTC: 'Current Salary',
+            expectedCTC: 'Expected Salary',
+            noticePeriod: 'Notice Period',
+            searchKeywords: 'Keywords',
+            availability: 'Availability',
+            dob: 'Date of Birth',
+        };
+
+        // Check each provided field for empty values
+        for (const [field, label] of Object.entries(fieldLabels)) {
+            const value = req.body[field];
+            // Only validate if field is provided
+            if (value !== undefined && value !== null) {
+                if (typeof value === 'string' && value.trim() === '') {
+                    return res.status(400).json({
+                        error: `${label} cannot be empty`,
+                        field: field,
+                        message: 'Please provide a valid value'
+                    });
+                }
+            }
+        }
+
         // Validate yearsOfExperience if provided
-        if (yearsOfExperience !== undefined) {
+        if (yearsOfExperience !== undefined && yearsOfExperience !== null) {
             const experience = parseInt(yearsOfExperience);
             if (isNaN(experience) || experience < 0 || experience > 50 || !Number.isInteger(parseFloat(yearsOfExperience))) {
                 return res.status(400).json({
                     error: 'Invalid years of experience',
-                    message: 'Years of experience must be a positive integer between 0 and 50'
+                    message: 'Years of experience must be a positive integer between 0 and 50',
+                    field: 'yearsOfExperience'
                 });
             }
         }

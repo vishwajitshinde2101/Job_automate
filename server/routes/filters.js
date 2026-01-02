@@ -94,6 +94,7 @@ router.get('/user', authenticateToken, async (req, res) => {
                 topGroupId: userFilters.topGroupId || '',
                 featuredCompanies: userFilters.featuredCompanies || '',
                 finalUrl: userFilters.finalUrl || '',
+                selectedFilters: userFilters.selectedFilters || null,
             },
         });
     } catch (error) {
@@ -126,7 +127,12 @@ router.post('/user', authenticateToken, async (req, res) => {
             topGroupId,
             featuredCompanies,
             finalUrl,
+            selectedFilters,
         } = req.body;
+
+        console.log('[Save Filters] Request received for userId:', req.userId);
+        console.log('[Save Filters] finalUrl:', finalUrl ? finalUrl.substring(0, 100) + '...' : 'NOT PROVIDED');
+        console.log('[Save Filters] selectedFilters:', selectedFilters ? JSON.stringify(selectedFilters).substring(0, 100) + '...' : 'NOT PROVIDED');
 
         // Upsert - create or update
         const [userFilter, created] = await UserFilter.upsert({
@@ -145,7 +151,11 @@ router.post('/user', authenticateToken, async (req, res) => {
             topGroupId: topGroupId || null,
             featuredCompanies: featuredCompanies || null,
             finalUrl: finalUrl || null,
+            selectedFilters: selectedFilters || null,
         });
+
+        console.log(`[Save Filters] ${created ? 'Created' : 'Updated'} successfully`);
+        console.log('[Save Filters] Saved finalUrl:', userFilter.finalUrl ? 'YES (' + userFilter.finalUrl.substring(0, 50) + '...)' : 'NO');
 
         res.json({
             success: true,
@@ -153,7 +163,8 @@ router.post('/user', authenticateToken, async (req, res) => {
             data: userFilter,
         });
     } catch (error) {
-        console.error('Error saving user filters:', error);
+        console.error('[Save Filters] ❌ Error saving user filters:', error.message);
+        console.error('[Save Filters] Error stack:', error.stack);
         res.status(500).json({
             success: false,
             error: error.message,

@@ -188,23 +188,69 @@ router.get('/stats', authenticateToken, async (req, res) => {
             ? Math.round((goodMatches / results.length) * 100)
             : 0;
 
+        // Application status breakdown
+        const applied = results.filter(r => r.applicationStatus === 'Applied').length;
+        const skipped = results.filter(r => r.applicationStatus === 'Skipped').length;
+
+        // Apply type breakdown (for applied only)
+        const appliedResults = results.filter(r => r.applicationStatus === 'Applied');
+        const directApplyCount = appliedResults.filter(r => r.applyType === 'Direct Apply').length;
+        const externalApplyCount = appliedResults.filter(r => r.applyType === 'External Apply').length;
+
+        // Calculate daily application trend (last 7 days)
+        const dailyTrend = [];
+        for (let i = 6; i >= 0; i--) {
+            const date = new Date();
+            date.setDate(date.getDate() - i);
+            date.setHours(0, 0, 0, 0);
+
+            const nextDate = new Date(date);
+            nextDate.setDate(nextDate.getDate() + 1);
+
+            const dayResults = results.filter(r => {
+                const rDate = new Date(r.datetime);
+                return rDate >= date && rDate < nextDate;
+            });
+
+            dailyTrend.push({
+                date: date.toISOString().split('T')[0],
+                total: dayResults.length,
+                applied: dayResults.filter(r => r.applicationStatus === 'Applied').length,
+                skipped: dayResults.filter(r => r.applicationStatus === 'Skipped').length,
+            });
+        }
+
         const stats = {
+            // Overall stats
             totalApplications: results.length,
             todayApplications: todayResults.length,
+
+            // Application status breakdown
+            applied: applied,
+            skipped: skipped,
+
+            // Apply type breakdown (for applied applications)
+            directApply: directApplyCount,
+            externalApply: externalApplyCount,
+            noApplyButton: results.filter(r => r.applyType === 'No Apply Button').length,
+
+            // Match quality
             successRate: successRate,
             goodMatches: goodMatches,
             poorMatches: results.filter(r => r.matchStatus === 'Poor Match').length,
-            directApply: results.filter(r => r.applyType === 'Direct Apply').length,
-            externalApply: results.filter(r => r.applyType === 'External Apply').length,
-            noApplyButton: results.filter(r => r.applyType === 'No Apply Button').length,
             avgMatchScore:
                 results.length > 0
                     ? (results.reduce((sum, r) => sum + r.matchScore, 0) / results.length).toFixed(2)
                     : 0,
+
+            // Match criteria counts
             earlyApplicantCount: results.filter(r => r.earlyApplicant).length,
             keySkillsMatchCount: results.filter(r => r.keySkillsMatch).length,
             locationMatchCount: results.filter(r => r.locationMatch).length,
             experienceMatchCount: results.filter(r => r.experienceMatch).length,
+
+            // Trend data
+            dailyTrend: dailyTrend,
         };
 
         res.json(stats);

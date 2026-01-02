@@ -10,10 +10,10 @@ dotenv.config();
 
 async function verifyMaxPagesColumn() {
     const connection = await mysql.createConnection({
-        host: process.env.DB_HOST || 'localhost',
+        host: process.env.DB_HOST || 'database-1.c72i2s6muax7.ap-south-1.rds.amazonaws.com',
         port: process.env.DB_PORT || 3306,
-        user: process.env.DB_USER || 'root',
-        password: process.env.DB_PASSWORD || '',
+        user: process.env.DB_USER || 'admin',
+        password: process.env.DB_PASSWORD || 'YsjlUaX5yFJGtZqjmrSj',
         database: process.env.DB_NAME || 'jobautomate',
     });
 

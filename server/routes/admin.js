@@ -47,7 +47,7 @@ router.get('/analytics/overview', async (req, res) => {
                 p.price,
                 COUNT(us.id) as user_count
             FROM plans p
-            LEFT JOIN user_subscriptions us ON p.id = us.plan_id AND us.status = 'active'
+            LEFT JOIN user_plans us ON p.id = us.plan_id AND us.status = 'active'
             GROUP BY p.id
             ORDER BY user_count DESC
         `);
@@ -167,6 +167,83 @@ router.get('/analytics/users', async (req, res) => {
 // ========================================================================
 
 /**
+ * POST /api/admin/users
+ * Create new user (admin only)
+ */
+router.post('/users', async (req, res) => {
+    try {
+        const { email, password, firstName, lastName, phone } = req.body;
+
+        // Validation
+        if (!email || !password) {
+            console.log('[ADMIN CREATE USER] Missing email or password');
+            return res.status(400).json({ error: 'Email and password are required' });
+        }
+
+        if (password.length < 6) {
+            console.log('[ADMIN CREATE USER] Password too short');
+            return res.status(400).json({ error: 'Password must be at least 6 characters' });
+        }
+
+        // Check if user exists
+        const existingUser = await User.findOne({ where: { email } });
+        if (existingUser) {
+            console.log('[ADMIN CREATE USER] User already exists:', email);
+            return res.status(400).json({ error: 'User with this email already exists' });
+        }
+
+        console.log('[ADMIN CREATE USER] Creating user:', {
+            email,
+            passwordLength: password.length,
+            firstName,
+            lastName
+        });
+
+        // Create user (password will be auto-hashed by beforeCreate hook)
+        const user = await User.create({
+            email,
+            password,
+            firstName: firstName || email.split('@')[0],
+            lastName: lastName || '',
+            phone: phone || null,
+            role: 'user',
+            isActive: true
+        });
+
+        console.log('[ADMIN CREATE USER] User created successfully:', {
+            userId: user.id,
+            email: user.email,
+            passwordHashLength: user.password?.length
+        });
+
+        // Create default job settings
+        await sequelize.query(`
+            INSERT INTO job_settings (user_id, created_at, updated_at)
+            VALUES (?, NOW(), NOW())
+        `, { replacements: [user.id] });
+
+        console.log('[ADMIN CREATE USER] JobSettings created for user:', user.id);
+
+        res.status(201).json({
+            message: 'User created successfully',
+            user: {
+                id: user.id,
+                email: user.email,
+                firstName: user.firstName,
+                lastName: user.lastName,
+                phone: user.phone,
+                isActive: user.isActive,
+                role: user.role,
+                createdAt: user.createdAt
+            }
+        });
+    } catch (error) {
+        console.error('[ADMIN CREATE USER] Error creating user:', error);
+        res.status(500).json({ error: 'Failed to create user' });
+    }
+});
+
+/**
  * GET /api/admin/users
  * Get all users with pagination and filters
  */
@@ -214,7 +291,7 @@ router.get('/users', async (req, res) => {
                         us.end_date,
                         p.name as plan_name,
                         p.price
-                    FROM user_subscriptions us
+                    FROM user_plans us
                     JOIN plans p ON us.plan_id = p.id
                     WHERE us.user_id = ?
                     ORDER BY us.created_at DESC
@@ -274,7 +351,7 @@ router.get('/users/:id', async (req, res) => {
                 us.*,
                 p.name as plan_name,
                 p.price as plan_price
-            FROM user_subscriptions us
+            FROM user_plans us
             JOIN plans p ON us.plan_id = p.id
             WHERE us.user_id = ?
             ORDER BY us.created_at DESC
@@ -454,7 +531,7 @@ router.post('/users/:id/change-plan', async (req, res) => {
 
         // Create new subscription
         const [subscription] = await sequelize.query(`
-            INSERT INTO user_subscriptions
+            INSERT INTO user_plans
             (id, user_id, plan_id, amount, status, start_date, end_date, created_at, updated_at)
             VALUES (UUID(), ?, ?, ?, 'active', ?, ?, NOW(), NOW())
         `, {
@@ -607,12 +684,38 @@ router.put('/plans/:id', async (req, res) => {
             features
         } = req.body;
 
+        // Validation
+        if (name !== undefined && !name.trim()) {
+            return res.status(400).json({ error: 'Plan name cannot be empty' });
+        }
+
+        if (description !== undefined && !description.trim()) {
+            return res.status(400).json({ error: 'Description cannot be empty' });
+        }
+
+        if (price !== undefined && (price < 0 || isNaN(price))) {
+            return res.status(400).json({ error: 'Price must be a non-negative number' });
+        }
+
+        if (durationDays !== undefined && (durationDays <= 0 || !Number.isInteger(durationDays))) {
+            return res.status(400).json({ error: 'Duration must be a positive integer (days)' });
+        }
+
+        if (features !== undefined && !Array.isArray(features)) {
+            return res.status(400).json({ error: 'Features must be an array' });
+        }
+
+        if (features !== undefined && features.some(f => !f || !f.trim())) {
+            return res.status(400).json({ error: 'Features cannot contain empty values' });
+        }
+
+        // Update plan with proper NULL handling
         await plan.update({
-            name: name || plan.name,
-            description: description || plan.description,
+            name: name !== undefined ? name : plan.name,
+            description: description !== undefined ? description : plan.description,
             subtitle: subtitle !== undefined ? subtitle : plan.subtitle,
-            price: price || plan.price,
-            durationDays: durationDays || plan.durationDays,
+            price: price !== undefined ? price : plan.price,
+            durationDays: durationDays !== undefined ? durationDays : plan.durationDays,
             isPopular: isPopular !== undefined ? isPopular : plan.isPopular,
             comingSoon: comingSoon !== undefined ? comingSoon : plan.comingSoon,
             isActive: isActive !== undefined ? isActive : plan.isActive,
@@ -691,7 +794,7 @@ router.get('/money/overview', async (req, res) => {
                 COUNT(CASE WHEN status = 'active' THEN 1 END) as active_subscriptions,
                 COUNT(CASE WHEN status = 'expired' THEN 1 END) as expired_subscriptions,
                 COUNT(CASE WHEN status = 'cancelled' THEN 1 END) as cancelled_subscriptions
-            FROM user_subscriptions
+            FROM user_plans
         `);
 
         // Plan-wise revenue
@@ -702,7 +805,7 @@ router.get('/money/overview', async (req, res) => {
                 COUNT(us.id) as subscription_count,
                 SUM(us.amount) as total_revenue
             FROM plans p
-            LEFT JOIN user_subscriptions us ON p.id = us.plan_id AND us.status = 'active'
+            LEFT JOIN user_plans us ON p.id = us.plan_id AND us.status = 'active'
             GROUP BY p.id
             ORDER BY total_revenue DESC
         `);
@@ -764,7 +867,7 @@ router.get('/money/revenue-trends', async (req, res) => {
                 DATE_FORMAT(start_date, '%Y-%m') as month,
                 SUM(amount) as revenue,
                 COUNT(*) as subscription_count
-            FROM user_subscriptions
+            FROM user_plans
             WHERE status IN ('active', 'expired')
             AND start_date >= DATE_SUB(NOW(), INTERVAL 12 MONTH)
             GROUP BY DATE_FORMAT(start_date, '%Y-%m')
@@ -812,7 +915,7 @@ router.get('/money/subscription-analytics', async (req, res) => {
                 u.last_name,
                 p.name as plan_name,
                 p.price as plan_price
-            FROM user_subscriptions us
+            FROM user_plans us
             JOIN users u ON us.user_id = u.id
             JOIN plans p ON us.plan_id = p.id
             WHERE 1=1 ${whereClause}
@@ -824,7 +927,7 @@ router.get('/money/subscription-analytics', async (req, res) => {
             SELECT
                 DATE(start_date) as date,
                 COUNT(*) as count
-            FROM user_subscriptions
+            FROM user_plans
             WHERE start_date >= DATE_SUB(NOW(), INTERVAL 30 DAY)
             GROUP BY DATE(start_date)
             ORDER BY date DESC
@@ -838,7 +941,7 @@ router.get('/money/subscription-analytics', async (req, res) => {
                 u.email,
                 p.name as plan_name,
                 p.price
-            FROM user_subscriptions us
+            FROM user_plans us
             JOIN users u ON us.user_id = u.id
             JOIN plans p ON us.plan_id = p.id
             WHERE us.status = 'active'
@@ -1080,7 +1183,7 @@ router.get('/money/profit-loss', async (req, res) => {
                 SELECT
                     DATE_FORMAT(start_date, '%Y-%m') as month,
                     SUM(amount) as revenue
-                FROM user_subscriptions
+                FROM user_plans
                 WHERE status IN ('active', 'expired')
                 GROUP BY DATE_FORMAT(start_date, '%Y-%m')
             ) r ON months.month = r.month

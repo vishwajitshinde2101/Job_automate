@@ -65,14 +65,18 @@ const User = sequelize.define('User', {
     hooks: {
         beforeCreate: async (user) => {
             if (user.password) {
+                console.log('[USER MODEL] beforeCreate: Hashing password for:', user.email);
                 const salt = await bcrypt.genSalt(10);
                 user.password = await bcrypt.hash(user.password, salt);
+                console.log('[USER MODEL] beforeCreate: Password hashed. Hash length:', user.password.length);
             }
         },
         beforeUpdate: async (user) => {
             if (user.changed('password')) {
+                console.log('[USER MODEL] beforeUpdate: Hashing password for:', user.email);
                 const salt = await bcrypt.genSalt(10);
                 user.password = await bcrypt.hash(user.password, salt);
+                console.log('[USER MODEL] beforeUpdate: Password hashed. Hash length:', user.password.length);
             }
         },
     },
@@ -82,7 +86,14 @@ const User = sequelize.define('User', {
  * Compare password with hashed password
  */
 User.prototype.comparePassword = async function (plainPassword) {
-    return await bcrypt.compare(plainPassword, this.password);
+    console.log('[USER MODEL] comparePassword: Comparing for user:', this.email);
+    console.log('[USER MODEL] comparePassword: Plain password length:', plainPassword?.length);
+    console.log('[USER MODEL] comparePassword: Stored hash length:', this.password?.length);
+
+    const result = await bcrypt.compare(plainPassword, this.password);
+
+    console.log('[USER MODEL] comparePassword: Result:', result);
+    return result;
 };
 
 export default User;

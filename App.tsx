@@ -21,6 +21,7 @@ import AdminDashboard from './pages/AdminDashboard';
 import AdminProtectedRoute from './components/AdminProtectedRoute';
 import { AppProvider, useApp } from './context/AppContext';
 import { ThemeProvider } from './context/ThemeContext';
+import { Toaster } from 'react-hot-toast';
 
 // Protected Route Component - redirects to login if not authenticated
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -73,6 +74,28 @@ const AppContent: React.FC = () => {
 
   return (
     <div className="bg-gray-50 dark:bg-dark-900 min-h-screen text-gray-900 dark:text-slate-200 font-sans selection:bg-neon-blue selection:text-black flex flex-col transition-colors duration-200">
+      <Toaster
+        position="top-right"
+        toastOptions={{
+          duration: 4000,
+          style: {
+            background: '#1f2937',
+            color: '#fff',
+          },
+          success: {
+            iconTheme: {
+              primary: '#10b981',
+              secondary: '#fff',
+            },
+          },
+          error: {
+            iconTheme: {
+              primary: '#ef4444',
+              secondary: '#fff',
+            },
+          },
+        }}
+      />
       {!isAdminRoute && <Navbar />}
       <main className="flex-grow">
         <Routes>

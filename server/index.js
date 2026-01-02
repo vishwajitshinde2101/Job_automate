@@ -23,6 +23,7 @@ import subscriptionRoutes from './routes/subscription.js';
 import plansRoutes from './routes/plans.js';
 import jobResultsRoutes from './routes/jobResults.js';
 import suggestionsRoutes from './routes/suggestions.js';
+import profileUpdateRoutes from './routes/profileUpdate.js';
 import { initScheduler } from './services/schedulerService.js';
 
 // Import models to ensure they're loaded
@@ -107,6 +108,7 @@ app.use('/api/subscription', subscriptionRoutes);
 app.use('/api/plans', plansRoutes);
 app.use('/api/job-results', jobResultsRoutes);
 app.use('/api/suggestions', suggestionsRoutes);
+app.use('/api/profile-update', profileUpdateRoutes);
 
 // ============= ERROR HANDLING =============
 

@@ -19,10 +19,37 @@ const router = express.Router();
  */
 router.post('/signup', async (req, res) => {
     try {
-        const { email, password, firstName, lastName } = req.body;
+        let { email, password, firstName, lastName } = req.body;
 
+        // Validate that email and password exist
         if (!email || !password) {
             return res.status(400).json({ error: 'Email and password are required' });
+        }
+
+        // Trim whitespace
+        email = email.trim();
+        password = password.trim();
+        if (firstName) firstName = firstName.trim();
+        if (lastName) lastName = lastName.trim();
+
+        // Check for empty strings after trimming
+        if (!email || email.length === 0) {
+            return res.status(400).json({ error: 'Email is required' });
+        }
+
+        if (!password || password.length === 0) {
+            return res.status(400).json({ error: 'Password is required' });
+        }
+
+        // Basic email format validation
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            return res.status(400).json({ error: 'Invalid email format' });
+        }
+
+        // Password strength validation (minimum 6 characters)
+        if (password.length < 6) {
+            return res.status(400).json({ error: 'Password must be at least 6 characters long' });
         }
 
         // Check if user exists
@@ -71,7 +98,7 @@ router.post('/signup', async (req, res) => {
  */
 router.post('/signup-with-payment', async (req, res) => {
     try {
-        const {
+        let {
             email,
             password,
             firstName,
@@ -91,12 +118,70 @@ router.post('/signup-with-payment', async (req, res) => {
             paymentId: razorpay_payment_id,
         });
 
-        // Validate required fields
+        // Validate required fields exist
         if (!email || !password || !firstName || !lastName) {
             console.log('[Signup with Payment] Missing user details');
             return res.status(400).json({
                 success: false,
                 error: 'User details are required',
+            });
+        }
+
+        // Trim whitespace
+        email = email.trim();
+        password = password.trim();
+        firstName = firstName.trim();
+        lastName = lastName.trim();
+
+        // Check for empty strings after trimming
+        if (!email || email.length === 0) {
+            console.log('[Signup with Payment] Email is empty');
+            return res.status(400).json({
+                success: false,
+                error: 'Email is required',
+            });
+        }
+
+        if (!password || password.length === 0) {
+            console.log('[Signup with Payment] Password is empty');
+            return res.status(400).json({
+                success: false,
+                error: 'Password is required',
+            });
+        }
+
+        if (!firstName || firstName.length === 0) {
+            console.log('[Signup with Payment] First name is empty');
+            return res.status(400).json({
+                success: false,
+                error: 'First name is required',
+            });
+        }
+
+        if (!lastName || lastName.length === 0) {
+            console.log('[Signup with Payment] Last name is empty');
+            return res.status(400).json({
+                success: false,
+                error: 'Last name is required',
+            });
+        }
+
+        // Email format validation
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            console.log('[Signup with Payment] Invalid email format');
+            return res.status(400).json({
+                success: false,
+                error: 'Invalid email format',
+            });
+        }
+
+        // Password strength validation
+        if (password.length < 6) {
+            console.log('[Signup with Payment] Password too short');
+            return res.status(400).json({
+                success: false,
+                error: 'Password must be at least 6 characters long',
             });
         }
 
@@ -229,23 +314,55 @@ router.post('/signup-with-payment', async (req, res) => {
  */
 router.post('/login', async (req, res) => {
     try {
-        const { email, password } = req.body;
+        let { email, password } = req.body;
 
+        // Validate that email and password exist
         if (!email || !password) {
+            console.log('[LOGIN] Missing email or password in request body');
             return res.status(400).json({ error: 'Email and password are required' });
         }
+
+        // Trim whitespace
+        email = email.trim();
+        password = password.trim();
+
+        // Check for empty strings after trimming
+        if (!email || email.length === 0) {
+            console.log('[LOGIN] Email is empty after trimming');
+            return res.status(400).json({ error: 'Email is required' });
+        }
+
+        if (!password || password.length === 0) {
+            console.log('[LOGIN] Password is empty after trimming');
+            return res.status(400).json({ error: 'Password is required' });
+        }
+
+        // Basic email format validation
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            console.log('[LOGIN] Invalid email format:', email);
+            return res.status(400).json({ error: 'Invalid email format' });
+        }
+
+        console.log('[LOGIN] Attempt for email:', email);
 
         // Find user
         const user = await User.findOne({ where: { email } });
         if (!user) {
+            console.log('[LOGIN] User not found:', email);
             return res.status(401).json({ error: 'Invalid credentials' });
         }
+
+        console.log('[LOGIN] User found. Comparing password...');
 
         // Check password
         const isPasswordValid = await user.comparePassword(password);
         if (!isPasswordValid) {
+            console.log('[LOGIN] Password comparison failed for:', email);
             return res.status(401).json({ error: 'Invalid credentials' });
         }
+
+        console.log('[LOGIN] Login successful for:', email);
 
         const token = generateToken(user.id, user.role);
 
@@ -262,7 +379,7 @@ router.post('/login', async (req, res) => {
             },
         });
     } catch (error) {
-        console.error('Login error:', error);
+        console.error('[LOGIN] Error:', error);
         res.status(500).json({ error: 'Login failed' });
     }
 });

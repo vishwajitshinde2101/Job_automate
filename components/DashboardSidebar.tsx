@@ -13,7 +13,8 @@ import {
   Lightbulb,
   UserCog,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Activity
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { useNavigate } from 'react-router-dom';
@@ -56,6 +57,7 @@ const DashboardSidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) =
   const menuItems = [
     { id: 'overview', label: 'Job Engine', icon: LayoutDashboard },
     ...(showAnalyticsTab ? [{ id: 'analytics', label: 'Analytics', icon: BarChart3 }] : []),
+    { id: 'activity', label: 'My Activity', icon: Activity },
     { id: 'config', label: 'Job Profile', icon: Settings },
     { id: 'auto-profile-update', label: 'Auto Profile Update', icon: RefreshCw },
     { id: 'history', label: 'Application History', icon: FileText },

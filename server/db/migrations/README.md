@@ -13,6 +13,21 @@ This directory contains all database schema migrations for the JobAutoApply appl
 | `003_add_unique_constraints.sql` | Add UNIQUE constraint on company_url for deduplication | ✅ Yes | 002 |
 | `004_add_filter_types.sql` | Add 'stipend' and 'internshipDuration' to filter_type ENUM | ✅ Yes | 002 |
 | `005_update_years_of_experience.sql` | Convert years_of_experience from VARCHAR to TINYINT UNSIGNED | ✅ Yes | 002 |
+| `006_update_plans_schema.sql` | Update plans table schema | ✅ Yes | 002 |
+| `007_add_admin_role.sql` | Add admin role functionality | ✅ Yes | 002 |
+| `008_create_suggestions_and_coupons.sql` | Create suggestions and coupons tables | ✅ Yes | 002 |
+| `009_add_job_details_columns.sql` | Add job details columns | ✅ Yes | 002 |
+| `010_add_credentials_verification_fields.sql` | Add credentials verification fields | ✅ Yes | 002 |
+| `011_add_dob_to_job_settings.sql` | Add date of birth to job settings | ✅ Yes | 002 |
+| `012_add_application_status.sql` | Add application status field | ✅ Yes | 002 |
+| `013_update_user_plans_schema.sql` | Update user plans schema | ✅ Yes | 002 |
+| `014_fix_suggestions_schema.sql` | Fix suggestions table schema | ✅ Yes | 008 |
+| `015_add_unique_constraint_user_filters.sql` | **Add UNIQUE constraint on user_id in user_filters table** | ✅ Yes | 002 |
+| `015_add_unique_constraint_user_filters.js` | JavaScript migration for unique constraint (auto-cleanup duplicates) | ✅ Yes | 002 |
+| `016_add_last_profile_update.sql` | Add last_profile_update column to job_settings table | ✅ Yes | 002 |
+| `016_add_last_profile_update.js` | JavaScript migration for last_profile_update column | ✅ Yes | 002 |
+| `017_add_profile_update_scheduler.sql` | Add profile update scheduler columns (enabled, frequency, next_run, status) | ✅ Yes | 002 |
+| `017_add_profile_update_scheduler.js` | JavaScript migration for profile update scheduler columns | ✅ Yes | 002 |
 
 ## Principles
 

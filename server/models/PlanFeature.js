@@ -9,12 +9,12 @@ import Plan from './Plan.js';
 
 const PlanFeature = sequelize.define('PlanFeature', {
     id: {
-        type: DataTypes.UUID,
+        type: DataTypes.STRING(36),
         defaultValue: DataTypes.UUIDV4,
         primaryKey: true,
     },
     planId: {
-        type: DataTypes.UUID,
+        type: DataTypes.INTEGER,
         allowNull: false,
         references: {
             model: Plan,

@@ -7,6 +7,8 @@ import DashboardLayout from '../components/DashboardLayout';
 import OnboardingFlow from '../components/OnboardingFlow';
 import SuggestAndEarn from '../components/SuggestAndEarn';
 import AppSettings from '../components/AppSettings';
+import UserAnalytics from '../components/UserAnalytics';
+import AutoProfileUpdate from '../components/AutoProfileUpdate';
 import { runBot, stopAutomation, getAutomationLogs, updateJobSettings, getJobSettings, getSkills, saveSkillsBulk, deleteSkill, getAllFilters, getUserFilters, saveUserFilters, runFilter, getFilterLogs, verifyNaukriCredentials } from '../services/automationApi';
 import { getSubscriptionStatus, createOrder, initiatePayment } from '../services/subscriptionApi';
 import { getPlans, Plan } from '../services/plansApi';
@@ -233,21 +235,32 @@ const Dashboard: React.FC = () => {
     dob: ''
   });
 
-  // Calculate Job Profile completion percentage (excluding Job Search Filters and Location)
+  // Calculate Job Profile completion percentage - ALL fields are compulsory
   const calculateProfileCompletion = () => {
     const requiredFields = [
-      configForm.naukriUsername,
-      configForm.naukriPassword,
-      configForm.resumeName,
-      configForm.targetRole,
-      configForm.currentSalary,
-      configForm.expectedSalary,
-      configForm.noticePeriod,
-      configForm.keywords,
-      configForm.availability,
+      configForm.naukriUsername,        // Naukri Email
+      configForm.naukriPassword,        // Naukri Password
+      configForm.resumeName,            // Resume
+      configForm.targetRole,            // Target Role
+      configForm.experience,            // Experience
+      configForm.location,              // Preferred Location
+      configForm.keywords,              // Keywords
+      configForm.currentSalary,         // Current Salary
+      configForm.expectedSalary,        // Expected Salary
+      configForm.noticePeriod,          // Notice Period
+      configForm.availability,          // Availability
+      configForm.yearsOfExperience,     // Years of Experience
+      configForm.dob,                   // Date of Birth
     ];
 
-    const filledFields = requiredFields.filter(field => field && field.toString().trim() !== '').length;
+    // Filter out fields that are filled (non-empty and non-zero for numbers)
+    const filledFields = requiredFields.filter(field => {
+      if (field === null || field === undefined) return false;
+      if (typeof field === 'string') return field.trim() !== '';
+      if (typeof field === 'number') return field > 0;
+      return true;
+    }).length;
+
     return Math.round((filledFields / requiredFields.length) * 100);
   };
 
@@ -391,7 +404,16 @@ const Dashboard: React.FC = () => {
         finalUrl: selectedFilters.finalUrl || '',  // Final URL is single string value
       };
 
-      await saveUserFilters(filtersToSave);
+      console.log('[Save Config] Saving filters with finalUrl:', filtersToSave.finalUrl ? filtersToSave.finalUrl.substring(0, 100) + '...' : 'EMPTY');
+
+      const filtersResult = await saveUserFilters(filtersToSave);
+
+      if (!filtersResult.success) {
+        console.error('[Save Config] ❌ Failed to save filters:', filtersResult);
+        throw new Error('Failed to save job search filters: ' + (filtersResult.error || 'Unknown error'));
+      }
+
+      console.log('[Save Config] ✅ Filters saved successfully:', filtersResult);
 
       // Also update local context
       updateConfig(configForm);
@@ -1655,9 +1677,6 @@ const Dashboard: React.FC = () => {
                   <div className="flex items-center justify-between">
                     <h3 className="text-white font-bold flex items-center gap-2 text-sm">
                       <Filter className="text-neon-green w-4 h-4" /> Job Search Filters
-                      <span className="bg-yellow-500/20 text-yellow-400 text-[10px] px-2 py-0.5 rounded-full border border-yellow-500/30 font-semibold">
-                        Coming Soon
-                      </span>
                     </h3>
                   </div>
 
@@ -1676,63 +1695,6 @@ const Dashboard: React.FC = () => {
                     <p className="text-[10px] text-gray-500">
                       Paste your customized job search URL from Naukri.com. This URL will be used when running automation.
                     </p>
-                  </div>
-
-                  {/* Coming Soon Filters List */}
-                  <div className="bg-dark-800/50 p-4 rounded-lg border border-gray-700/50">
-                    <p className="text-xs text-gray-400 mb-3">
-                      The following filters will be available soon for advanced job search customization:
-                    </p>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                      <div className="flex items-center gap-2 text-gray-500 text-xs">
-                        <Clock className="w-3 h-3" />
-                        <span>Freshness</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-gray-500 text-xs">
-                        <IndianRupee className="w-3 h-3" />
-                        <span>Salary Range</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-gray-500 text-xs">
-                        <Home className="w-3 h-3" />
-                        <span>Work Type</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-gray-500 text-xs">
-                        <MapPin className="w-3 h-3" />
-                        <span>City</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-gray-500 text-xs">
-                        <Briefcase className="w-3 h-3" />
-                        <span>Functional Area</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-gray-500 text-xs">
-                        <Building2 className="w-3 h-3" />
-                        <span>Industry</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-gray-500 text-xs">
-                        <Briefcase className="w-3 h-3" />
-                        <span>Role Category</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-gray-500 text-xs">
-                        <GraduationCap className="w-3 h-3" />
-                        <span>UG Qualification</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-gray-500 text-xs">
-                        <GraduationCap className="w-3 h-3" />
-                        <span>PG Qualification</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-gray-500 text-xs">
-                        <Building2 className="w-3 h-3" />
-                        <span>Company Type</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-gray-500 text-xs">
-                        <Briefcase className="w-3 h-3" />
-                        <span>Employment Type</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-gray-500 text-xs">
-                        <Building2 className="w-3 h-3" />
-                        <span>Top Companies</span>
-                      </div>
-                    </div>
                   </div>
                 </div>
 
@@ -2856,6 +2818,16 @@ const Dashboard: React.FC = () => {
             )}
           </div>
         );
+
+      case 'activity':
+        return (
+          <div className="max-w-7xl mx-auto space-y-6">
+            <UserAnalytics />
+          </div>
+        );
+
+      case 'auto-profile-update':
+        return <AutoProfileUpdate />;
 
       case 'billing':
         return (
