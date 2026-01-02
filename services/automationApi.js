@@ -107,13 +107,6 @@ export async function runBot(options = {}) {
     return apiCall('/automation/run-bot', 'POST', options);
 }
 
-/**
- * Schedule automation for a specific time
- * @param {string|Date} scheduledTime
- */
-export async function scheduleAutomation(scheduledTime) {
-    return apiCall('/automation/schedule', 'POST', { scheduledTime });
-}
 
 /**
  * Stop currently running automation
@@ -410,4 +403,33 @@ export async function verifyNaukriCredentials(naukriUsername, naukriPassword) {
         naukriUsername,
         naukriPassword
     });
+}
+
+/**
+ * ======================== SCHEDULER ENDPOINTS ========================
+ */
+
+/**
+ * Schedule automation to run at a specific time
+ * @param {Date|string} scheduledTime - When to run the automation
+ * @returns {Promise<{success: boolean, message: string, scheduledTime: string}>}
+ */
+export async function scheduleAutomation(scheduledTime) {
+    return await apiCall('/automation/schedule', 'POST', { scheduledTime });
+}
+
+/**
+ * Cancel scheduled automation
+ * @returns {Promise<{success: boolean, message: string}>}
+ */
+export async function cancelScheduledAutomation() {
+    return await apiCall('/automation/cancel-schedule', 'POST');
+}
+
+/**
+ * Get current schedule status
+ * @returns {Promise<{success: boolean, hasSchedule: boolean, scheduledTime: string|null, status: string|null}>}
+ */
+export async function getScheduleStatus() {
+    return await apiCall('/automation/schedule-status', 'GET');
 }

@@ -31,7 +31,7 @@ const TermsConditions: React.FC = () => {
           <section className="mb-10">
             <h2 className="text-2xl font-semibold text-white mb-4">1. Acceptance of Terms</h2>
             <p className="text-gray-300 leading-relaxed">
-              By accessing and using JobAutoApply ("Service"), you accept and agree to be bound by these
+              By accessing and using AutoJobzy ("Service"), you accept and agree to be bound by these
               Terms and Conditions. If you do not agree to these terms, please do not use our Service.
               These terms apply to all visitors, users, and others who access or use the Service.
             </p>
@@ -40,7 +40,7 @@ const TermsConditions: React.FC = () => {
           <section className="mb-10">
             <h2 className="text-2xl font-semibold text-white mb-4">2. Description of Service</h2>
             <p className="text-gray-300 leading-relaxed">
-              JobAutoApply is a job application automation platform that helps users streamline their
+              AutoJobzy is a job application automation platform that helps users streamline their
               job search process. Our Service automates the process of applying to jobs on various
               job portals based on user preferences and credentials provided by the user. The Service
               requires users to provide their job portal login credentials, which are stored securely
@@ -109,7 +109,7 @@ const TermsConditions: React.FC = () => {
             <h2 className="text-2xl font-semibold text-white mb-4">7. Intellectual Property</h2>
             <p className="text-gray-300 leading-relaxed">
               The Service and its original content, features, and functionality are owned by
-              JobAutoApply and are protected by international copyright, trademark, patent, trade
+              AutoJobzy and are protected by international copyright, trademark, patent, trade
               secret, and other intellectual property laws. You may not copy, modify, distribute,
               sell, or lease any part of our Service without explicit written permission.
             </p>
@@ -128,7 +128,7 @@ const TermsConditions: React.FC = () => {
           <section className="mb-10">
             <h2 className="text-2xl font-semibold text-white mb-4">9. Limitation of Liability</h2>
             <p className="text-gray-300 leading-relaxed">
-              In no event shall JobAutoApply, its directors, employees, partners, agents, suppliers,
+              In no event shall AutoJobzy, its directors, employees, partners, agents, suppliers,
               or affiliates be liable for any indirect, incidental, special, consequential, or
               punitive damages, including without limitation, loss of profits, data, use, goodwill,
               or other intangible losses, resulting from your access to or use of the Service.
@@ -169,7 +169,7 @@ const TermsConditions: React.FC = () => {
               If you have any questions about these Terms, please contact us at:
             </p>
             <div className="mt-4 bg-gray-800/50 rounded-lg p-4 border border-gray-700">
-              <p className="text-gray-300">Email: support@jobautoapply.com</p>
+              <p className="text-gray-300">Email: support@autojobzy.com</p>
               <p className="text-gray-300">Phone: +91 98765 43210</p>
             </div>
           </section>

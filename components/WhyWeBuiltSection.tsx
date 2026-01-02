@@ -35,7 +35,7 @@ const WhyWeBuiltSection: React.FC = () => {
             </p>
 
             <p className="text-gray-400 mb-8 leading-relaxed">
-              JobAutoApply was built to solve this. You provide basic info — skills, experience, preferences — and our app handles everything automatically. Built-in scheduler, monthly tracking, and you just attend HR calls.
+              AutoJobzy was built to solve this. You provide basic info — skills, experience, preferences — and our app handles everything automatically. Built-in scheduler, monthly tracking, and you just attend HR calls.
             </p>
 
             <Link to="/why-we-built">
@@ -100,7 +100,7 @@ const WhyWeBuiltSection: React.FC = () => {
               <p className="text-gray-300 italic">
                 "You provide basic info. We handle applications. You just attend HR calls."
               </p>
-              <p className="text-neon-blue text-sm mt-2">— JobAutoApply</p>
+              <p className="text-neon-blue text-sm mt-2">— AutoJobzy</p>
             </div>
           </motion.div>
         </div>

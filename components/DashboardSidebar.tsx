@@ -75,7 +75,7 @@ const DashboardSidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) =
       <div className="h-20 flex items-center px-6 border-b border-gray-200 dark:border-white/10">
         <Cpu className="h-6 w-6 text-neon-blue animate-pulse mr-2" />
         <span className="font-heading font-bold text-xl text-gray-900 dark:text-white">
-          Job<span className="text-neon-blue">AutoApply</span>
+          Auto<span className="text-neon-blue">Jobzy</span>
         </span>
       </div>
 

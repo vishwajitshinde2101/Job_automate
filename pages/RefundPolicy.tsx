@@ -31,7 +31,7 @@ const RefundPolicy: React.FC = () => {
           <section className="mb-10">
             <h2 className="text-2xl font-semibold text-white mb-4">1. Overview</h2>
             <p className="text-gray-300 leading-relaxed">
-              At JobAutoApply, we strive to provide the best job automation service. We understand
+              At AutoJobzy, we strive to provide the best job automation service. We understand
               that sometimes circumstances change, and we have established this Refund & Cancellation
               Policy to address such situations fairly. Please read this policy carefully before
               making a purchase.
@@ -73,7 +73,7 @@ const RefundPolicy: React.FC = () => {
               To request a refund:
             </p>
             <ol className="list-decimal list-inside text-gray-300 space-y-2">
-              <li>Email us at support@jobautoapply.com with subject "Refund Request"</li>
+              <li>Email us at support@autojobzy.com with subject "Refund Request"</li>
               <li>Include your registered email address and order ID</li>
               <li>Provide a brief reason for the refund request</li>
               <li>Our team will review your request within 2-3 business days</li>
@@ -119,7 +119,7 @@ const RefundPolicy: React.FC = () => {
             </p>
             <ul className="list-disc list-inside text-gray-300 space-y-2">
               <li>Go to your Dashboard and click on "Manage Subscription"</li>
-              <li>Or email us at support@jobautoapply.com</li>
+              <li>Or email us at support@autojobzy.com</li>
               <li>Cancellation stops future renewals only</li>
               <li>You will continue to have access until your current subscription period ends</li>
               <li>No partial refunds for remaining days after 48-hour window</li>
@@ -153,7 +153,7 @@ const RefundPolicy: React.FC = () => {
             <h2 className="text-2xl font-semibold text-white mb-4">9. Disputes</h2>
             <p className="text-gray-300 leading-relaxed">
               If you believe your refund request was unfairly denied, you may escalate the matter
-              by emailing disputes@jobautoapply.com with detailed information. Our management team
+              by emailing disputes@autojobzy.com with detailed information. Our management team
               will review your case and respond within 5 business days. All decisions made by the
               management team are final.
             </p>
@@ -165,7 +165,7 @@ const RefundPolicy: React.FC = () => {
               For refund or cancellation requests, please contact us:
             </p>
             <div className="mt-4 bg-gray-800/50 rounded-lg p-4 border border-gray-700">
-              <p className="text-gray-300">Email: support@jobautoapply.com</p>
+              <p className="text-gray-300">Email: support@autojobzy.com</p>
               <p className="text-gray-300">Phone: +91 98765 43210</p>
               <p className="text-gray-300 mt-2 text-sm">Business Hours: Mon-Sat, 10:00 AM - 6:00 PM IST</p>
             </div>

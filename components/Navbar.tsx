@@ -39,7 +39,7 @@ const Navbar: React.FC = () => {
           <Link to="/" className="flex-shrink-0 flex items-center gap-2 cursor-pointer">
             <Cpu className="h-8 w-8 text-neon-blue animate-pulse" />
             <span className="font-heading font-bold text-2xl tracking-tight text-gray-900 dark:text-white">
-              Job<span className="text-neon-blue">AutoApply</span>
+              Auto<span className="text-neon-blue">Jobzy</span>
             </span>
           </Link>
 

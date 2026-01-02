@@ -18,7 +18,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, activeTab, 
 
       {/* Mobile Toggle */}
       <div className="md:hidden fixed top-0 left-0 right-0 h-16 bg-white dark:bg-dark-900 border-b border-gray-200 dark:border-white/10 flex items-center px-4 z-50 justify-between shadow-sm">
-        <span className="font-heading font-bold text-lg text-gray-900 dark:text-white">JobAutoApply</span>
+        <span className="font-heading font-bold text-lg text-gray-900 dark:text-white">AutoJobzy</span>
         <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="text-gray-900 dark:text-white">
           {mobileMenuOpen ? <X /> : <Menu />}
         </button>

@@ -631,6 +631,7 @@ const Dashboard: React.FC = () => {
     }
   };
 
+
   // Fetch application history from database
   const fetchApplicationHistory = async (page: number) => {
     setHistoryLoading(true);
@@ -870,8 +871,7 @@ const Dashboard: React.FC = () => {
     switch (activeTab) {
       case 'overview':
         return (
-          <div className="w-full max-w-[95%] mx-auto p-6">
-            {/* Browser Simulation + Terminal Stack - Centered Container */}
+          <div className="w-full max-w-[95%] mx-auto p-6">            {/* Browser Simulation + Terminal Stack - Centered Container */}
             <div className="flex flex-col bg-black rounded-2xl border border-gray-800 overflow-hidden shadow-2xl">
 
               {/* Mock Browser Header - Consistent Theme */}
@@ -1118,11 +1118,10 @@ const Dashboard: React.FC = () => {
               </div>
               <div className="w-full bg-dark-900 rounded-full h-3 overflow-hidden border border-gray-700">
                 <div
-                  className={`h-full transition-all duration-500 ${
-                    profileCompletion === 100
+                  className={`h-full transition-all duration-500 ${profileCompletion === 100
                       ? 'bg-gradient-to-r from-green-500 to-green-600'
                       : 'bg-gradient-to-r from-yellow-500 to-orange-500'
-                  }`}
+                    }`}
                   style={{ width: `${profileCompletion}%` }}
                 />
               </div>
@@ -1195,11 +1194,10 @@ const Dashboard: React.FC = () => {
                           value={configForm.naukriUsername}
                           onChange={(e) => setConfigForm({ ...configForm, naukriUsername: e.target.value })}
                           disabled={isCredentialsVerified}
-                          className={`w-full bg-dark-900 border-2 rounded-lg py-2.5 pl-10 pr-4 text-white text-sm outline-none transition-colors ${
-                            isCredentialsVerified
+                          className={`w-full bg-dark-900 border-2 rounded-lg py-2.5 pl-10 pr-4 text-white text-sm outline-none transition-colors ${isCredentialsVerified
                               ? 'border-gray-600 cursor-not-allowed opacity-60'
                               : 'border-neon-blue/30 focus:border-neon-blue'
-                          }`}
+                            }`}
                           placeholder="your.email@example.com"
                         />
                       </div>
@@ -1712,11 +1710,10 @@ const Dashboard: React.FC = () => {
                   <button
                     type="submit"
                     disabled={!isProfileComplete}
-                    className={`w-full font-bold py-3 rounded-lg transition-all flex items-center justify-center gap-2 shadow-lg ${
-                      isProfileComplete
+                    className={`w-full font-bold py-3 rounded-lg transition-all flex items-center justify-center gap-2 shadow-lg ${isProfileComplete
                         ? 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white shadow-green-500/30 hover:shadow-xl cursor-pointer'
                         : 'bg-gray-700 text-gray-400 cursor-not-allowed opacity-60 shadow-none'
-                    }`}
+                      }`}
                   >
                     {isProfileComplete ? (
                       <>
@@ -2085,15 +2082,6 @@ const Dashboard: React.FC = () => {
                   <p className="text-xs text-gray-400">Try adding 'Node.js' to increase opportunities by 23%</p>
                 </div>
 
-                <div className="p-4 bg-dark-900/50 rounded-lg border border-white/5 hover:border-purple-500/30 transition-all cursor-pointer group">
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="p-1.5 bg-purple-500/10 rounded-lg">
-                      <Clock className="w-4 h-4 text-purple-400" />
-                    </div>
-                    <span className="text-white font-medium text-sm">Schedule Automation</span>
-                  </div>
-                  <p className="text-xs text-gray-400">Run automation at 9 AM for 40% better response rates</p>
-                </div>
               </div>
             </div>
           </div>
@@ -2401,9 +2389,8 @@ const Dashboard: React.FC = () => {
                               <div className="flex items-center gap-2">
                                 <div className="flex-1 bg-dark-900 rounded-full h-2 overflow-hidden">
                                   <div
-                                    className={`h-full ${
-                                      record.matchScore >= 4 ? 'bg-green-500' : record.matchScore >= 3 ? 'bg-yellow-500' : 'bg-red-500'
-                                    }`}
+                                    className={`h-full ${record.matchScore >= 4 ? 'bg-green-500' : record.matchScore >= 3 ? 'bg-yellow-500' : 'bg-red-500'
+                                      }`}
                                     style={{ width: `${(record.matchScore / record.matchScoreTotal) * 100}%` }}
                                   ></div>
                                 </div>
@@ -2413,32 +2400,29 @@ const Dashboard: React.FC = () => {
                               </div>
                             </td>
                             <td className="px-4 py-3 text-sm">
-                              <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                                record.matchStatus === 'Good Match'
+                              <span className={`px-2 py-1 rounded-full text-xs font-semibold ${record.matchStatus === 'Good Match'
                                   ? 'bg-green-900/30 text-green-400 border border-green-500/50'
                                   : 'bg-red-900/30 text-red-400 border border-red-500/50'
-                              }`}>
+                                }`}>
                                 {record.matchStatus}
                               </span>
                             </td>
                             <td className="px-4 py-3 text-sm">
-                              <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                                record.applyType === 'Direct Apply'
+                              <span className={`px-2 py-1 rounded-full text-xs font-semibold ${record.applyType === 'Direct Apply'
                                   ? 'bg-blue-900/30 text-blue-400 border border-blue-500/50'
                                   : record.applyType === 'External Apply'
-                                  ? 'bg-purple-900/30 text-purple-400 border border-purple-500/50'
-                                  : 'bg-gray-900/30 text-gray-400 border border-gray-500/50'
-                              }`}>
+                                    ? 'bg-purple-900/30 text-purple-400 border border-purple-500/50'
+                                    : 'bg-gray-900/30 text-gray-400 border border-gray-500/50'
+                                }`}>
                                 {record.applyType}
                               </span>
                             </td>
                             <td className="px-4 py-3 text-sm text-center">
                               {record.applicationStatus ? (
-                                <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                                  record.applicationStatus === 'Applied'
+                                <span className={`px-2 py-1 rounded-full text-xs font-semibold ${record.applicationStatus === 'Applied'
                                     ? 'bg-green-900/30 text-green-400 border border-green-500/50'
                                     : 'bg-yellow-900/30 text-yellow-400 border border-yellow-500/50'
-                                }`}>
+                                  }`}>
                                   {record.applicationStatus}
                                 </span>
                               ) : (
@@ -2471,11 +2455,10 @@ const Dashboard: React.FC = () => {
                     <button
                       onClick={() => handleHistoryPageChange(historyPage - 1)}
                       disabled={historyPage === 1}
-                      className={`px-4 py-2 rounded-lg transition-all ${
-                        historyPage === 1
+                      className={`px-4 py-2 rounded-lg transition-all ${historyPage === 1
                           ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
                           : 'bg-neon-blue/10 border border-neon-blue/30 text-neon-blue hover:bg-neon-blue/20'
-                      }`}
+                        }`}
                     >
                       <ChevronLeft className="w-4 h-4" />
                     </button>
@@ -2498,11 +2481,10 @@ const Dashboard: React.FC = () => {
                           <button
                             key={pageNum}
                             onClick={() => handleHistoryPageChange(pageNum)}
-                            className={`px-4 py-2 rounded-lg transition-all ${
-                              historyPage === pageNum
+                            className={`px-4 py-2 rounded-lg transition-all ${historyPage === pageNum
                                 ? 'bg-neon-blue text-black font-bold'
                                 : 'bg-dark-700 hover:bg-dark-600 text-gray-300 border border-white/10'
-                            }`}
+                              }`}
                           >
                             {pageNum}
                           </button>
@@ -2514,11 +2496,10 @@ const Dashboard: React.FC = () => {
                     <button
                       onClick={() => handleHistoryPageChange(historyPage + 1)}
                       disabled={historyPage === historyData.totalPages}
-                      className={`px-4 py-2 rounded-lg transition-all ${
-                        historyPage === historyData.totalPages
+                      className={`px-4 py-2 rounded-lg transition-all ${historyPage === historyData.totalPages
                           ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
                           : 'bg-neon-blue/10 border border-neon-blue/30 text-neon-blue hover:bg-neon-blue/20'
-                      }`}
+                        }`}
                     >
                       <ChevronRight className="w-4 h-4" />
                     </button>
@@ -2594,11 +2575,10 @@ const Dashboard: React.FC = () => {
                         <div className="text-center">
                           <p className="text-sm text-gray-600 mb-2">Early Applicant</p>
                           <span
-                            className={`inline-block px-3 py-1 rounded-full text-sm font-semibold ${
-                              selectedApplication.earlyApplicant
+                            className={`inline-block px-3 py-1 rounded-full text-sm font-semibold ${selectedApplication.earlyApplicant
                                 ? 'bg-green-100 text-green-700 border border-green-300'
                                 : 'bg-gray-100 text-gray-600 border border-gray-300'
-                            }`}
+                              }`}
                           >
                             {formatBoolean(selectedApplication.earlyApplicant)}
                           </span>
@@ -2606,11 +2586,10 @@ const Dashboard: React.FC = () => {
                         <div className="text-center">
                           <p className="text-sm text-gray-600 mb-2">Key Skills Match</p>
                           <span
-                            className={`inline-block px-3 py-1 rounded-full text-sm font-semibold ${
-                              selectedApplication.keySkillsMatch
+                            className={`inline-block px-3 py-1 rounded-full text-sm font-semibold ${selectedApplication.keySkillsMatch
                                 ? 'bg-green-100 text-green-700 border border-green-300'
                                 : 'bg-gray-100 text-gray-600 border border-gray-300'
-                            }`}
+                              }`}
                           >
                             {formatBoolean(selectedApplication.keySkillsMatch)}
                           </span>
@@ -2618,11 +2597,10 @@ const Dashboard: React.FC = () => {
                         <div className="text-center">
                           <p className="text-sm text-gray-600 mb-2">Location Match</p>
                           <span
-                            className={`inline-block px-3 py-1 rounded-full text-sm font-semibold ${
-                              selectedApplication.locationMatch
+                            className={`inline-block px-3 py-1 rounded-full text-sm font-semibold ${selectedApplication.locationMatch
                                 ? 'bg-green-100 text-green-700 border border-green-300'
                                 : 'bg-gray-100 text-gray-600 border border-gray-300'
-                            }`}
+                              }`}
                           >
                             {formatBoolean(selectedApplication.locationMatch)}
                           </span>
@@ -2630,11 +2608,10 @@ const Dashboard: React.FC = () => {
                         <div className="text-center">
                           <p className="text-sm text-gray-600 mb-2">Experience Match</p>
                           <span
-                            className={`inline-block px-3 py-1 rounded-full text-sm font-semibold ${
-                              selectedApplication.experienceMatch
+                            className={`inline-block px-3 py-1 rounded-full text-sm font-semibold ${selectedApplication.experienceMatch
                                 ? 'bg-green-100 text-green-700 border border-green-300'
                                 : 'bg-gray-100 text-gray-600 border border-gray-300'
-                            }`}
+                              }`}
                           >
                             {formatBoolean(selectedApplication.experienceMatch)}
                           </span>
@@ -2658,11 +2635,10 @@ const Dashboard: React.FC = () => {
                         <div>
                           <p className="text-sm text-gray-600 mb-1">Match Status</p>
                           <span
-                            className={`inline-block px-3 py-1 rounded-full text-sm font-semibold ${
-                              selectedApplication.matchStatus === 'Good Match'
+                            className={`inline-block px-3 py-1 rounded-full text-sm font-semibold ${selectedApplication.matchStatus === 'Good Match'
                                 ? 'bg-green-100 text-green-700 border border-green-300'
                                 : 'bg-red-100 text-red-700 border border-red-300'
-                            }`}
+                              }`}
                           >
                             {selectedApplication.matchStatus}
                           </span>
@@ -3027,63 +3003,6 @@ const Dashboard: React.FC = () => {
                 </div>
               </>
             )}
-          </div>
-        );
-
-      case 'auto-profile-update':
-        return (
-          <div className="max-w-4xl mx-auto">
-            <h2 className="text-2xl font-bold text-white mb-6">Auto Profile Update – Coming Soon</h2>
-
-            {/* Coming Soon Card */}
-            <div className="bg-dark-800 border-2 border-yellow-500/30 rounded-2xl p-8">
-              <div className="flex justify-center mb-6">
-                <div className="relative">
-                  <div className="w-20 h-20 bg-gradient-to-br from-yellow-500/20 to-orange-500/20 rounded-full flex items-center justify-center border-2 border-yellow-500/30">
-                    <RotateCw className="w-10 h-10 text-yellow-400 animate-spin" style={{ animationDuration: '3s' }} />
-                  </div>
-                  <div className="absolute -top-2 -right-2 bg-yellow-500 text-dark-900 text-xs font-bold px-3 py-1 rounded-full shadow-lg">
-                    SOON
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-6 text-center max-w-3xl mx-auto">
-                <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-6">
-                  <p className="text-gray-200 text-lg leading-relaxed mb-4">
-                    We are working on a new feature that will <strong className="text-white">automatically visit and update your Naukri profile</strong> at a scheduled time every day.
-                  </p>
-
-                  <p className="text-gray-300 leading-relaxed mb-4">
-                    Once enabled, the system will <strong className="text-white">randomly update your profile</strong> during the selected time window, helping keep your profile active and refreshed.
-                  </p>
-
-                  <p className="text-gray-400 leading-relaxed">
-                    This feature is currently under development and will be available soon.
-                  </p>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
-                  <div className="bg-dark-900/50 border border-gray-700 rounded-lg p-5">
-                    <Clock className="w-10 h-10 text-neon-blue mb-3 mx-auto" />
-                    <h4 className="text-white font-bold mb-2 text-sm">Scheduled Updates</h4>
-                    <p className="text-gray-400 text-xs leading-relaxed">Automatic daily profile visits at your chosen time window</p>
-                  </div>
-
-                  <div className="bg-dark-900/50 border border-gray-700 rounded-lg p-5">
-                    <Zap className="w-10 h-10 text-yellow-400 mb-3 mx-auto" />
-                    <h4 className="text-white font-bold mb-2 text-sm">Random Timing</h4>
-                    <p className="text-gray-400 text-xs leading-relaxed">Profile updates at random times within your window</p>
-                  </div>
-
-                  <div className="bg-dark-900/50 border border-gray-700 rounded-lg p-5">
-                    <CheckCircle className="w-10 h-10 text-green-400 mb-3 mx-auto" />
-                    <h4 className="text-white font-bold mb-2 text-sm">Stay Active</h4>
-                    <p className="text-gray-400 text-xs leading-relaxed">Keep your Naukri profile fresh and visible</p>
-                  </div>
-                </div>
-              </div>
-            </div>
           </div>
         );
 

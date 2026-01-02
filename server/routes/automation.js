@@ -343,6 +343,37 @@ router.post('/cancel-schedule', authenticateToken, async (req, res) => {
 });
 
 /**
+ * GET /api/automation/schedule-status
+ * Get current schedule status
+ */
+router.get('/schedule-status', authenticateToken, async (req, res) => {
+    try {
+        const jobSettings = await JobSettings.findOne({
+            where: { userId: req.userId }
+        });
+
+        if (!jobSettings) {
+            return res.json({
+                success: true,
+                hasSchedule: false,
+                scheduledTime: null,
+                status: null
+            });
+        }
+
+        res.json({
+            success: true,
+            hasSchedule: jobSettings.scheduledTime ? true : false,
+            scheduledTime: jobSettings.scheduledTime,
+            status: jobSettings.scheduleStatus
+        });
+    } catch (error) {
+        console.error('Get schedule status error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+/**
  * GET /api/automation/logs
  * Get current automation logs (auth required)
  */

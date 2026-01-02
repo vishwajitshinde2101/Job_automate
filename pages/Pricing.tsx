@@ -137,7 +137,7 @@ const Pricing: React.FC = () => {
           key: orderResult.data.keyId,
           amount: orderResult.data.amount,
           currency: orderResult.data.currency,
-          name: 'JobAutoApply',
+          name: 'AutoJobzy',
           description: orderResult.data.planName || 'Subscription Plan',
           order_id: orderResult.data.orderId,
           handler: async function (razorpayResponse: any) {

@@ -34,7 +34,7 @@ const AboutUs: React.FC = () => {
           <div className="flex items-center gap-3">
             <Cpu className="w-10 h-10 text-neon-blue animate-pulse" />
             <div>
-              <h1 className="text-3xl font-bold text-white">About JobAutoApply</h1>
+              <h1 className="text-3xl font-bold text-white">About AutoJobzy</h1>
               <p className="text-gray-400 mt-1">Automating the bridge between talent and opportunity</p>
             </div>
           </div>
@@ -57,7 +57,7 @@ const AboutUs: React.FC = () => {
               You Provide Info. <span className="text-transparent bg-clip-text bg-gradient-to-r from-neon-blue to-neon-purple">We Handle Applications.</span>
             </h2>
             <p className="text-xl text-gray-300 leading-relaxed">
-              JobAutoApply is built for job seekers, IT professionals, and anyone looking to switch jobs. Naukri's 50-application daily limit takes ~3 hours of manual work. Our app automates everything — you just provide basic info and attend HR calls.
+              AutoJobzy is built for job seekers, IT professionals, and anyone looking to switch jobs. Naukri's 50-application daily limit takes ~3 hours of manual work. Our app automates everything — you just provide basic info and attend HR calls.
             </p>
           </div>
         </div>
@@ -75,7 +75,7 @@ const AboutUs: React.FC = () => {
               <h2 className="text-2xl font-bold text-white">Company Overview</h2>
             </div>
             <p className="text-gray-300 text-lg leading-relaxed mb-6">
-              JobAutoApply is an AI-powered job application automation platform designed for anyone looking for jobs — whether you're switching careers, an IT professional, or a job seeker from any field. We understand that manually applying on Naukri.com with its 50-application daily limit takes approximately 3 hours of your valuable time every day.
+              AutoJobzy is an AI-powered job application automation platform designed for anyone looking for jobs — whether you're switching careers, an IT professional, or a job seeker from any field. We understand that manually applying on Naukri.com with its 50-application daily limit takes approximately 3 hours of your valuable time every day.
             </p>
             <p className="text-gray-300 text-lg leading-relaxed">
               Our platform has all built-in techniques for efficient job applications. You just provide basic information — your skills, experience, and preferences — and we handle everything else. The app automatically scans job portals, matches your profile, and submits applications while you focus on preparing for interviews and attending HR calls.
@@ -165,7 +165,7 @@ const AboutUs: React.FC = () => {
         {/* Why Choose Us */}
         <section className="mb-16">
           <div className="bg-gradient-to-r from-neon-blue/10 to-neon-purple/10 border border-white/10 rounded-2xl p-8 md:p-10">
-            <h2 className="text-2xl font-bold text-white mb-8 text-center">Why Choose JobAutoApply?</h2>
+            <h2 className="text-2xl font-bold text-white mb-8 text-center">Why Choose AutoJobzy?</h2>
             <div className="grid md:grid-cols-2 gap-6">
               {[
                 'Save 3+ hours daily on manual applications',
@@ -198,7 +198,7 @@ const AboutUs: React.FC = () => {
               <p className="text-gray-400 mb-4">Have questions? We'd love to hear from you!</p>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                 <a
-                  href="mailto:support@jobautoapply.com"
+                  href="mailto:support@autojobzy.com"
                   className="px-6 py-3 bg-neon-blue text-black font-bold rounded-lg hover:bg-white transition-colors"
                 >
                   Contact Us

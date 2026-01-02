@@ -87,7 +87,7 @@ const Landing: React.FC = () => {
             </span>
           </h2>
           <p className="text-xl text-gray-400">
-            Join thousands of job seekers who provide basic info and let JobAutoApply handle the rest.
+            Join thousands of job seekers who provide basic info and let AutoJobzy handle the rest.
           </p>
           <div className="pt-8">
             <Link to="/signup">

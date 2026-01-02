@@ -40,7 +40,7 @@ const AdminDashboard: React.FC = () => {
               </div>
               <div>
                 <h1 className="text-xl font-bold text-white">Admin Panel</h1>
-                <p className="text-xs text-gray-400">Job Automate Platform</p>
+                <p className="text-xs text-gray-400">AutoJobzy Platform</p>
               </div>
             </div>
 

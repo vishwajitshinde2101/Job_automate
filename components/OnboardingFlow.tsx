@@ -23,7 +23,7 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) => {
 
   const steps = [
     {
-      title: "Welcome to JobAutoApply",
+      title: "Welcome to AutoJobzy",
       icon: <Zap className="w-16 h-16 text-red-500" />,
       content: (
         <div className="space-y-4">

@@ -30,7 +30,7 @@ const AdminSidebar: React.FC = () => {
           </div>
           <div>
             <h1 className="text-lg font-bold text-white">Admin Panel</h1>
-            <p className="text-xs text-gray-400">Job Automate</p>
+            <p className="text-xs text-gray-400">AutoJobzy</p>
           </div>
         </div>
       </div>

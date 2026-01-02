@@ -10,7 +10,7 @@ const Footer: React.FC = () => {
           <div className="col-span-1 md:col-span-1">
             <div className="flex items-center gap-2 mb-4">
                <Cpu className="h-6 w-6 text-neon-blue" />
-               <span className="font-heading font-bold text-xl text-gray-900 dark:text-white">JobAutoApply</span>
+               <span className="font-heading font-bold text-xl text-gray-900 dark:text-white">AutoJobzy</span>
             </div>
             <p className="text-gray-600 dark:text-gray-500 text-sm leading-relaxed">
               Automating the bridge between talent and opportunity. Built for the next generation of tech leaders.
@@ -48,7 +48,7 @@ const Footer: React.FC = () => {
         </div>
 
         <div className="border-t border-gray-200 dark:border-white/5 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
-          <p className="text-gray-500 dark:text-gray-600 text-sm">© 2024 JobAutoApply Inc. All rights reserved.</p>
+          <p className="text-gray-500 dark:text-gray-600 text-sm">© 2024 AutoJobzy Inc. All rights reserved.</p>
           <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-500">
             <span>Made for Students 👨‍🎓👩‍🎓</span>
             <span className="w-1 h-1 bg-gray-400 dark:bg-gray-600 rounded-full"></span>

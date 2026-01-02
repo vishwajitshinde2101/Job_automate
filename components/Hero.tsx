@@ -41,7 +41,7 @@ const Hero: React.FC = () => {
             </h1>
 
             <p className="text-lg md:text-xl text-gray-400 max-w-2xl mx-auto lg:mx-0">
-              Naukri has a 50-application daily limit. Manual review takes ~3 hours. JobAutoApply handles it all — you just provide basic info, and we start applying while you focus on interviews.
+              Naukri has a 50-application daily limit. Manual review takes ~3 hours. AutoJobzy handles it all — you just provide basic info, and we start applying while you focus on interviews.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">

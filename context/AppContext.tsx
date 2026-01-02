@@ -33,7 +33,7 @@ const INITIAL_USER: User = {
 // Helper to get persisted user from localStorage
 const getPersistedUser = (): User => {
   try {
-    const stored = localStorage.getItem('jobAutomate_user');
+    const stored = localStorage.getItem('autojobzy_user');
     if (stored) {
       const parsed = JSON.parse(stored);
       return { ...INITIAL_USER, ...parsed };
@@ -54,9 +54,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   // Persist user state to localStorage whenever it changes
   useEffect(() => {
     if (user.isLoggedIn) {
-      localStorage.setItem('jobAutomate_user', JSON.stringify(user));
+      localStorage.setItem('autojobzy_user', JSON.stringify(user));
     } else {
-      localStorage.removeItem('jobAutomate_user');
+      localStorage.removeItem('autojobzy_user');
     }
   }, [user]);
 
@@ -115,7 +115,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     // Clear all authentication tokens and session data
     localStorage.removeItem('token');
     localStorage.removeItem('user');
-    localStorage.removeItem('jobAutomate_user');
+    localStorage.removeItem('autojobzy_user');
     localStorage.removeItem('pendingPlanId');
     localStorage.removeItem('selectedPlanId');
     localStorage.removeItem('selectedPlan');

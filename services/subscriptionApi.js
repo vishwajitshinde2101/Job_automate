@@ -172,7 +172,7 @@ export async function initiatePayment(orderData, userInfo, onSuccess, onFailure)
         key: orderData.keyId,
         amount: orderData.amount,
         currency: orderData.currency,
-        name: 'JobAutoApply',
+        name: 'AutoJobzy',
         description: orderData.planName || 'Subscription Plan',
         order_id: orderData.orderId,
         handler: async function (response) {

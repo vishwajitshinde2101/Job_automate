@@ -47,7 +47,7 @@ const WhyWeBuilt: React.FC = () => {
     },
     {
       year: 'The Result',
-      title: 'JobAutoApply Was Born',
+      title: 'AutoJobzy Was Born',
       content: 'Today, our users save 3+ hours daily. They track monthly applications, see days of time saved, and use the built-in scheduler to manage everything while they focus on attending HR calls.',
     },
   ];
@@ -66,7 +66,7 @@ const WhyWeBuilt: React.FC = () => {
     {
       icon: Users,
       title: 'For All Professionals',
-      description: 'Whether you\'re switching jobs, an IT expert, or from any field — JobAutoApply works for everyone who values their time.',
+      description: 'Whether you\'re switching jobs, an IT expert, or from any field — AutoJobzy works for everyone who values their time.',
     },
   ];
 
@@ -86,7 +86,7 @@ const WhyWeBuilt: React.FC = () => {
             <Heart className="w-10 h-10 text-red-500" />
             <div>
               <h1 className="text-3xl font-bold text-white">Why We Built This App</h1>
-              <p className="text-gray-400 mt-1">The story behind JobAutoApply</p>
+              <p className="text-gray-400 mt-1">The story behind AutoJobzy</p>
             </div>
           </div>
         </div>
@@ -105,10 +105,10 @@ const WhyWeBuilt: React.FC = () => {
             <p className="text-2xl md:text-4xl font-bold text-white leading-relaxed">
               "3 hours daily on Naukri. 90+ hours monthly.<br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-neon-blue to-neon-purple">
-                We built JobAutoApply to give that time back.
+                We built AutoJobzy to give that time back.
               </span>"
             </p>
-            <p className="mt-6 text-gray-400">— The Founding Team, JobAutoApply</p>
+            <p className="mt-6 text-gray-400">— The Founding Team, AutoJobzy</p>
           </motion.div>
         </div>
       </div>
@@ -161,7 +161,7 @@ const WhyWeBuilt: React.FC = () => {
             </div>
             <h2 className="text-3xl font-bold text-white mb-4">From Time Wasted to Time Saved</h2>
             <p className="text-gray-400 max-w-2xl mx-auto">
-              JobAutoApply was born from the frustration of spending 3+ hours daily on job portals, doing repetitive tasks that could be automated.
+              AutoJobzy was born from the frustration of spending 3+ hours daily on job portals, doing repetitive tasks that could be automated.
             </p>
           </div>
 
@@ -201,7 +201,7 @@ const WhyWeBuilt: React.FC = () => {
             </div>
             <h2 className="text-3xl font-bold text-white mb-4">What We Believe In</h2>
             <p className="text-gray-400 max-w-2xl mx-auto">
-              These core values guide every decision we make at JobAutoApply.
+              These core values guide every decision we make at AutoJobzy.
             </p>
           </div>
 
@@ -235,7 +235,7 @@ const WhyWeBuilt: React.FC = () => {
               We envision a world where <strong className="text-white">job seekers spend zero hours on repetitive applications</strong>. Where professionals from any field — IT experts, job switchers, or anyone looking for opportunities — can focus entirely on what matters: preparing for interviews and attending HR calls.
             </p>
             <p className="text-gray-300 text-lg leading-relaxed mb-8">
-              With all built-in techniques, a scheduler that works around your availability, and monthly tracking that shows exactly how many days you've saved — JobAutoApply handles the grind so you don't have to.
+              With all built-in techniques, a scheduler that works around your availability, and monthly tracking that shows exactly how many days you've saved — AutoJobzy handles the grind so you don't have to.
             </p>
             <div className="flex flex-wrap gap-4">
               <div className="flex items-center gap-2 px-4 py-2 bg-white/5 rounded-lg">

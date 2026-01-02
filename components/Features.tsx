@@ -7,7 +7,7 @@ const Features: React.FC = () => {
     <section id="features" className="py-20 bg-dark-900 relative">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
-          <h2 className="text-neon-blue font-bold tracking-wide uppercase text-sm mb-2">Why JobAutoApply?</h2>
+          <h2 className="text-neon-blue font-bold tracking-wide uppercase text-sm mb-2">Why AutoJobzy?</h2>
           <h3 className="text-3xl md:text-4xl font-heading font-bold text-white">
             You Provide Info. <span className="text-neon-green">We Handle the Rest.</span>
           </h3>

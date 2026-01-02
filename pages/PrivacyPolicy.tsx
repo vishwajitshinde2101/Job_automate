@@ -31,7 +31,7 @@ const PrivacyPolicy: React.FC = () => {
           <section className="mb-10">
             <h2 className="text-2xl font-semibold text-white mb-4">1. Introduction</h2>
             <p className="text-gray-300 leading-relaxed">
-              Welcome to JobAutomate ("we," "our," or "us"). We are committed to protecting your
+              Welcome to AutoJobzy ("we," "our," or "us"). We are committed to protecting your
               personal information and your right to privacy. This Privacy Policy explains how we
               collect, use, disclose, and safeguard your information when you use our job automation
               service.
@@ -135,7 +135,7 @@ const PrivacyPolicy: React.FC = () => {
               If you have any questions about this Privacy Policy, please contact us at:
             </p>
             <div className="mt-4 bg-gray-800/50 rounded-lg p-4 border border-gray-700">
-              <p className="text-gray-300">Email: support@jobautomate.com</p>
+              <p className="text-gray-300">Email: support@autojobzy.com</p>
               <p className="text-gray-300">Phone: +91 98765 43210</p>
             </div>
           </section>

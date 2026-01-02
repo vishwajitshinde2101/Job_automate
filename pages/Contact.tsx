@@ -51,7 +51,7 @@ const Contact: React.FC = () => {
           <div>
             <h2 className="text-2xl font-semibold text-white mb-6">Get in Touch</h2>
             <p className="text-gray-300 mb-8">
-              Have questions about JobAutomate? Need help with your subscription? Our support
+              Have questions about AutoJobzy? Need help with your subscription? Our support
               team is here to assist you. Reach out through any of the channels below.
             </p>
 
@@ -64,8 +64,8 @@ const Contact: React.FC = () => {
                 <div>
                   <h3 className="text-white font-medium mb-1">Email Us</h3>
                   <p className="text-gray-400 text-sm mb-1">For general inquiries and support</p>
-                  <a href="mailto:support@jobautomate.com" className="text-indigo-400 hover:text-indigo-300">
-                    support@jobautomate.com
+                  <a href="mailto:support@autojobzy.com" className="text-indigo-400 hover:text-indigo-300">
+                    support@autojobzy.com
                   </a>
                 </div>
               </div>

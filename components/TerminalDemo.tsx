@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 
 const LOG_MESSAGES = [
-  { text: "Initializing JobAutoApply v2.5...", color: "text-gray-400" },
+  { text: "Initializing AutoJobzy v2.5...", color: "text-gray-400" },
   { text: "Connecting to secure server...", color: "text-gray-400" },
   { text: "Success: Connected securely.", color: "text-green-400" },
   { text: "Scanning for 'Frontend Developer' roles...", color: "text-neon-blue" },
