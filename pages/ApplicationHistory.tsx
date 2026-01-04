@@ -34,6 +34,7 @@ interface ApplicationRecord {
   matchScoreTotal: number;
   matchStatus: 'Good Match' | 'Poor Match';
   applyType: 'Direct Apply' | 'External Apply' | 'No Apply Button';
+  applicationStatus: 'Applied' | 'Skipped' | null;
   earlyApplicant: boolean;
   keySkillsMatch: boolean;
   locationMatch: boolean;
@@ -63,6 +64,7 @@ const ApplicationHistory: React.FC = () => {
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterApplyType, setFilterApplyType] = useState<string>('all');
+  const [filterApplicationStatus, setFilterApplicationStatus] = useState<string>('all');
 
   // Fetch application history on mount
   useEffect(() => {
@@ -95,6 +97,11 @@ const ApplicationHistory: React.FC = () => {
       filtered = filtered.filter((app) => app.applyType === filterApplyType);
     }
 
+    // Application status filter
+    if (filterApplicationStatus !== 'all') {
+      filtered = filtered.filter((app) => app.applicationStatus === filterApplicationStatus);
+    }
+
     // Sort
     filtered.sort((a, b) => {
       const aVal = a[sortField];
@@ -115,7 +122,7 @@ const ApplicationHistory: React.FC = () => {
     });
 
     setFilteredApplications(filtered);
-  }, [applications, searchQuery, sortField, sortDirection, filterStatus, filterApplyType]);
+  }, [applications, searchQuery, sortField, sortDirection, filterStatus, filterApplyType, filterApplicationStatus]);
 
   const fetchApplicationHistory = async () => {
     try {
@@ -166,6 +173,12 @@ const ApplicationHistory: React.FC = () => {
   const getApplyTypeColor = (type: string) => {
     if (type === 'Direct Apply') return 'bg-blue-500/10 text-blue-400 border-blue-500/30';
     if (type === 'External Apply') return 'bg-purple-500/10 text-purple-400 border-purple-500/30';
+    return 'bg-gray-500/10 text-gray-400 border-gray-500/30';
+  };
+
+  const getApplicationStatusColor = (status: string | null) => {
+    if (status === 'Applied') return 'bg-green-500/10 text-green-400 border-green-500/30';
+    if (status === 'Skipped') return 'bg-orange-500/10 text-orange-400 border-orange-500/30';
     return 'bg-gray-500/10 text-gray-400 border-gray-500/30';
   };
 
@@ -235,6 +248,18 @@ const ApplicationHistory: React.FC = () => {
               <p className="text-sm text-gray-400">Total Applications</p>
               <p className="text-2xl font-bold text-white">{applications.length}</p>
             </div>
+            <div className="px-4 py-2 bg-dark-800 border border-green-500/20 rounded-lg">
+              <p className="text-sm text-gray-400">Applied</p>
+              <p className="text-2xl font-bold text-green-400">
+                {applications.filter(app => app.applicationStatus === 'Applied').length}
+              </p>
+            </div>
+            <div className="px-4 py-2 bg-dark-800 border border-orange-500/20 rounded-lg">
+              <p className="text-sm text-gray-400">Skipped</p>
+              <p className="text-2xl font-bold text-orange-400">
+                {applications.filter(app => app.applicationStatus === 'Skipped').length}
+              </p>
+            </div>
           </div>
         </div>
 
@@ -279,6 +304,19 @@ const ApplicationHistory: React.FC = () => {
                 <option value="Direct Apply">Direct Apply</option>
                 <option value="External Apply">External Apply</option>
                 <option value="No Apply Button">No Apply Button</option>
+              </select>
+            </div>
+
+            {/* Application Status Filter */}
+            <div>
+              <select
+                value={filterApplicationStatus}
+                onChange={(e) => setFilterApplicationStatus(e.target.value)}
+                className="w-full bg-dark-900 border border-gray-700 rounded-lg py-3 px-4 text-white focus:border-neon-blue focus:ring-1 focus:ring-neon-blue outline-none transition-all"
+              >
+                <option value="all">All Results</option>
+                <option value="Applied">Applied</option>
+                <option value="Skipped">Skipped</option>
               </select>
             </div>
           </div>
@@ -357,13 +395,14 @@ const ApplicationHistory: React.FC = () => {
                   </th>
                   <th className="text-left px-6 py-4 text-sm font-semibold text-gray-400">Status</th>
                   <th className="text-left px-6 py-4 text-sm font-semibold text-gray-400">Apply Type</th>
+                  <th className="text-left px-6 py-4 text-sm font-semibold text-gray-400">Result</th>
                   <th className="text-left px-6 py-4 text-sm font-semibold text-gray-400">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
                 {filteredApplications.length === 0 ? (
                   <tr>
-                    <td colSpan={8} className="px-6 py-12 text-center">
+                    <td colSpan={9} className="px-6 py-12 text-center">
                       <div className="flex flex-col items-center justify-center">
                         <Filter className="w-12 h-12 text-gray-600 mb-3" />
                         <p className="text-gray-400 text-lg font-semibold mb-1">No applications found</p>
@@ -443,6 +482,15 @@ const ApplicationHistory: React.FC = () => {
                           )}`}
                         >
                           {app.applyType}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span
+                          className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${getApplicationStatusColor(
+                            app.applicationStatus
+                          )}`}
+                        >
+                          {app.applicationStatus || 'Unknown'}
                         </span>
                       </td>
                       <td className="px-6 py-4">

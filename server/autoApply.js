@@ -11,7 +11,12 @@
  */
 
 import puppeteer from 'puppeteer';
-import { getAnswer } from './aiAnswer.js';
+import {
+    getAnswer,
+    initializeAgenticService,
+    getCheckboxSelection,
+    getReasoningLog
+} from './aiAnswer.js';
 import sequelize from './db/config.js';
 import XLSX from 'xlsx';
 import JobApplicationResult from './models/JobApplicationResult.js';
@@ -360,79 +365,29 @@ async function handleCheckBox(page, userId = null) {
 
         addLog(`Checkbox options: ${checkboxData.map(c => c.label || c.value).join(', ')}`, 'info');
 
-        // If userId provided, use intelligent matching
-        let selectedIndices = [];
+        // NEW: Use agentic AI to select best option
+        let selectedIndex = 0;
 
-        if (userId) {
-            const userPrefs = await fetchUserPreferences(userId);
-            addLog(`Matching checkboxes with user preferences...`, 'info');
+        try {
+            // Get the question from the chatbot
+            const question = await page.evaluate(() => {
+                const questionEl = document.querySelector('.botItem .botMsg span');
+                return questionEl ? questionEl.innerText.trim() : 'Select option';
+            });
 
-            // Build a comprehensive list of user preference values to match against
-            const userValues = [
-                userPrefs.targetRole,
-                userPrefs.location,
-                ...userPrefs.skills,
-                ...userPrefs.keywords.split(',').map(k => k.trim()),
-            ].filter(Boolean);
+            // Prepare options for AI
+            const options = checkboxData.map(c => ({ label: c.label || c.value }));
 
-            // Add work type preferences if available
-            if (userPrefs.filters.wfhType) {
-                const workTypes = Array.isArray(userPrefs.filters.wfhType)
-                    ? userPrefs.filters.wfhType
-                    : [userPrefs.filters.wfhType];
-                userValues.push(...workTypes);
-            }
+            // Use AI to select best option
+            selectedIndex = await getCheckboxSelection(options, question, userId);
 
-            // Add experience level if applicable
-            if (userPrefs.experience > 0) {
-                userValues.push(`${userPrefs.experience} years`);
-                userValues.push(`${userPrefs.experience}+ years`);
-
-                // Add experience ranges
-                if (userPrefs.experience <= 2) userValues.push('fresher', '0-2 years', 'entry level');
-                else if (userPrefs.experience <= 5) userValues.push('2-5 years', 'mid level');
-                else if (userPrefs.experience <= 10) userValues.push('5-10 years', 'senior level');
-                else userValues.push('10+ years', 'expert', 'lead');
-            }
-
-            // Match each checkbox against user values
-            for (let i = 0; i < checkboxData.length; i++) {
-                const checkbox = checkboxData[i];
-                const checkboxText = checkbox.label || checkbox.value;
-
-                // Check for match with any user value
-                const isMatch = userValues.some(userVal =>
-                    isTextMatch(checkboxText, userVal, 0.5)
-                );
-
-                if (isMatch) {
-                    selectedIndices.push(i);
-                    addLog(`✓ Matched: "${checkboxText}"`, 'success');
-                }
-            }
-
-            // If no matches found, look for default options like "Any", "Other", "Not Applicable"
-            if (selectedIndices.length === 0) {
-                addLog('No matches found, looking for default options...', 'warning');
-
-                const defaultOptions = ['any', 'other', 'not applicable', 'na', 'none', 'all'];
-                for (let i = 0; i < checkboxData.length; i++) {
-                    const checkboxText = normalizeText(checkboxData[i].label || checkboxData[i].value);
-
-                    if (defaultOptions.some(opt => checkboxText.includes(opt))) {
-                        selectedIndices.push(i);
-                        addLog(`Selected default option: "${checkboxData[i].label || checkboxData[i].value}"`, 'info');
-                        break; // Only select one default option
-                    }
-                }
-            }
+            addLog(`AI selected option ${selectedIndex + 1}: "${checkboxData[selectedIndex].label || checkboxData[selectedIndex].value}"`, 'success');
+        } catch (error) {
+            addLog(`AI selection error, using fallback: ${error.message}`, 'warning');
+            selectedIndex = 0;
         }
 
-        // If still no selection (or no userId), select first option as fallback
-        if (selectedIndices.length === 0) {
-            selectedIndices = [0];
-            addLog('Using fallback: selecting first option', 'warning');
-        }
+        let selectedIndices = [selectedIndex];
 
         // Click selected checkboxes
         const isRadio = checkboxData[0]?.type === 'radio';
@@ -578,6 +533,18 @@ async function handleChatbot(jobPage, userId = null) {
                 // AI-generated text answer
                 const aiAnswer = await getAnswer(q);
                 addLog(`AI Answer: ${aiAnswer}`, 'success');
+
+                // Reasoning logs disabled (agentic AI disabled)
+                // const reasoningLog = getReasoningLog();
+                // if (reasoningLog.length > 0) {
+                //     const lastReasoning = reasoningLog[reasoningLog.length - 1];
+                //     if (lastReasoning.reasoning && lastReasoning.reasoning.length > 0) {
+                //         addLog(`  Reasoning: ${lastReasoning.reasoning.join(' → ')}`, 'info');
+                //     }
+                //     if (lastReasoning.confidence) {
+                //         addLog(`  Confidence: ${lastReasoning.confidence}%`, 'info');
+                //     }
+                // }
 
                 const inputSelector = ".textArea[contenteditable='true']";
 
@@ -877,10 +844,29 @@ export async function startAutomation(options = {}) {
             }
         }
 
+        // ========== STEP 3.75: AGENTIC AI DISABLED ==========
+        // if (userId) {
+        //     try {
+        //         const dbConfig = {
+        //             host: process.env.DB_HOST || 'database-1.c72i2s6muax7.ap-south-1.rds.amazonaws.com',
+        //             user: process.env.DB_USER || 'admin',
+        //             password: process.env.DB_PASSWORD || 'YsjlUaX5yFJGtZqjmrSj',
+        //             database: process.env.DB_NAME || 'jobautomate',
+        //             port: parseInt(process.env.DB_PORT || '3306', 10)
+        //         };
+        //         initializeAgenticService(userId, dbConfig);
+        //         addLog('Agentic AI system initialized', 'success');
+        //     } catch (error) {
+        //         addLog(`Failed to initialize agentic AI: ${error.message}`, 'warning');
+        //     }
+        // }
+
         // ========== STEP 4: PROCESS JOB PAGES ==========
         // Use the finalJobUrl directly without modification
         let currentPage = 1;
         let totalJobsApplied = 0;
+        let totalJobsSkipped = 0;
+        const skipReasons = {}; // Track reasons for skipping
 
         while (currentPage <= maxPages && isRunning) {
             // For first page, use URL as-is. For subsequent pages, append page parameter
@@ -1026,27 +1012,11 @@ export async function startAutomation(options = {}) {
                 if (externalApply) applyType = 'External Apply';
                 else if (applyBtn) applyType = 'Direct Apply';
 
-                // Default status
+                // Default status - will be updated after successful application
                 let applicationStatus = 'Skipped';
 
-                if (applyBtn && canApply) {
-                    try {
-                        // Click Apply button
-                        await applyBtn.click();
-                        await jobPage.waitForTimeout(1000); // small wait to ensure click registers
-
-                        // Mark as Applied ONLY after click
-                        applicationStatus = 'Applied';
-                    } catch (err) {
-                        // Click failed → treat as Skipped
-                        applicationStatus = 'Skipped';
-                    }
-
-                }
-                addLog('applicationStatus :: ', applicationStatus);
-
                 // Save job result with scraped details
-                jobResults.push({
+                const jobResult = {
                     datetime: new Date().toISOString(),
                     pageNumber: currentPage,
                     jobNumber: `${i + 1}/${jobLinks.length}`,
@@ -1078,10 +1048,28 @@ export async function startAutomation(options = {}) {
                     roleCategory: scrapedDetails.roleCategory,
                     companyRating: scrapedDetails.companyRating,
                     jobHighlights: scrapedDetails.jobHighlights
-                });
+                };
+
+                // Add to results array
+                jobResults.push(jobResult);
 
                 // Skip external apply or poor match
                 if (externalApply || !applyBtn || !canApply) {
+                    totalJobsSkipped++;
+
+                    // Track skip reason
+                    let skipReason = '';
+                    if (externalApply) {
+                        skipReason = 'External Apply';
+                    } else if (!applyBtn) {
+                        skipReason = 'No Apply Button';
+                    } else if (!canApply) {
+                        skipReason = 'Poor Match';
+                    }
+
+                    skipReasons[skipReason] = (skipReasons[skipReason] || 0) + 1;
+                    addLog(`⏭️  Job skipped (${skipReason}) - Total skipped: ${totalJobsSkipped}`, 'warning');
+
                     await jobPage.close();
                     await delay(1000);
                     continue;
@@ -1094,6 +1082,9 @@ export async function startAutomation(options = {}) {
 
                 // Handle chatbot with intelligent checkbox matching
                 await handleChatbot(jobPage, userId);
+
+                // Mark as Applied ONLY after successful application
+                jobResult.applicationStatus = 'Applied';
 
                 totalJobsApplied++;
                 addLog(`Job application submitted! Total applied: ${totalJobsApplied}`, 'success');
@@ -1177,10 +1168,32 @@ export async function startAutomation(options = {}) {
             }
         }
 
-        addLog(`Automation complete! Applied to ${totalJobsApplied} jobs.`, 'success');
+        // ========== FINAL SUMMARY ==========
+        addLog('', 'info');
+        addLog('========================================', 'info');
+        addLog('📊 AUTOMATION SUMMARY', 'success');
+        addLog('========================================', 'info');
+        addLog(`✅ Jobs Applied: ${totalJobsApplied}`, 'success');
+        addLog(`⏭️  Jobs Skipped: ${totalJobsSkipped}`, 'warning');
+        addLog(`📈 Total Jobs Processed: ${totalJobsApplied + totalJobsSkipped}`, 'info');
+
+        if (Object.keys(skipReasons).length > 0) {
+            addLog('', 'info');
+            addLog('Skip Breakdown:', 'info');
+            for (const [reason, count] of Object.entries(skipReasons)) {
+                addLog(`   • ${reason}: ${count}`, 'warning');
+            }
+        }
+
+        addLog('========================================', 'info');
+        addLog('Automation complete!', 'success');
+
         return {
             success: true,
             jobsApplied: totalJobsApplied,
+            jobsSkipped: totalJobsSkipped,
+            skipReasons: skipReasons,
+            totalProcessed: totalJobsApplied + totalJobsSkipped,
             logs: automationLogs,
         };
     } catch (error) {

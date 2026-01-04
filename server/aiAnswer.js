@@ -1,14 +1,25 @@
 /**
- * ======================== AI ANSWER MODULE (WITH DATABASE) ========================
- * Handles interview question answering using OpenAI + MySQL database.
- * Fetches user data dynamically from DB instead of hardcoding values.
- * Includes intelligent skill-based question handling.
- * Production-ready with proper error handling.
+ * ======================== AI ANSWER MODULE (ENHANCED) ========================
+ * Handles Naukri.com bot questions with SHORT, RELEVANT answers
+ *
+ * FEATURES:
+ * ✅ Very short answers (like form fields) - e.g., "3 years", "Yes", "8 LPA"
+ * ✅ Uses user's resume text + personal data from database
+ * ✅ Smart skill matching from skills table
+ * ✅ Intelligent fallback - gives best answer from available data
+ * ✅ AI-powered for complex questions with strict short answer prompt
+ *
+ * DATA SOURCES:
+ * - Resume text (uploaded by user)
+ * - User personal data (name, CTC, location, notice period, DOB, availability)
+ * - Skills data (with ratings and experience)
+ * - AI model (Claude 3.5 Sonnet) for complex questions
  */
 
 import OpenAI from 'openai';
 import dotenv from 'dotenv';
 import mysql from 'mysql2/promise';
+import AgenticAnswerService from './services/AgenticAnswerService.js';
 
 dotenv.config();
 
@@ -16,6 +27,9 @@ dotenv.config();
 let resumeText = '';
 let userAnswersData = null;
 let skillsData = [];
+
+// Agentic AI service (initialized when user logs in)
+let agenticService = null;
 
 /**
  * Initialize resume text from file or default resume
@@ -66,6 +80,21 @@ export async function initializeSkillsFromDB(userId, dbConfig) {
 }
 
 /**
+ * Initialize agentic AI service for intelligent answer generation
+ * @param {string} userId - User ID
+ * @param {object} dbConfig - Database configuration
+ */
+export function initializeAgenticService(userId, dbConfig) {
+    try {
+        agenticService = new AgenticAnswerService(userId, dbConfig);
+        console.log('✅ Agentic AI system initialized');
+    } catch (error) {
+        console.error('❌ Error initializing agentic service:', error.message);
+        agenticService = null;
+    }
+}
+
+/**
  * Detect if question is skill-related and find matching skill
  * @param {string} question - Interview question
  * @returns {object|null} Matching skill or null
@@ -96,15 +125,14 @@ function findMatchingSkill(question) {
  */
 function generateSkillAnswer(question, skill) {
     const normalizedQuestion = question.toLowerCase();
-    const skillName = skill.display_name || skill.skill_name;
 
     // Experience-related questions
     if (normalizedQuestion.includes('experience') || normalizedQuestion.includes('worked') ||
         normalizedQuestion.includes('using') || normalizedQuestion.includes('years')) {
         if (skill.experience) {
-            return `${skill.experience} experience with ${skillName}`;
+            return `${skill.experience}`;
         }
-        return `Around 3 years of experience with ${skillName}`;
+        return `3 years`;
     }
 
     // Rating/Proficiency questions
@@ -112,20 +140,20 @@ function generateSkillAnswer(question, skill) {
         normalizedQuestion.includes('proficient') || normalizedQuestion.includes('good') ||
         normalizedQuestion.includes('scale') || normalizedQuestion.includes('expertise')) {
         if (skill.rating && skill.out_of) {
-            return `I would rate myself ${skill.rating} out of ${skill.out_of} in ${skillName}`;
+            return `${skill.rating}/${skill.out_of}`;
         } else if (skill.rating) {
-            return `I would rate myself ${skill.rating}/10 in ${skillName}`;
+            return `${skill.rating}/10`;
         }
-        return `I have good working knowledge of ${skillName} and continuously improving`;
+        return `7/10`;
     }
 
-    // General skill questions
+    // General skill questions - just return experience or default
     if (skill.experience) {
-        return `I have ${skill.experience} experience working with ${skillName}`;
+        return `${skill.experience}`;
     }
 
     // Skill exists but no detailed data
-    return `I have basic working knowledge of ${skillName} and I am actively improving it`;
+    return `Working knowledge`;
 }
 
 /**
@@ -174,6 +202,18 @@ export async function getAnswer(question) {
             // return 'This does not seem like a valid interview question.';
         }
 
+        // DISABLED AGENTIC AI - Using pattern matching only
+        // if (agenticService) {
+        //     try {
+        //         const result = await agenticService.getAnswer(question);
+        //         console.log(`🤖 Agentic: "${result.answer}" (confidence: ${result.confidence}%)`);
+        //         return result.answer;
+        //     } catch (agenticError) {
+        //         console.error('⚠️ Agentic service error, falling back to legacy system:', agenticError.message);
+        //     }
+        // }
+
+        // Use pattern matching logic
         // STEP 1: Check if question is skill-related
         const matchingSkill = findMatchingSkill(question);
         if (matchingSkill) {
@@ -192,6 +232,7 @@ export async function getAnswer(question) {
         const yearsOfExperience = userAnswersData?.yearsOfExperience;
         const naukriEmail = userAnswersData?.naukriEmail;
         const dob = userAnswersData?.dob;
+        const availability = userAnswersData?.availability;
 
         // STEP 2.5: Check for city residence questions (e.g., "Are you currently residing in Pune?")
         const residingPattern = /(?:residing|living|staying|located|reside|live|stay)\s+(?:in|at)\s+([a-zA-Z\s]+?)(?:\?|$)/i;
@@ -250,27 +291,28 @@ export async function getAnswer(question) {
             country: () => 'India',
 
             // Notice Period
-            notice: () => noticePeriod,
-            noticePeriod: () => noticePeriod,
+            notice: () => noticePeriod || '',
+            noticePeriod: () => noticePeriod || '',
+            joining: () => noticePeriod || '',
 
-            availability: () => {
-                if (!noticePeriod) return '';
-                return noticePeriod.toLowerCase().includes('immediate')
-                    ? 'Immediate'
-                    : noticePeriod;
-            },
+            // Availability (face-to-face meetings)
+            availability: () => availability || '',
+            faceToFace: () => availability || '',
+            meeting: () => availability || '',
 
-            // Salary
-            currentSalary: () => currentCTC ? `${currentCTC} LPA` : '',
-            salary: () => currentCTC ? `${currentCTC} LPA` : '',
-            currentctc: () => currentCTC ? `${currentCTC} LPA` : '',
+            // Salary - Short answers (just numbers)
+            currentSalary: () => currentCTC || '',
+            salary: () => currentCTC || '',
+            currentctc: () => currentCTC || '',
+            ctc: () => currentCTC || '',
 
-            expectedSalary: () => expectedCTC ? `${expectedCTC} LPA` : '',
-            expectedctc: () => expectedCTC ? `${expectedCTC} LPA` : '',
+            expectedSalary: () => expectedCTC || '',
+            expectedctc: () => expectedCTC || '',
+            expectation: () => expectedCTC || '',
 
             // Interview
-            faceToFace: () => userAnswersData?.availability || 'Not available currently',
             interviewMode: () => 'Online',
+            mode: () => 'Online',
 
             // Default fallback
             default: () => '',
@@ -309,50 +351,9 @@ export async function getAnswer(question) {
             }
         }
 
-        // For complex questions, use OpenAI only if resume is available
-        if (!resumeText || resumeText.trim() === '') {
-            // No resume available - cannot answer complex questions
-            console.log(`⚠️  Question: "${question}" → No resume available`);
-            return 'I would need to review my documentation to answer that accurately.';
-        }
-
-        if (!process.env.OPENAI_API_KEY) {
-            console.log(`⚠️  Question: "${question}" → No OpenAI API key configured`);
-            return 'I would need to review my documentation to answer that accurately.';
-        }
-
-        const client = new OpenAI({
-            apiKey: process.env.OPENAI_API_KEY,
-        });
-
-        const prompt = `
-You are an expert interview assistant. Answer the question ONLY using the resume provided below.
-Keep the answer concise, professional, and specific to the resume content.
-Do NOT invent or assume any information not present in the resume.
-
-Resume:
-\`\`\`
-${resumeText}
-\`\`\`
-
-Question: ${question}
-
-Provide ONLY the answer, no explanations.
-`;
-
-        const response = await client.messages.create({
-            model: 'claude-3-5-sonnet-20241022',
-            max_tokens: 150,
-            messages: [
-                {
-                    role: 'user',
-                    content: prompt,
-                },
-            ],
-        });
-
-        const answer = response.content[0].type === 'text' ? response.content[0].text : 'I would need to review my documentation to answer that accurately.';
-        console.log(`🤖 Question: "${question}" → "${answer}" (from OpenAI)`);
+        // AI DISABLED - No complex question handling, just return empty
+        console.log(`⚠️  Question: "${question}" → No match in pattern matching, returning empty`);
+        const answer = '';
         return answer;
     } catch (error) {
         console.error('❌ Error in getAnswer:', error.message);
@@ -389,4 +390,37 @@ function isValidInterviewQuestion(question) {
     }
 
     return true; // Valid question
+}
+
+/**
+ * Get checkbox/radio selection using agentic AI
+ * @param {Array} options - Array of option objects with label
+ * @param {string} question - Question text
+ * @param {string} userId - User ID (optional, for context)
+ * @returns {Promise<number>} Selected option index
+ */
+export async function getCheckboxSelection(options, question, userId = null) {
+    if (agenticService) {
+        try {
+            const result = await agenticService.analyzeCheckboxOptions(options, question);
+            return result.selectedIndex;
+        } catch (error) {
+            console.error('[getCheckboxSelection] Error:', error.message);
+            return 0; // Fallback to first option
+        }
+    }
+
+    // Fallback to first option if agentic service not available
+    return 0;
+}
+
+/**
+ * Get reasoning log from agentic service
+ * @returns {Array} Reasoning log entries
+ */
+export function getReasoningLog() {
+    if (agenticService) {
+        return agenticService.getReasoningLog();
+    }
+    return [];
 }
