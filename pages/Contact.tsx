@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { ArrowLeft, Mail, Phone, MapPin, Send, Clock, MessageCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -25,7 +26,13 @@ const Contact: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
+    <>
+      <Helmet>
+        <title>Contact Us - AutoJobzy Support | Get Help</title>
+        <meta name="description" content="Get in touch with AutoJobzy support team. We're here to help you with job automation, technical issues, and any questions about our service." />
+        <link rel="canonical" href="https://job-automate.onrender.com/contact" />
+      </Helmet>
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
       {/* Header */}
       <div className="border-b border-gray-800">
         <div className="max-w-4xl mx-auto px-4 py-6">
@@ -239,6 +246,7 @@ const Contact: React.FC = () => {
         </div>
       </div>
     </div>
+    </>
   );
 };
 

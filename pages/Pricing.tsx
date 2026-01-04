@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Check, Zap, Crown, Rocket, AlertCircle, CheckCircle, Loader2, ArrowRight, UserPlus } from 'lucide-react';
 import { getPlans, createOrder, initiatePayment, getSubscriptionStatus } from '../services/subscriptionApi';
@@ -314,8 +315,14 @@ const Pricing: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
-      {/* Header */}
+    <>
+      <Helmet>
+        <title>Pricing Plans - AutoJobzy | Job Automation from ₹299</title>
+        <meta name="description" content="Choose the perfect plan for your job search automation. Plans start from ₹299. Unlimited applications on Naukri & LinkedIn. Get 50% OFF on premium plans!" />
+        <link rel="canonical" href="https://job-automate.onrender.com/pricing" />
+      </Helmet>
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
+        {/* Header */}
       <div className="pt-20 pb-12 text-center">
         <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
           {isSignupFlow ? 'Complete Your Signup' : 'Choose Your Plan'}
@@ -508,6 +515,7 @@ const Pricing: React.FC = () => {
         </div>
       </div>
     </div>
+    </>
   );
 };
 

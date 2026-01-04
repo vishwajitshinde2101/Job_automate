@@ -1,4 +1,5 @@
 import React from 'react';
+import { Helmet } from 'react-helmet-async';
 import { ArrowLeft, Target, Eye, Cpu, Users, MapPin, Zap, FileSpreadsheet, Clock, Brain, CheckCircle, Briefcase, Rocket, Calendar, Phone } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -20,8 +21,14 @@ const AboutUs: React.FC = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
-      {/* Header */}
+    <>
+      <Helmet>
+        <title>About AutoJobzy - AI Job Search Automation Platform</title>
+        <meta name="description" content="Learn about AutoJobzy - India's leading job application automation platform. Save 3+ hours daily with AI-powered automation for Naukri & LinkedIn job applications." />
+        <link rel="canonical" href="https://job-automate.onrender.com/about" />
+      </Helmet>
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
+        {/* Header */}
       <div className="border-b border-gray-800">
         <div className="max-w-5xl mx-auto px-4 py-6">
           <button
@@ -223,6 +230,7 @@ const AboutUs: React.FC = () => {
         </div>
       </div>
     </div>
+    </>
   );
 };
 

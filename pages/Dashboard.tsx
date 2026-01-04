@@ -1119,8 +1119,8 @@ const Dashboard: React.FC = () => {
               <div className="w-full bg-dark-900 rounded-full h-3 overflow-hidden border border-gray-700">
                 <div
                   className={`h-full transition-all duration-500 ${profileCompletion === 100
-                      ? 'bg-gradient-to-r from-green-500 to-green-600'
-                      : 'bg-gradient-to-r from-yellow-500 to-orange-500'
+                    ? 'bg-gradient-to-r from-green-500 to-green-600'
+                    : 'bg-gradient-to-r from-yellow-500 to-orange-500'
                     }`}
                   style={{ width: `${profileCompletion}%` }}
                 />
@@ -1711,8 +1711,8 @@ const Dashboard: React.FC = () => {
                     type="submit"
                     disabled={!isProfileComplete}
                     className={`w-full font-bold py-3 rounded-lg transition-all flex items-center justify-center gap-2 shadow-lg ${isProfileComplete
-                        ? 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white shadow-green-500/30 hover:shadow-xl cursor-pointer'
-                        : 'bg-gray-700 text-gray-400 cursor-not-allowed opacity-60 shadow-none'
+                      ? 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white shadow-green-500/30 hover:shadow-xl cursor-pointer'
+                      : 'bg-gray-700 text-gray-400 cursor-not-allowed opacity-60 shadow-none'
                       }`}
                   >
                     {isProfileComplete ? (
@@ -2401,18 +2401,18 @@ const Dashboard: React.FC = () => {
                             </td>
                             <td className="px-4 py-3 text-sm">
                               <span className={`px-2 py-1 rounded-full text-xs font-semibold ${record.matchStatus === 'Good Match'
-                                  ? 'bg-green-900/30 text-green-400 border border-green-500/50'
-                                  : 'bg-red-900/30 text-red-400 border border-red-500/50'
+                                ? 'bg-green-900/30 text-green-400 border border-green-500/50'
+                                : 'bg-red-900/30 text-red-400 border border-red-500/50'
                                 }`}>
                                 {record.matchStatus}
                               </span>
                             </td>
                             <td className="px-4 py-3 text-sm">
                               <span className={`px-2 py-1 rounded-full text-xs font-semibold ${record.applyType === 'Direct Apply'
-                                  ? 'bg-blue-900/30 text-blue-400 border border-blue-500/50'
-                                  : record.applyType === 'External Apply'
-                                    ? 'bg-purple-900/30 text-purple-400 border border-purple-500/50'
-                                    : 'bg-gray-900/30 text-gray-400 border border-gray-500/50'
+                                ? 'bg-blue-900/30 text-blue-400 border border-blue-500/50'
+                                : record.applyType === 'External Apply'
+                                  ? 'bg-purple-900/30 text-purple-400 border border-purple-500/50'
+                                  : 'bg-gray-900/30 text-gray-400 border border-gray-500/50'
                                 }`}>
                                 {record.applyType}
                               </span>
@@ -2420,8 +2420,8 @@ const Dashboard: React.FC = () => {
                             <td className="px-4 py-3 text-sm text-center">
                               {record.applicationStatus ? (
                                 <span className={`px-2 py-1 rounded-full text-xs font-semibold ${record.applicationStatus === 'Applied'
-                                    ? 'bg-green-900/30 text-green-400 border border-green-500/50'
-                                    : 'bg-yellow-900/30 text-yellow-400 border border-yellow-500/50'
+                                  ? 'bg-green-900/30 text-green-400 border border-green-500/50'
+                                  : 'bg-yellow-900/30 text-yellow-400 border border-yellow-500/50'
                                   }`}>
                                   {record.applicationStatus}
                                 </span>
@@ -2456,8 +2456,8 @@ const Dashboard: React.FC = () => {
                       onClick={() => handleHistoryPageChange(historyPage - 1)}
                       disabled={historyPage === 1}
                       className={`px-4 py-2 rounded-lg transition-all ${historyPage === 1
-                          ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
-                          : 'bg-neon-blue/10 border border-neon-blue/30 text-neon-blue hover:bg-neon-blue/20'
+                        ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
+                        : 'bg-neon-blue/10 border border-neon-blue/30 text-neon-blue hover:bg-neon-blue/20'
                         }`}
                     >
                       <ChevronLeft className="w-4 h-4" />
@@ -2482,8 +2482,8 @@ const Dashboard: React.FC = () => {
                             key={pageNum}
                             onClick={() => handleHistoryPageChange(pageNum)}
                             className={`px-4 py-2 rounded-lg transition-all ${historyPage === pageNum
-                                ? 'bg-neon-blue text-black font-bold'
-                                : 'bg-dark-700 hover:bg-dark-600 text-gray-300 border border-white/10'
+                              ? 'bg-neon-blue text-black font-bold'
+                              : 'bg-dark-700 hover:bg-dark-600 text-gray-300 border border-white/10'
                               }`}
                           >
                             {pageNum}
@@ -2497,8 +2497,8 @@ const Dashboard: React.FC = () => {
                       onClick={() => handleHistoryPageChange(historyPage + 1)}
                       disabled={historyPage === historyData.totalPages}
                       className={`px-4 py-2 rounded-lg transition-all ${historyPage === historyData.totalPages
-                          ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
-                          : 'bg-neon-blue/10 border border-neon-blue/30 text-neon-blue hover:bg-neon-blue/20'
+                        ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
+                        : 'bg-neon-blue/10 border border-neon-blue/30 text-neon-blue hover:bg-neon-blue/20'
                         }`}
                     >
                       <ChevronRight className="w-4 h-4" />
@@ -2576,8 +2576,8 @@ const Dashboard: React.FC = () => {
                           <p className="text-sm text-gray-600 mb-2">Early Applicant</p>
                           <span
                             className={`inline-block px-3 py-1 rounded-full text-sm font-semibold ${selectedApplication.earlyApplicant
-                                ? 'bg-green-100 text-green-700 border border-green-300'
-                                : 'bg-gray-100 text-gray-600 border border-gray-300'
+                              ? 'bg-green-100 text-green-700 border border-green-300'
+                              : 'bg-gray-100 text-gray-600 border border-gray-300'
                               }`}
                           >
                             {formatBoolean(selectedApplication.earlyApplicant)}
@@ -2587,8 +2587,8 @@ const Dashboard: React.FC = () => {
                           <p className="text-sm text-gray-600 mb-2">Key Skills Match</p>
                           <span
                             className={`inline-block px-3 py-1 rounded-full text-sm font-semibold ${selectedApplication.keySkillsMatch
-                                ? 'bg-green-100 text-green-700 border border-green-300'
-                                : 'bg-gray-100 text-gray-600 border border-gray-300'
+                              ? 'bg-green-100 text-green-700 border border-green-300'
+                              : 'bg-gray-100 text-gray-600 border border-gray-300'
                               }`}
                           >
                             {formatBoolean(selectedApplication.keySkillsMatch)}
@@ -2598,8 +2598,8 @@ const Dashboard: React.FC = () => {
                           <p className="text-sm text-gray-600 mb-2">Location Match</p>
                           <span
                             className={`inline-block px-3 py-1 rounded-full text-sm font-semibold ${selectedApplication.locationMatch
-                                ? 'bg-green-100 text-green-700 border border-green-300'
-                                : 'bg-gray-100 text-gray-600 border border-gray-300'
+                              ? 'bg-green-100 text-green-700 border border-green-300'
+                              : 'bg-gray-100 text-gray-600 border border-gray-300'
                               }`}
                           >
                             {formatBoolean(selectedApplication.locationMatch)}
@@ -2609,8 +2609,8 @@ const Dashboard: React.FC = () => {
                           <p className="text-sm text-gray-600 mb-2">Experience Match</p>
                           <span
                             className={`inline-block px-3 py-1 rounded-full text-sm font-semibold ${selectedApplication.experienceMatch
-                                ? 'bg-green-100 text-green-700 border border-green-300'
-                                : 'bg-gray-100 text-gray-600 border border-gray-300'
+                              ? 'bg-green-100 text-green-700 border border-green-300'
+                              : 'bg-gray-100 text-gray-600 border border-gray-300'
                               }`}
                           >
                             {formatBoolean(selectedApplication.experienceMatch)}
@@ -2636,8 +2636,8 @@ const Dashboard: React.FC = () => {
                           <p className="text-sm text-gray-600 mb-1">Match Status</p>
                           <span
                             className={`inline-block px-3 py-1 rounded-full text-sm font-semibold ${selectedApplication.matchStatus === 'Good Match'
-                                ? 'bg-green-100 text-green-700 border border-green-300'
-                                : 'bg-red-100 text-red-700 border border-red-300'
+                              ? 'bg-green-100 text-green-700 border border-green-300'
+                              : 'bg-red-100 text-red-700 border border-red-300'
                               }`}
                           >
                             {selectedApplication.matchStatus}
