@@ -80,7 +80,7 @@ const DashboardSidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) =
       <div className="h-20 flex items-center px-6 border-b border-gray-200 dark:border-white/10">
         <Cpu className="h-6 w-6 text-neon-blue animate-pulse mr-2" />
         <span className="font-heading font-bold text-xl text-gray-900 dark:text-white">
-          Auto<span className="text-neon-blue">AutoJobzy</span>
+          Auto<span className="text-neon-blue">Jobzy</span>
         </span>
       </div>
 
@@ -122,10 +122,10 @@ const DashboardSidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) =
                   setProfileExpanded(false);
                 }}
                 className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-all duration-200 ${activeTab === item.id
-                    ? 'bg-neon-blue/10 text-neon-blue border border-neon-blue/20'
-                    : item.id === 'logout'
-                      ? 'text-gray-600 dark:text-gray-400 hover:bg-red-50 dark:hover:bg-red-500/10 hover:text-red-600 dark:hover:text-red-400'
-                      : item.id === 'institute-admin'
+                  ? 'bg-neon-blue/10 text-neon-blue border border-neon-blue/20'
+                  : item.id === 'logout'
+                    ? 'text-gray-600 dark:text-gray-400 hover:bg-red-50 dark:hover:bg-red-500/10 hover:text-red-600 dark:hover:text-red-400'
+                    : item.id === 'institute-admin'
                       ? 'text-gray-600 dark:text-gray-400 hover:bg-neon-purple/10 hover:text-neon-purple dark:hover:text-neon-purple'
                       : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white'
                   }`}

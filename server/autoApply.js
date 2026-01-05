@@ -1,14 +1,15 @@
 
+
 /**
- * ======================== AUTO APPLY MODULE ========================
- * Main automation script for applying to jobs on Naukri.
- * Fetches credentials from database (job_settings table).
- * Handles login, job filtering, form filling, and chatbot interactions.
- *
- * Uses OLD login selectors:
- *   #usernameField
- *   #passwordField
- */
+* ======================== AUTO APPLY MODULE ========================
+* Main automation script for applying to jobs on Naukri.
+* Fetches credentials from database (job_settings table).
+* Handles login, job filtering, form filling, and chatbot interactions.
+*
+* Uses OLD login selectors:
+*   #usernameField
+*   #passwordField
+*/
 
 import puppeteer from 'puppeteer';
 import {
@@ -28,10 +29,10 @@ let browser = null;
 let jobResults = [];
 
 /**
- * Add log message with timestamp
- * @param {string} message - Log message
- * @param {string} type - Log type: 'info', 'success', 'error', 'warning'
- */
+* Add log message with timestamp
+* @param {string} message - Log message
+* @param {string} type - Log type: 'info', 'success', 'error', 'warning'
+*/
 function addLog(message, type = 'info') {
     const timestamp = new Date().toLocaleTimeString();
     const log = { timestamp, message, type };
@@ -42,20 +43,20 @@ function addLog(message, type = 'info') {
 }
 
 /**
- * Sleep helper function
- * @param {number} ms - Milliseconds to sleep
- */
+* Sleep helper function
+* @param {number} ms - Milliseconds to sleep
+*/
 function delay(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 /**
- * Safe navigation with retry logic
- * @param {Page} page - Puppeteer page object
- * @param {string} url - URL to navigate to
- * @param {number} maxRetries - Maximum retry attempts
- * @returns {Promise<boolean>} - Success status
- */
+* Safe navigation with retry logic
+* @param {Page} page - Puppeteer page object
+* @param {string} url - URL to navigate to
+* @param {number} maxRetries - Maximum retry attempts
+* @returns {Promise<boolean>} - Success status
+*/
 async function safeGoto(page, url, maxRetries = 3) {
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
         try {
@@ -74,10 +75,10 @@ async function safeGoto(page, url, maxRetries = 3) {
 }
 
 /**
- * Fetch Naukri credentials from job_settings table
- * @param {string} userId - User ID
- * @returns {Promise<{email: string, password: string}>} Credentials from database
- */
+* Fetch Naukri credentials from job_settings table
+* @param {string} userId - User ID
+* @returns {Promise<{email: string, password: string}>} Credentials from database
+*/
 async function fetchCredentialsFromDB(userId) {
     try {
         addLog(`Fetching credentials for user: ${userId}`, 'info');
@@ -109,10 +110,10 @@ async function fetchCredentialsFromDB(userId) {
 }
 
 /**
- * Map years of experience (number) to Naukri dropdown option text
- * @param {number} years - Years of experience from database
- * @returns {string|null} - Matching dropdown option text, or null to skip
- */
+* Map years of experience (number) to Naukri dropdown option text
+* @param {number} years - Years of experience from database
+* @returns {string|null} - Matching dropdown option text, or null to skip
+*/
 function mapExperienceToOption(years) {
     if (years === null || years === undefined || years < 0) return null;
 
@@ -130,10 +131,10 @@ function mapExperienceToOption(years) {
 }
 
 /**
- * Automatically select experience in Naukri search bar dropdown
- * @param {puppeteer.Page} page - Puppeteer page instance
- * @param {number} yearsOfExperience - Years of experience from database
- */
+* Automatically select experience in Naukri search bar dropdown
+* @param {puppeteer.Page} page - Puppeteer page instance
+* @param {number} yearsOfExperience - Years of experience from database
+*/
 async function selectExperienceSearchBox(page, yearsOfExperience) {
     try {
         const experienceText = mapExperienceToOption(yearsOfExperience);
@@ -187,9 +188,9 @@ async function selectExperienceSearchBox(page, yearsOfExperience) {
 }
 
 /**
- * Auto-scroll page to load lazy-loaded content
- * @param {puppeteer.Page} page - Puppeteer page instance
- */
+* Auto-scroll page to load lazy-loaded content
+* @param {puppeteer.Page} page - Puppeteer page instance
+*/
 async function autoScroll(page) {
     await page.evaluate(() => {
         return new Promise(resolve => {
@@ -209,17 +210,17 @@ async function autoScroll(page) {
 }
 
 /**
- * Fetch user preferences from database for checkbox matching
- * @param {string} userId - User ID
- * @returns {Promise<Object>} User preferences object
- */
+* Fetch user preferences from database for checkbox matching
+* @param {string} userId - User ID
+* @returns {Promise<Object>} User preferences object
+*/
 async function fetchUserPreferences(userId) {
     try {
         // Fetch job settings
         const [jobSettings] = await sequelize.query(
             `SELECT target_role, location, current_c_t_c, expected_c_t_c,
-                    notice_period, years_of_experience, search_keywords
-             FROM job_settings WHERE user_id = ? LIMIT 1`,
+                   notice_period, years_of_experience, search_keywords
+            FROM job_settings WHERE user_id = ? LIMIT 1`,
             { replacements: [userId] }
         );
 
@@ -262,10 +263,10 @@ async function fetchUserPreferences(userId) {
 }
 
 /**
- * Normalize text for matching (lowercase, remove extra spaces, special chars)
- * @param {string} text - Text to normalize
- * @returns {string} Normalized text
- */
+* Normalize text for matching (lowercase, remove extra spaces, special chars)
+* @param {string} text - Text to normalize
+* @returns {string} Normalized text
+*/
 function normalizeText(text) {
     if (!text) return '';
     return text.toString()
@@ -276,12 +277,12 @@ function normalizeText(text) {
 }
 
 /**
- * Check if two strings match (exact, partial, or fuzzy match)
- * @param {string} text1 - First text
- * @param {string} text2 - Second text
- * @param {number} threshold - Match threshold (0-1), default 0.6
- * @returns {boolean} Whether texts match
- */
+* Check if two strings match (exact, partial, or fuzzy match)
+* @param {string} text1 - First text
+* @param {string} text2 - Second text
+* @param {number} threshold - Match threshold (0-1), default 0.6
+* @returns {boolean} Whether texts match
+*/
 function isTextMatch(text1, text2, threshold = 0.6) {
     const norm1 = normalizeText(text1);
     const norm2 = normalizeText(text2);
@@ -305,11 +306,11 @@ function isTextMatch(text1, text2, threshold = 0.6) {
 }
 
 /**
- * Intelligent checkbox selection based on user preferences
- * @param {puppeteer.Page} page - Puppeteer page instance
- * @param {string} userId - User ID for fetching preferences
- * @returns {Promise<boolean>} Whether checkbox was handled
- */
+* Intelligent checkbox selection based on user preferences
+* @param {puppeteer.Page} page - Puppeteer page instance
+* @param {string} userId - User ID for fetching preferences
+* @returns {Promise<boolean>} Whether checkbox was handled
+*/
 async function handleCheckBox(page, userId = null) {
     try {
         const checkboxSelector = ".checkBoxContainer input[type='radio'], .checkBoxContainer input[type='checkbox']";
@@ -418,11 +419,11 @@ async function handleCheckBox(page, userId = null) {
 }
 
 /**
- * Login to Naukri using old selectors (#usernameField, #passwordField)
- * @param {puppeteer.Page} page - Puppeteer page instance
- * @param {string} email - Naukri email
- * @param {string} password - Naukri password
- */
+* Login to Naukri using old selectors (#usernameField, #passwordField)
+* @param {puppeteer.Page} page - Puppeteer page instance
+* @param {string} email - Naukri email
+* @param {string} password - Naukri password
+*/
 async function loginToNaukri(page, email, password) {
     try {
         addLog('Opening Naukri login page...', 'info');
@@ -490,10 +491,10 @@ async function loginToNaukri(page, email, password) {
 }
 
 /**
- * Handle chatbot questions and provide AI-generated answers
- * @param {puppeteer.Page} jobPage - Puppeteer page instance
- * @param {string} userId - User ID for intelligent checkbox matching
- */
+* Handle chatbot questions and provide AI-generated answers
+* @param {puppeteer.Page} jobPage - Puppeteer page instance
+* @param {string} userId - User ID for intelligent checkbox matching
+*/
 async function handleChatbot(jobPage, userId = null) {
     try {
         await jobPage.waitForSelector('.chatbot_MessageContainer', { timeout: 5000 });
@@ -582,10 +583,10 @@ async function handleChatbot(jobPage, userId = null) {
 }
 
 /**
- * Scrape comprehensive job details from Naukri job page
- * @param {puppeteer.Page} jobPage - Puppeteer page instance
- * @returns {Promise<Object>} Job details object
- */
+* Scrape comprehensive job details from Naukri job page
+* @param {puppeteer.Page} jobPage - Puppeteer page instance
+* @returns {Promise<Object>} Job details object
+*/
 async function scrapeJobDetails(jobPage) {
     try {
         const jobDetails = await jobPage.evaluate(() => {
@@ -694,8 +695,8 @@ async function scrapeJobDetails(jobPage) {
 }
 
 /**
- * Save results to Excel file
- */
+* Save results to Excel file
+*/
 function saveToExcel() {
     try {
         const ws = XLSX.utils.json_to_sheet(jobResults);
@@ -711,14 +712,14 @@ function saveToExcel() {
 }
 
 /**
- * Main automation function
- * @param {Object} options - Configuration options
- * @param {string} options.userId - User ID (required for DB credential lookup)
- * @param {string} options.jobUrl - URL of filtered job listings page
- * @param {number} options.maxPages - Maximum pages to process (default: 10)
- * @param {string} options.naukriEmail - Optional email (overrides DB)
- * @param {string} options.naukriPassword - Optional password (overrides DB)
- */
+* Main automation function
+* @param {Object} options - Configuration options
+* @param {string} options.userId - User ID (required for DB credential lookup)
+* @param {string} options.jobUrl - URL of filtered job listings page
+* @param {number} options.maxPages - Maximum pages to process (default: 10)
+* @param {string} options.naukriEmail - Optional email (overrides DB)
+* @param {string} options.naukriPassword - Optional password (overrides DB)
+*/
 export async function startAutomation(options = {}) {
     if (isRunning) {
         addLog('Automation already running', 'warning');
@@ -777,9 +778,9 @@ export async function startAutomation(options = {}) {
             try {
                 const [rows] = await sequelize.query(
                     `SELECT final_url 
-             FROM user_filters 
-             WHERE user_id = :userId
-             LIMIT 1`,
+            FROM user_filters 
+            WHERE user_id = :userId
+            LIMIT 1`,
                     { replacements: { userId } }
                 );
 
@@ -811,7 +812,7 @@ export async function startAutomation(options = {}) {
         // ========== STEP 2: LAUNCH BROWSER ==========
         addLog('Launching browser...', 'info');
         browser = await puppeteer.launch({
-            headless: true,
+            headless: false,
             defaultViewport: null,
             args: ['--start-maximized']
         });
@@ -1216,9 +1217,9 @@ export async function startAutomation(options = {}) {
 }
 
 /**
- * Stop the currently running automation
- * Forcefully closes the browser and clears all state
- */
+* Stop the currently running automation
+* Forcefully closes the browser and clears all state
+*/
 export async function stopAutomation() {
     if (!isRunning) {
         addLog('No automation running', 'warning');
@@ -1256,25 +1257,25 @@ export async function stopAutomation() {
 }
 
 /**
- * Get current logs
- * @returns {Array} Array of log entries
- */
+* Get current logs
+* @returns {Array} Array of log entries
+*/
 export function getLogs() {
     return automationLogs;
 }
 
 /**
- * Clear logs
- */
+* Clear logs
+*/
 export function clearLogs() {
     automationLogs = [];
     addLog('Logs cleared', 'info');
 }
 
 /**
- * Check if automation is running
- * @returns {boolean} Whether automation is running
- */
+* Check if automation is running
+* @returns {boolean} Whether automation is running
+*/
 export function isAutomationRunning() {
     return isRunning;
 }
@@ -1356,4 +1357,3 @@ async function handleRadioButtons(page, userId = null) {
         return false;
     }
 }
-
