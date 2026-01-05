@@ -14,7 +14,8 @@ import {
   UserCog,
   ChevronDown,
   ChevronUp,
-  Activity
+  Activity,
+  Building2,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { useNavigate } from 'react-router-dom';
@@ -29,6 +30,7 @@ const DashboardSidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) =
   const navigate = useNavigate();
   const [userName, setUserName] = useState<string>('');
   const [userEmail, setUserEmail] = useState<string>('');
+  const [userRole, setUserRole] = useState<string>('');
   const [profileExpanded, setProfileExpanded] = useState<boolean>(false);
 
   // Fetch user info from localStorage
@@ -40,6 +42,7 @@ const DashboardSidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) =
         const fullName = `${user.firstName || ''} ${user.lastName || ''}`.trim();
         setUserName(fullName || 'User');
         setUserEmail(user.email || '');
+        setUserRole(user.role || '');
       } catch (e) {
         setUserName('User');
       }
@@ -63,10 +66,12 @@ const DashboardSidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) =
     { id: 'history', label: 'Application History', icon: FileText },
   ];
 
+  // Build profile menu items dynamically based on user role
   const profileMenuItems = [
     { id: 'billing', label: 'My Plan', icon: CreditCard },
     { id: 'suggest-earn', label: 'Suggest & Earn', icon: Lightbulb },
     { id: 'settings', label: 'App Settings', icon: UserCog },
+    ...(userRole === 'institute_admin' ? [{ id: 'institute-admin', label: 'Institute Admin Panel', icon: Building2, isNavigation: true }] : []),
     { id: 'logout', label: 'Logout', icon: LogOut },
   ];
 
@@ -102,12 +107,15 @@ const DashboardSidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) =
         {/* Profile Dropdown Menu - Appears Above Profile Button */}
         {profileExpanded && (
           <div className="space-y-1 pl-2 pb-2 border-b border-gray-200 dark:border-white/10">
-            {profileMenuItems.map((item) => (
+            {profileMenuItems.map((item: any) => (
               <button
                 key={item.id}
                 onClick={() => {
                   if (item.id === 'logout') {
                     handleLogout();
+                  } else if (item.isNavigation) {
+                    // Navigate to external page (like Institute Admin Panel)
+                    navigate(`/${item.id}`);
                   } else {
                     setActiveTab(item.id);
                   }
@@ -117,10 +125,12 @@ const DashboardSidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) =
                     ? 'bg-neon-blue/10 text-neon-blue border border-neon-blue/20'
                     : item.id === 'logout'
                       ? 'text-gray-600 dark:text-gray-400 hover:bg-red-50 dark:hover:bg-red-500/10 hover:text-red-600 dark:hover:text-red-400'
+                      : item.id === 'institute-admin'
+                      ? 'text-gray-600 dark:text-gray-400 hover:bg-neon-purple/10 hover:text-neon-purple dark:hover:text-neon-purple'
                       : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white'
                   }`}
               >
-                <item.icon className={`w-4 h-4 ${activeTab === item.id ? 'text-neon-blue' : item.id === 'logout' ? 'text-gray-500 hover:text-red-600 dark:hover:text-red-400' : 'text-gray-500'}`} />
+                <item.icon className={`w-4 h-4 ${activeTab === item.id ? 'text-neon-blue' : item.id === 'logout' ? 'text-gray-500 hover:text-red-600 dark:hover:text-red-400' : item.id === 'institute-admin' ? 'text-neon-purple' : 'text-gray-500'}`} />
                 <span className="font-medium text-xs">{item.label}</span>
               </button>
             ))}

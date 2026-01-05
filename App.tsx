@@ -19,6 +19,20 @@ import ApplicationHistory from './pages/ApplicationHistory';
 import AdminLogin from './pages/AdminLogin';
 import AdminDashboard from './pages/AdminDashboard';
 import AdminProtectedRoute from './components/AdminProtectedRoute';
+import SuperAdminLogin from './pages/SuperAdminLogin';
+import SuperAdminDashboard from './pages/SuperAdminDashboard';
+import SuperAdminInstitutes from './pages/SuperAdminInstitutes';
+import SuperAdminInstituteDetails from './pages/SuperAdminInstituteDetails';
+import SuperAdminPackages from './pages/SuperAdminPackages';
+import SuperAdminIndividualUsers from './pages/SuperAdminIndividualUsers';
+import SuperAdminUsers from './pages/SuperAdminUsers';
+import SuperAdminProtectedRoute from './components/SuperAdminProtectedRoute';
+import InstituteSignup from './pages/InstituteSignup';
+import InstitutePending from './pages/InstitutePending';
+import InstituteAdminLogin from './pages/InstituteAdminLogin';
+import InstituteAdminDashboard from './pages/InstituteAdminDashboard';
+import InstituteStudentManagement from './pages/InstituteStudentManagement';
+import InstituteAdminProtectedRoute from './components/InstituteAdminProtectedRoute';
 import { AppProvider, useApp } from './context/AppContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { Toaster } from 'react-hot-toast';
@@ -48,7 +62,7 @@ const AppContent: React.FC = () => {
   const previousPath = useRef<string | null>(null);
 
   // Define protected and public routes
-  const protectedRoutes = ['/dashboard', '/plans', '/setup', '/history'];
+  const protectedRoutes = ['/dashboard', '/plans', '/setup', '/history', '/institute-admin'];
   const publicRoutes = ['/', '/login', '/signup', '/pricing', '/privacy-policy', '/terms', '/refund-policy', '/contact', '/about', '/why-we-built', '/api-tester'];
 
   // Monitor navigation and automatically logout when leaving Dashboard to public routes
@@ -70,8 +84,8 @@ const AppContent: React.FC = () => {
     previousPath.current = currentPath;
   }, [location.pathname, user.isLoggedIn, logout]);
 
-  // Check if current route is admin route
-  const isAdminRoute = location.pathname.startsWith('/admin');
+  // Check if current route is admin, superadmin, or institute-admin route
+  const isAdminRoute = location.pathname.startsWith('/admin') || location.pathname.startsWith('/superadmin') || location.pathname.startsWith('/institute-admin');
 
   return (
     <div className="bg-gray-50 dark:bg-dark-900 min-h-screen text-gray-900 dark:text-slate-200 font-sans selection:bg-neon-blue selection:text-black flex flex-col transition-colors duration-200">
@@ -116,9 +130,27 @@ const AppContent: React.FC = () => {
           <Route path="/about" element={<AboutUs />} />
           <Route path="/why-we-built" element={<WhyWeBuilt />} />
 
+          {/* Institute Routes */}
+          <Route path="/institute-signup" element={<InstituteSignup />} />
+          <Route path="/institute-pending" element={<InstitutePending />} />
+
+          {/* Institute Admin Routes */}
+          <Route path="/institute-admin/login" element={<InstituteAdminLogin />} />
+          <Route path="/institute-admin" element={<InstituteAdminProtectedRoute><InstituteAdminDashboard /></InstituteAdminProtectedRoute>} />
+          <Route path="/institute-admin/students" element={<InstituteAdminProtectedRoute><InstituteStudentManagement /></InstituteAdminProtectedRoute>} />
+
           {/* Admin Routes */}
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/admin/dashboard" element={<AdminProtectedRoute><AdminDashboard /></AdminProtectedRoute>} />
+
+          {/* Super Admin Routes */}
+          <Route path="/superadmin/login" element={<SuperAdminLogin />} />
+          <Route path="/superadmin/dashboard" element={<SuperAdminProtectedRoute><SuperAdminDashboard /></SuperAdminProtectedRoute>} />
+          <Route path="/superadmin/institutes/:id" element={<SuperAdminProtectedRoute><SuperAdminInstituteDetails /></SuperAdminProtectedRoute>} />
+          <Route path="/superadmin/institutes" element={<SuperAdminProtectedRoute><SuperAdminInstitutes /></SuperAdminProtectedRoute>} />
+          <Route path="/superadmin/packages" element={<SuperAdminProtectedRoute><SuperAdminPackages /></SuperAdminProtectedRoute>} />
+          <Route path="/superadmin/individual-users" element={<SuperAdminProtectedRoute><SuperAdminIndividualUsers /></SuperAdminProtectedRoute>} />
+          <Route path="/superadmin/users" element={<SuperAdminProtectedRoute><SuperAdminUsers /></SuperAdminProtectedRoute>} />
         </Routes>
       </main>
       {!user.isLoggedIn && !isAdminRoute && <Footer />}

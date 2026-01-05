@@ -362,6 +362,15 @@ router.post('/login', async (req, res) => {
             return res.status(401).json({ error: 'Invalid credentials' });
         }
 
+        // Check if user is active (for institute admins pending approval)
+        if (user.isActive === false) {
+            console.log('[LOGIN] User account is inactive:', email);
+            return res.status(403).json({
+                error: 'Your account is pending approval. Please wait for administrator approval.',
+                pending: true
+            });
+        }
+
         console.log('[LOGIN] Login successful for:', email);
 
         const token = generateToken(user.id, user.role);
@@ -491,6 +500,97 @@ router.post('/verify-naukri-credentials', authenticateToken, async (req, res) =>
         res.status(500).json({
             success: false,
             error: 'Verification failed due to a server error. Please try again later.'
+        });
+    }
+});
+
+/**
+ * POST /api/auth/institute-signup
+ * Register a new institute with admin user (pending approval)
+ */
+router.post('/institute-signup', async (req, res) => {
+    try {
+        const {
+            instituteName,
+            instituteEmail,
+            institutePhone,
+            instituteAddress,
+            instituteWebsite,
+            adminFirstName,
+            adminLastName,
+            adminEmail,
+            adminPassword
+        } = req.body;
+
+        // Validate required fields
+        if (!instituteName || !instituteEmail || !adminFirstName || !adminLastName || !adminEmail || !adminPassword) {
+            return res.status(400).json({ error: 'Please fill in all required fields' });
+        }
+
+        // Check if institute email already exists
+        const { default: Institute } = await import('../models/Institute.js');
+        const existingInstitute = await Institute.findOne({ where: { email: instituteEmail } });
+        if (existingInstitute) {
+            return res.status(400).json({ error: 'An institute with this email already exists' });
+        }
+
+        // Check if admin email already exists
+        const existingUser = await User.findOne({ where: { email: adminEmail } });
+        if (existingUser) {
+            return res.status(400).json({ error: 'A user with this email already exists' });
+        }
+
+        // Create institute with pending status
+        const { v4: uuidv4 } = await import('uuid');
+        const instituteId = uuidv4();
+
+        const institute = await Institute.create({
+            id: instituteId,
+            name: instituteName,
+            email: instituteEmail,
+            phone: institutePhone || null,
+            address: instituteAddress || null,
+            website: instituteWebsite || null,
+            status: 'inactive', // Pending approval
+        });
+
+        // Create admin user (but can't login until approved)
+        // Note: Password will be automatically hashed by User model's beforeCreate hook
+        const adminUser = await User.create({
+            id: uuidv4(),
+            firstName: adminFirstName,
+            lastName: adminLastName,
+            email: adminEmail,
+            password: adminPassword, // Will be hashed by beforeCreate hook
+            role: 'institute_admin',
+            instituteId: instituteId,
+            isActive: false, // Can't login until approved
+        });
+
+        // Link admin to institute
+        const { default: InstituteAdmin } = await import('../models/InstituteAdmin.js');
+        await InstituteAdmin.create({
+            instituteId: instituteId,
+            userId: adminUser.id,
+        });
+
+        console.log('[Institute Signup] Registration submitted:', instituteName);
+
+        res.status(201).json({
+            success: true,
+            message: 'Institute registration submitted successfully. You will receive an email once approved.',
+            institute: {
+                id: institute.id,
+                name: institute.name,
+                status: 'pending'
+            }
+        });
+
+    } catch (error) {
+        console.error('[Institute Signup] Error:', error);
+        res.status(500).json({
+            error: 'Registration failed. Please try again later.',
+            details: error.message
         });
     }
 });

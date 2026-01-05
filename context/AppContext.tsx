@@ -33,10 +33,24 @@ const INITIAL_USER: User = {
 // Helper to get persisted user from localStorage
 const getPersistedUser = (): User => {
   try {
+    // First check for autojobzy_user (old format)
     const stored = localStorage.getItem('autojobzy_user');
     if (stored) {
       const parsed = JSON.parse(stored);
       return { ...INITIAL_USER, ...parsed };
+    }
+
+    // Also check for 'user' and 'token' (backend API format)
+    const backendUser = localStorage.getItem('user');
+    const token = localStorage.getItem('token');
+    if (backendUser && token) {
+      const userData = JSON.parse(backendUser);
+      return {
+        username: `${userData.firstName || ''} ${userData.lastName || ''}`.trim(),
+        email: userData.email || '',
+        isLoggedIn: true,
+        onboardingCompleted: userData.onboardingCompleted ?? false,
+      };
     }
   } catch (e) {
     console.error('Failed to parse stored user:', e);
@@ -119,6 +133,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     localStorage.removeItem('pendingPlanId');
     localStorage.removeItem('selectedPlanId');
     localStorage.removeItem('selectedPlan');
+    localStorage.removeItem('instituteAdminToken');
+    localStorage.removeItem('instituteAdminUser');
+    localStorage.removeItem('adminToken');
+    localStorage.removeItem('adminUser');
+    localStorage.removeItem('superAdminToken');
+    localStorage.removeItem('superAdminUser');
 
     // Clear any session storage if used
     sessionStorage.clear();

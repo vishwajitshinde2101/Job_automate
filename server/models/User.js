@@ -42,9 +42,17 @@ const User = sequelize.define('User', {
         defaultValue: true,
     },
     role: {
-        type: DataTypes.ENUM('user', 'admin'),
+        type: DataTypes.ENUM('user', 'admin', 'superadmin', 'institute_admin', 'staff', 'student'),
         defaultValue: 'user',
         allowNull: false,
+    },
+    instituteId: {
+        type: DataTypes.UUID,
+        allowNull: true,
+        references: {
+            model: 'institutes',
+            key: 'id',
+        },
     },
     onboardingCompleted: {
         type: DataTypes.BOOLEAN,

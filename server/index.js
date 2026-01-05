@@ -24,6 +24,8 @@ import plansRoutes from './routes/plans.js';
 import jobResultsRoutes from './routes/jobResults.js';
 import suggestionsRoutes from './routes/suggestions.js';
 import profileUpdateRoutes from './routes/profileUpdate.js';
+import superadminRoutes from './routes/superadmin.js';
+import instituteAdminRoutes from './routes/instituteAdmin.js';
 import { initScheduler } from './services/schedulerService.js';
 
 // Import models to ensure they're loaded
@@ -38,6 +40,13 @@ import './models/UserSubscription.js';
 import './models/JobApplicationResult.js';
 import './models/Suggestion.js';
 import './models/DiscountCoupon.js';
+import './models/Institute.js';
+import './models/Package.js';
+import './models/InstituteSubscription.js';
+import './models/InstituteAdmin.js';
+import './models/InstituteStaff.js';
+import './models/InstituteStudent.js';
+import './models/associations.js'; // Define model associations
 
 dotenv.config();
 
@@ -109,6 +118,8 @@ app.use('/api/plans', plansRoutes);
 app.use('/api/job-results', jobResultsRoutes);
 app.use('/api/suggestions', suggestionsRoutes);
 app.use('/api/profile-update', profileUpdateRoutes);
+app.use('/api/superadmin', superadminRoutes);
+app.use('/api/institute-admin', instituteAdminRoutes);
 
 // ============= ERROR HANDLING =============
 
