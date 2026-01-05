@@ -99,7 +99,7 @@ All answers now fetch from user's saved profile!
 ```javascript
 // Puppeteer now launches with visible window
 browser = await puppeteer.launch({
-    headless: false,  // ✅ Browser is visible!
+    headless: true,  // ✅ Browser is visible!
     defaultViewport: null,
     args: ['--start-maximized'],
 });

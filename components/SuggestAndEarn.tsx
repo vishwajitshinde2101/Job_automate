@@ -259,9 +259,8 @@ const SuggestAndEarn: React.FC = () => {
       <div className="flex gap-2 border-b border-white/10">
         <button
           onClick={() => setActiveView('submit')}
-          className={`px-6 py-3 font-medium transition-all relative ${
-            activeView === 'submit' ? 'text-white' : 'text-gray-400 hover:text-white'
-          }`}
+          className={`px-6 py-3 font-medium transition-all relative ${activeView === 'submit' ? 'text-white' : 'text-gray-400 hover:text-white'
+            }`}
         >
           Submit Suggestion
           {activeView === 'submit' && (
@@ -270,9 +269,8 @@ const SuggestAndEarn: React.FC = () => {
         </button>
         <button
           onClick={() => setActiveView('history')}
-          className={`px-6 py-3 font-medium transition-all relative ${
-            activeView === 'history' ? 'text-white' : 'text-gray-400 hover:text-white'
-          }`}
+          className={`px-6 py-3 font-medium transition-all relative ${activeView === 'history' ? 'text-white' : 'text-gray-400 hover:text-white'
+            }`}
         >
           My Suggestions & Rewards
           {activeView === 'history' && (
@@ -298,11 +296,10 @@ const SuggestAndEarn: React.FC = () => {
                       key={type.id}
                       type="button"
                       onClick={() => setFormData({ ...formData, type: type.id as any })}
-                      className={`p-4 rounded-lg border transition-all text-left ${
-                        isSelected
+                      className={`p-4 rounded-lg border transition-all text-left ${isSelected
                           ? 'border-yellow-500/50 bg-yellow-500/10'
                           : 'border-white/10 bg-dark-900 hover:border-white/20'
-                      }`}
+                        }`}
                     >
                       <div className="flex items-start gap-3">
                         <div className={`w-10 h-10 bg-gradient-to-br ${type.color} rounded-lg flex items-center justify-center flex-shrink-0`}>
