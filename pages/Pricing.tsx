@@ -102,7 +102,7 @@ const Pricing: React.FC = () => {
       try {
         // Create guest order (no authentication required)
         console.log('[Pricing] Creating guest order for plan:', plan.id);
-        const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+        const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.autojobzy.com/api';
         const response = await fetch(`${API_BASE_URL}/subscription/create-guest-order`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -323,198 +323,196 @@ const Pricing: React.FC = () => {
       </Helmet>
       <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
         {/* Header */}
-      <div className="pt-20 pb-12 text-center">
-        <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
-          {isSignupFlow ? 'Complete Your Signup' : 'Choose Your Plan'}
-        </h1>
-        <p className="text-gray-400 text-lg max-w-2xl mx-auto px-4">
-          {isSignupFlow
-            ? 'Select a plan to activate your account and start automating'
-            : 'Automate your job applications and land your dream job faster'}
-        </p>
-      </div>
+        <div className="pt-20 pb-12 text-center">
+          <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
+            {isSignupFlow ? 'Complete Your Signup' : 'Choose Your Plan'}
+          </h1>
+          <p className="text-gray-400 text-lg max-w-2xl mx-auto px-4">
+            {isSignupFlow
+              ? 'Select a plan to activate your account and start automating'
+              : 'Automate your job applications and land your dream job faster'}
+          </p>
+        </div>
 
-      {/* Signup Flow Banner */}
-      {isSignupFlow && signupData && (
-        <div className="max-w-4xl mx-auto px-4 mb-8">
-          <div className="bg-gradient-to-r from-green-500/20 to-emerald-500/20 border border-green-500/50 rounded-xl p-4">
-            <div className="flex items-center gap-3">
-              <UserPlus className="w-6 h-6 text-green-400" />
-              <div>
-                <p className="text-white font-medium">
-                  Creating account for {signupData.firstName} {signupData.lastName}
-                </p>
-                <p className="text-gray-400 text-sm">
-                  Select a plan below and complete payment to activate your account
-                </p>
+        {/* Signup Flow Banner */}
+        {isSignupFlow && signupData && (
+          <div className="max-w-4xl mx-auto px-4 mb-8">
+            <div className="bg-gradient-to-r from-green-500/20 to-emerald-500/20 border border-green-500/50 rounded-xl p-4">
+              <div className="flex items-center gap-3">
+                <UserPlus className="w-6 h-6 text-green-400" />
+                <div>
+                  <p className="text-white font-medium">
+                    Creating account for {signupData.firstName} {signupData.lastName}
+                  </p>
+                  <p className="text-gray-400 text-sm">
+                    Select a plan below and complete payment to activate your account
+                  </p>
+                </div>
               </div>
             </div>
-          </div>
-        </div>
-      )}
-
-      {/* Current Subscription Banner */}
-      {currentSubscription && !isSignupFlow && (
-        <div className="max-w-4xl mx-auto px-4 mb-8">
-          <div className="bg-indigo-500/20 border border-indigo-500/50 rounded-xl p-4 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <CheckCircle className="w-6 h-6 text-indigo-400" />
-              <div>
-                <p className="text-white font-medium">
-                  Active Plan: {currentSubscription.planName}
-                </p>
-                <p className="text-gray-400 text-sm">
-                  {currentSubscription.daysRemaining} days remaining
-                </p>
-              </div>
-            </div>
-            <button
-              onClick={() => navigate('/dashboard')}
-              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-colors"
-            >
-              Go to Dashboard
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Alerts */}
-      {error && (
-        <div className="max-w-4xl mx-auto px-4 mb-6">
-          <div className="bg-red-500/20 border border-red-500/50 rounded-xl p-4 flex items-center gap-3">
-            <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0" />
-            <p className="text-red-400">{error}</p>
-          </div>
-        </div>
-      )}
-
-      {success && (
-        <div className="max-w-4xl mx-auto px-4 mb-6">
-          <div className="bg-green-500/20 border border-green-500/50 rounded-xl p-4 flex items-center gap-3">
-            <CheckCircle className="w-5 h-5 text-green-400 flex-shrink-0" />
-            <p className="text-green-400">{success}</p>
-          </div>
-        </div>
-      )}
-
-      {/* Plans Grid */}
-      <div className="max-w-6xl mx-auto px-4 pb-20">
-        <div className="grid md:grid-cols-3 gap-8">
-          {plans.map((plan, index) => {
-            const isPopular = index === 1;
-            const isProcessing = processingPlanId === plan.id;
-            const isCurrentPlan = currentSubscription?.planName === plan.name;
-
-            return (
-              <div
-                key={plan.id}
-                className={`relative bg-gray-800/50 backdrop-blur-sm border rounded-2xl p-8 transition-all duration-300 ${
-                  isPopular
-                    ? 'border-indigo-500 scale-105 shadow-2xl shadow-indigo-500/20'
-                    : 'border-gray-700 hover:border-gray-600'
-                }`}
-              >
-                {/* Popular Badge */}
-                {isPopular && (
-                  <div className="absolute -top-4 left-1/2 -translate-x-1/2">
-                    <span className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white px-4 py-1 rounded-full text-sm font-medium">
-                      Most Popular
-                    </span>
-                  </div>
-                )}
-
-                {/* Plan Icon */}
-                <div
-                  className={`w-16 h-16 rounded-xl bg-gradient-to-br ${getPlanGradient(
-                    index
-                  )} flex items-center justify-center text-white mb-6`}
-                >
-                  {getPlanIcon(index)}
-                </div>
-
-                {/* Plan Name & Description */}
-                <h3 className="text-2xl font-bold text-white mb-2">{plan.name}</h3>
-                <p className="text-gray-400 text-sm mb-6">{plan.description}</p>
-
-                {/* Price */}
-                <div className="mb-6">
-                  <span className="text-4xl font-bold text-white">
-                    {formatPrice(plan.price)}
-                  </span>
-                  <span className="text-gray-400 ml-2">
-                    / {plan.durationDays} days
-                  </span>
-                </div>
-
-                {/* Features */}
-                <ul className="space-y-3 mb-8">
-                  {plan.features.map((feature) => (
-                    <li key={feature.id} className="flex items-start gap-3">
-                      <Check className="w-5 h-5 text-green-400 flex-shrink-0 mt-0.5" />
-                      <span className="text-gray-300 text-sm">
-                        {feature.featureLabel || feature.featureValue}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-
-                {/* CTA Button */}
-                <button
-                  onClick={() => handleSelectPlan(plan)}
-                  disabled={isProcessing || isCurrentPlan}
-                  className={`w-full py-3 px-6 rounded-xl font-medium transition-all duration-300 flex items-center justify-center gap-2 ${
-                    isCurrentPlan
-                      ? 'bg-gray-700 text-gray-400 cursor-not-allowed'
-                      : isPopular
-                      ? 'bg-gradient-to-r from-indigo-500 to-purple-500 text-white hover:from-indigo-600 hover:to-purple-600'
-                      : 'bg-gray-700 text-white hover:bg-gray-600'
-                  }`}
-                >
-                  {isProcessing ? (
-                    <>
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                      Processing...
-                    </>
-                  ) : isCurrentPlan ? (
-                    'Current Plan'
-                  ) : (
-                    <>
-                      Get Started
-                      <ArrowRight className="w-5 h-5" />
-                    </>
-                  )}
-                </button>
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Empty State */}
-        {plans.length === 0 && !loading && (
-          <div className="text-center py-20">
-            <p className="text-gray-400 text-lg">No plans available at the moment.</p>
           </div>
         )}
-      </div>
 
-      {/* Footer Links */}
-      <div className="border-t border-gray-800 py-8">
-        <div className="max-w-4xl mx-auto px-4 flex flex-wrap justify-center gap-6 text-sm">
-          <a href="/privacy-policy" className="text-gray-400 hover:text-white transition-colors">
-            Privacy Policy
-          </a>
-          <a href="/terms" className="text-gray-400 hover:text-white transition-colors">
-            Terms & Conditions
-          </a>
-          <a href="/refund-policy" className="text-gray-400 hover:text-white transition-colors">
-            Refund Policy
-          </a>
-          <a href="/contact" className="text-gray-400 hover:text-white transition-colors">
-            Contact Us
-          </a>
+        {/* Current Subscription Banner */}
+        {currentSubscription && !isSignupFlow && (
+          <div className="max-w-4xl mx-auto px-4 mb-8">
+            <div className="bg-indigo-500/20 border border-indigo-500/50 rounded-xl p-4 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <CheckCircle className="w-6 h-6 text-indigo-400" />
+                <div>
+                  <p className="text-white font-medium">
+                    Active Plan: {currentSubscription.planName}
+                  </p>
+                  <p className="text-gray-400 text-sm">
+                    {currentSubscription.daysRemaining} days remaining
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => navigate('/dashboard')}
+                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-colors"
+              >
+                Go to Dashboard
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Alerts */}
+        {error && (
+          <div className="max-w-4xl mx-auto px-4 mb-6">
+            <div className="bg-red-500/20 border border-red-500/50 rounded-xl p-4 flex items-center gap-3">
+              <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0" />
+              <p className="text-red-400">{error}</p>
+            </div>
+          </div>
+        )}
+
+        {success && (
+          <div className="max-w-4xl mx-auto px-4 mb-6">
+            <div className="bg-green-500/20 border border-green-500/50 rounded-xl p-4 flex items-center gap-3">
+              <CheckCircle className="w-5 h-5 text-green-400 flex-shrink-0" />
+              <p className="text-green-400">{success}</p>
+            </div>
+          </div>
+        )}
+
+        {/* Plans Grid */}
+        <div className="max-w-6xl mx-auto px-4 pb-20">
+          <div className="grid md:grid-cols-3 gap-8">
+            {plans.map((plan, index) => {
+              const isPopular = index === 1;
+              const isProcessing = processingPlanId === plan.id;
+              const isCurrentPlan = currentSubscription?.planName === plan.name;
+
+              return (
+                <div
+                  key={plan.id}
+                  className={`relative bg-gray-800/50 backdrop-blur-sm border rounded-2xl p-8 transition-all duration-300 ${isPopular
+                      ? 'border-indigo-500 scale-105 shadow-2xl shadow-indigo-500/20'
+                      : 'border-gray-700 hover:border-gray-600'
+                    }`}
+                >
+                  {/* Popular Badge */}
+                  {isPopular && (
+                    <div className="absolute -top-4 left-1/2 -translate-x-1/2">
+                      <span className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white px-4 py-1 rounded-full text-sm font-medium">
+                        Most Popular
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Plan Icon */}
+                  <div
+                    className={`w-16 h-16 rounded-xl bg-gradient-to-br ${getPlanGradient(
+                      index
+                    )} flex items-center justify-center text-white mb-6`}
+                  >
+                    {getPlanIcon(index)}
+                  </div>
+
+                  {/* Plan Name & Description */}
+                  <h3 className="text-2xl font-bold text-white mb-2">{plan.name}</h3>
+                  <p className="text-gray-400 text-sm mb-6">{plan.description}</p>
+
+                  {/* Price */}
+                  <div className="mb-6">
+                    <span className="text-4xl font-bold text-white">
+                      {formatPrice(plan.price)}
+                    </span>
+                    <span className="text-gray-400 ml-2">
+                      / {plan.durationDays} days
+                    </span>
+                  </div>
+
+                  {/* Features */}
+                  <ul className="space-y-3 mb-8">
+                    {plan.features.map((feature) => (
+                      <li key={feature.id} className="flex items-start gap-3">
+                        <Check className="w-5 h-5 text-green-400 flex-shrink-0 mt-0.5" />
+                        <span className="text-gray-300 text-sm">
+                          {feature.featureLabel || feature.featureValue}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+
+                  {/* CTA Button */}
+                  <button
+                    onClick={() => handleSelectPlan(plan)}
+                    disabled={isProcessing || isCurrentPlan}
+                    className={`w-full py-3 px-6 rounded-xl font-medium transition-all duration-300 flex items-center justify-center gap-2 ${isCurrentPlan
+                        ? 'bg-gray-700 text-gray-400 cursor-not-allowed'
+                        : isPopular
+                          ? 'bg-gradient-to-r from-indigo-500 to-purple-500 text-white hover:from-indigo-600 hover:to-purple-600'
+                          : 'bg-gray-700 text-white hover:bg-gray-600'
+                      }`}
+                  >
+                    {isProcessing ? (
+                      <>
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                        Processing...
+                      </>
+                    ) : isCurrentPlan ? (
+                      'Current Plan'
+                    ) : (
+                      <>
+                        Get Started
+                        <ArrowRight className="w-5 h-5" />
+                      </>
+                    )}
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Empty State */}
+          {plans.length === 0 && !loading && (
+            <div className="text-center py-20">
+              <p className="text-gray-400 text-lg">No plans available at the moment.</p>
+            </div>
+          )}
+        </div>
+
+        {/* Footer Links */}
+        <div className="border-t border-gray-800 py-8">
+          <div className="max-w-4xl mx-auto px-4 flex flex-wrap justify-center gap-6 text-sm">
+            <a href="/privacy-policy" className="text-gray-400 hover:text-white transition-colors">
+              Privacy Policy
+            </a>
+            <a href="/terms" className="text-gray-400 hover:text-white transition-colors">
+              Terms & Conditions
+            </a>
+            <a href="/refund-policy" className="text-gray-400 hover:text-white transition-colors">
+              Refund Policy
+            </a>
+            <a href="/contact" className="text-gray-400 hover:text-white transition-colors">
+              Contact Us
+            </a>
+          </div>
         </div>
       </div>
-    </div>
     </>
   );
 };

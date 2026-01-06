@@ -298,10 +298,10 @@ npm run server
 ### No logs appearing
 ```bash
 # Check backend is running
-curl http://localhost:5000/api/health
+curl https://api.autojobzy.com/api/health
 
 # Check logs endpoint
-curl http://localhost:5000/api/automation/logs
+curl https://api.autojobzy.com/api/automation/logs
 ```
 
 ---

@@ -486,7 +486,7 @@ className="border-b border-white/10 hover:bg-white/5"
 
 ```bash
 # 1. Login as admin
-POST http://localhost:5000/api/auth/login
+POST https://api.autojobzy.com/api/auth/login
 {
   "email": "admin@jobautomate.com",
   "password": "Admin@123"
@@ -495,7 +495,7 @@ POST http://localhost:5000/api/auth/login
 # 2. Copy token from response
 
 # 3. Test admin endpoint
-GET http://localhost:5000/api/admin/analytics/overview
+GET https://api.autojobzy.com/api/admin/analytics/overview
 Authorization: Bearer YOUR_TOKEN_HERE
 ```
 
@@ -503,11 +503,11 @@ Authorization: Bearer YOUR_TOKEN_HERE
 
 ```bash
 # Get all users
-GET http://localhost:5000/api/admin/users?page=1&limit=10
+GET https://api.autojobzy.com/api/admin/users?page=1&limit=10
 Authorization: Bearer YOUR_TOKEN
 
 # Update user status
-PUT http://localhost:5000/api/admin/users/USER_ID/status
+PUT https://api.autojobzy.com/api/admin/users/USER_ID/status
 Authorization: Bearer YOUR_TOKEN
 {
   "isActive": false

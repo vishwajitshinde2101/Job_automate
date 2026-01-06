@@ -122,7 +122,7 @@ Frontend → Updates Dashboard:
 
 **Request:**
 ```bash
-curl -X POST http://localhost:5000/api/automation/run-bot \
+curl -X POST https://api.autojobzy.com/api/automation/run-bot \
   -H "Authorization: Bearer YOUR_JWT_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -307,7 +307,7 @@ Either:
 ### 5. MySQL Database Must Be Running
 ```bash
 # Check connection status
-curl http://localhost:5000/api/health
+curl https://api.autojobzy.com/api/health
 
 # Should return:
 {
@@ -323,12 +323,12 @@ curl http://localhost:5000/api/health
 ### Test 1: Via cURL
 ```bash
 # 1. Login to get token
-TOKEN=$(curl -s -X POST http://localhost:5000/api/auth/login \
+TOKEN=$(curl -s -X POST https://api.autojobzy.com/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{"email":"your@email.com","password":"password"}' | jq -r '.token')
 
 # 2. Run bot
-curl -X POST http://localhost:5000/api/automation/run-bot \
+curl -X POST https://api.autojobzy.com/api/automation/run-bot \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"maxPages":2}'
@@ -400,7 +400,7 @@ curl -X POST http://localhost:5000/api/automation/run-bot \
 1. Save credentials manually via dashboard
 2. Or save via API:
    ```bash
-   curl -X POST http://localhost:5000/api/credentials/set \
+   curl -X POST https://api.autojobzy.com/api/credentials/set \
      -H "Content-Type: application/json" \
      -d '{"email":"your@naukri.com","password":"password"}'
    ```

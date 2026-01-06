@@ -18,7 +18,7 @@ const APITester: React.FC = () => {
     const [responses, setResponses] = useState<ApiResponse[]>([]);
     const [loading, setLoading] = useState(false);
 
-    const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+    const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.autojobzy.com/api';
 
     const addResponse = (response: ApiResponse) => {
         setResponses((prev) => [response, ...prev]);
@@ -652,8 +652,8 @@ const APITester: React.FC = () => {
                             <div
                                 key={index}
                                 className={`border-l-4 rounded-lg p-4 ${response.status === 200 || response.status === 201
-                                        ? 'bg-green-50 border-green-400'
-                                        : 'bg-red-50 border-red-400'
+                                    ? 'bg-green-50 border-green-400'
+                                    : 'bg-red-50 border-red-400'
                                     }`}
                             >
                                 <div className="flex items-start justify-between">
@@ -669,8 +669,8 @@ const APITester: React.FC = () => {
                                             </span>
                                             <span
                                                 className={`text-sm px-2 py-1 rounded ${response.status === 200 || response.status === 201
-                                                        ? 'bg-green-200 text-green-800'
-                                                        : 'bg-red-200 text-red-800'
+                                                    ? 'bg-green-200 text-green-800'
+                                                    : 'bg-red-200 text-red-800'
                                                     }`}
                                             >
                                                 {response.status} {response.statusText}

@@ -105,7 +105,7 @@ React Dashboard
    [Start Bot]
        ↓
    Express API
-   (http://localhost:5000)
+   (https://api.autojobzy.com)
        ↓
    Puppeteer Browser
        ↓
@@ -142,7 +142,7 @@ React Dashboard
 First time:
 ```bash
 # Save credentials once (uses system keychain)
-curl -X POST http://localhost:5000/api/credentials/set \
+curl -X POST https://api.autojobzy.com/api/credentials/set \
   -H "Content-Type: application/json" \
   -d '{"email":"your@email.com","password":"your-password"}'
 ```
@@ -263,7 +263,7 @@ Replace your existing "Start Bot" handler with:
 ```typescript
 const handleStartBot = async () => {
   try {
-    const response = await fetch('http://localhost:5000/api/automation/start', {
+    const response = await fetch('https://api.autojobzy.com/api/automation/start', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -294,7 +294,7 @@ const handleResumeUpload = async (file: File) => {
   formData.append('resume', file);
 
   try {
-    const response = await fetch('http://localhost:5000/api/resume/upload', {
+    const response = await fetch('https://api.autojobzy.com/api/resume/upload', {
       method: 'POST',
       body: formData
     });
@@ -316,7 +316,7 @@ const handleResumeUpload = async (file: File) => {
 useEffect(() => {
   if (isRunning) {
     const interval = setInterval(async () => {
-      const response = await fetch('http://localhost:5000/api/automation/logs');
+      const response = await fetch('https://api.autojobzy.com/api/automation/logs');
       const data = await response.json();
       setLogs(data.logs);
     }, 2000); // Poll every 2 seconds
@@ -332,31 +332,31 @@ useEffect(() => {
 
 ### Test Backend Health
 ```bash
-curl http://localhost:5000/api/health
+curl https://api.autojobzy.com/api/health
 ```
 
 ### Test Credential Save
 ```bash
-curl -X POST http://localhost:5000/api/credentials/set \
+curl -X POST https://api.autojobzy.com/api/credentials/set \
   -H "Content-Type: application/json" \
   -d '{"email":"test@naukri.com","password":"test123"}'
 ```
 
 ### Test Credential Check
 ```bash
-curl http://localhost:5000/api/credentials/check
+curl https://api.autojobzy.com/api/credentials/check
 ```
 
 ### Start Automation
 ```bash
-curl -X POST http://localhost:5000/api/automation/start \
+curl -X POST https://api.autojobzy.com/api/automation/start \
   -H "Content-Type: application/json" \
   -d '{"maxPages":2}'
 ```
 
 ### Get Logs
 ```bash
-curl http://localhost:5000/api/automation/logs
+curl https://api.autojobzy.com/api/automation/logs
 ```
 
 ---
@@ -376,7 +376,7 @@ curl http://localhost:5000/api/automation/logs
 
 ```bash
 # Check backend is running
-curl http://localhost:5000/api/health
+curl https://api.autojobzy.com/api/health
 
 # Check logs
 npm run server  # Look for errors
@@ -387,7 +387,7 @@ npm run server  # Look for errors
 1. Verify credentials at naukri.com manually
 2. Save new credentials:
    ```bash
-   curl -X POST http://localhost:5000/api/credentials/set \
+   curl -X POST https://api.autojobzy.com/api/credentials/set \
      -H "Content-Type: application/json" \
      -d '{"email":"your@email.com","password":"your-password"}'
    ```

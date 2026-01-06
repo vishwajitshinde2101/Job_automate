@@ -51,12 +51,12 @@ Edit `server/aiAnswer.js` line ~28:
 npm run server
 ```
 - [ ] Server starts without errors
-- [ ] Message shows: "🚀 Server running on http://localhost:5000"
+- [ ] Message shows: "🚀 Server running on https://api.autojobzy.com"
 - [ ] No port conflicts
 
 ### Test 2: Health Check
 ```bash
-curl http://localhost:5000/api/health
+curl https://api.autojobzy.com/api/health
 ```
 - [ ] Returns: `{"status":"Server is running",...}`
 
@@ -86,7 +86,7 @@ Go to Dashboard page:
 
 ### Option A: Save via API (Recommended)
 ```bash
-curl -X POST http://localhost:5000/api/credentials/set \
+curl -X POST https://api.autojobzy.com/api/credentials/set \
   -H "Content-Type: application/json" \
   -d '{"email":"your@naukri.com","password":"your-password"}'
 ```
@@ -104,7 +104,7 @@ NAUKRI_PASSWORD=your-password
 
 ### Verify Credentials Saved
 ```bash
-curl http://localhost:5000/api/credentials/check
+curl https://api.autojobzy.com/api/credentials/check
 ```
 - [ ] Response shows: `{"hasCredentials":true}`
 
@@ -120,7 +120,7 @@ Go to Dashboard in React:
 
 OR upload via API:
 ```bash
-curl -X POST http://localhost:5000/api/resume/upload \
+curl -X POST https://api.autojobzy.com/api/resume/upload \
   -F "resume=@/path/to/resume.pdf"
 ```
 - [ ] Response shows: `{"success":true,"fileName":"..."}`
@@ -159,27 +159,27 @@ curl -X POST http://localhost:5000/api/resume/upload \
 
 #### Get Logs
 ```bash
-curl http://localhost:5000/api/automation/logs
+curl https://api.autojobzy.com/api/automation/logs
 ```
 - [ ] Returns array of logs
 - [ ] Timestamp format is correct
 
 #### Check Status
 ```bash
-curl http://localhost:5000/api/automation/status
+curl https://api.autojobzy.com/api/automation/status
 ```
 - [ ] Returns `isRunning` boolean
 - [ ] Returns `logCount`
 
 #### Clear Logs
 ```bash
-curl -X POST http://localhost:5000/api/automation/clear-logs
+curl -X POST https://api.autojobzy.com/api/automation/clear-logs
 ```
 - [ ] Returns: `{"success":true}`
 
 #### Check Resume Text
 ```bash
-curl http://localhost:5000/api/resume/text
+curl https://api.autojobzy.com/api/resume/text
 ```
 - [ ] Returns resume content (if uploaded)
 
@@ -226,8 +226,8 @@ curl http://localhost:5000/api/resume/text
 - [ ] Check Naukri website hasn't changed UI
 
 ### If No Logs Appear
-- [ ] Check bot is running: `curl http://localhost:5000/api/automation/status`
-- [ ] Check logs endpoint: `curl http://localhost:5000/api/automation/logs`
+- [ ] Check bot is running: `curl https://api.autojobzy.com/api/automation/status`
+- [ ] Check logs endpoint: `curl https://api.autojobzy.com/api/automation/logs`
 - [ ] Check frontend polling interval (default 2 sec)
 - [ ] Check browser console (F12) for errors
 
@@ -336,18 +336,18 @@ Run this sequence to verify everything works:
 ```bash
 # 1. Start backend
 npm run server
-# ✓ See: "🚀 Server running on http://localhost:5000"
+# ✓ See: "🚀 Server running on https://api.autojobzy.com"
 
 # 2. In new terminal, start frontend
 npm run dev
 # ✓ See: "Local: http://localhost:5173"
 
 # 3. Test health
-curl http://localhost:5000/api/health
+curl https://api.autojobzy.com/api/health
 # ✓ Returns status: "Server is running"
 
 # 4. Check credentials
-curl http://localhost:5000/api/credentials/check
+curl https://api.autojobzy.com/api/credentials/check
 # ✓ Returns: {"hasCredentials": true/false}
 
 # 5. Open browser
@@ -398,10 +398,10 @@ If all checkboxes are ✅, you have:
 |-------|---------|
 | Backend won't start | `npm run server` |
 | Frontend won't load | `npm run dev` |
-| Check API | `curl http://localhost:5000/api/health` |
-| Save credentials | `curl -X POST http://localhost:5000/api/credentials/set -H "Content-Type: application/json" -d '{"email":"...","password":"..."}'` |
-| View logs | `curl http://localhost:5000/api/automation/logs` |
-| Stop automation | `curl -X POST http://localhost:5000/api/automation/stop` |
+| Check API | `curl https://api.autojobzy.com/api/health` |
+| Save credentials | `curl -X POST https://api.autojobzy.com/api/credentials/set -H "Content-Type: application/json" -d '{"email":"...","password":"..."}'` |
+| View logs | `curl https://api.autojobzy.com/api/automation/logs` |
+| Stop automation | `curl -X POST https://api.autojobzy.com/api/automation/stop` |
 | Fresh install | `rm -rf node_modules package-lock.json && npm install` |
 
 ---

@@ -665,7 +665,7 @@ const Dashboard: React.FC = () => {
       if (historyFilters.endDate) params.append('endDate', historyFilters.endDate);
 
       const response = await fetch(
-        `http://localhost:5000/api/job-results?${params.toString()}`,
+        `https://api.autojobzy.com/api/job-results?${params.toString()}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -1195,8 +1195,8 @@ const Dashboard: React.FC = () => {
                           onChange={(e) => setConfigForm({ ...configForm, naukriUsername: e.target.value })}
                           disabled={isCredentialsVerified}
                           className={`w-full bg-dark-900 border-2 rounded-lg py-2.5 pl-10 pr-4 text-white text-sm outline-none transition-colors ${isCredentialsVerified
-                              ? 'border-gray-600 cursor-not-allowed opacity-60'
-                              : 'border-neon-blue/30 focus:border-neon-blue'
+                            ? 'border-gray-600 cursor-not-allowed opacity-60'
+                            : 'border-neon-blue/30 focus:border-neon-blue'
                             }`}
                           placeholder="your.email@example.com"
                         />

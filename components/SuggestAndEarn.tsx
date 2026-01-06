@@ -72,7 +72,7 @@ const SuggestAndEarn: React.FC = () => {
     description: ''
   });
 
-  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.autojobzy.com/api';
 
   const suggestionTypes = [
     {
@@ -297,8 +297,8 @@ const SuggestAndEarn: React.FC = () => {
                       type="button"
                       onClick={() => setFormData({ ...formData, type: type.id as any })}
                       className={`p-4 rounded-lg border transition-all text-left ${isSelected
-                          ? 'border-yellow-500/50 bg-yellow-500/10'
-                          : 'border-white/10 bg-dark-900 hover:border-white/20'
+                        ? 'border-yellow-500/50 bg-yellow-500/10'
+                        : 'border-white/10 bg-dark-900 hover:border-white/20'
                         }`}
                     >
                       <div className="flex items-start gap-3">

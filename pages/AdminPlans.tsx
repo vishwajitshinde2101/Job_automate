@@ -66,7 +66,7 @@ const AdminPlans: React.FC = () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('adminToken');
-      const response = await fetch('http://localhost:5000/api/admin/plans', {
+      const response = await fetch('https://api.autojobzy.com/api/admin/plans', {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -174,7 +174,7 @@ const AdminPlans: React.FC = () => {
 
     try {
       const token = localStorage.getItem('adminToken');
-      const response = await fetch('http://localhost:5000/api/admin/plans', {
+      const response = await fetch('https://api.autojobzy.com/api/admin/plans', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -229,7 +229,7 @@ const AdminPlans: React.FC = () => {
 
     try {
       const token = localStorage.getItem('adminToken');
-      const response = await fetch(`http://localhost:5000/api/admin/plans/${editingPlan.id}`, {
+      const response = await fetch(`https://api.autojobzy.com/api/admin/plans/${editingPlan.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -259,7 +259,7 @@ const AdminPlans: React.FC = () => {
   const togglePlanStatus = async (planId: string, currentStatus: boolean) => {
     try {
       const token = localStorage.getItem('adminToken');
-      const response = await fetch(`http://localhost:5000/api/admin/plans/${planId}`, {
+      const response = await fetch(`https://api.autojobzy.com/api/admin/plans/${planId}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -285,7 +285,7 @@ const AdminPlans: React.FC = () => {
 
     try {
       const token = localStorage.getItem('adminToken');
-      const response = await fetch(`http://localhost:5000/api/admin/plans/${planId}`, {
+      const response = await fetch(`https://api.autojobzy.com/api/admin/plans/${planId}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` },
       });
@@ -334,13 +334,12 @@ const AdminPlans: React.FC = () => {
           {plans.map((plan) => (
             <div
               key={plan.id}
-              className={`relative bg-dark-800 border rounded-xl p-6 transition-all ${
-                plan.isPopular
+              className={`relative bg-dark-800 border rounded-xl p-6 transition-all ${plan.isPopular
                   ? 'border-red-500 shadow-lg shadow-red-500/20'
                   : plan.comingSoon
-                  ? 'border-purple-500 shadow-lg shadow-purple-500/20 opacity-75'
-                  : 'border-white/10 hover:border-white/20'
-              }`}
+                    ? 'border-purple-500 shadow-lg shadow-purple-500/20 opacity-75'
+                    : 'border-white/10 hover:border-white/20'
+                }`}
             >
               {/* Badges */}
               <div className="flex items-center gap-2 mb-4">
@@ -398,11 +397,10 @@ const AdminPlans: React.FC = () => {
                 </button>
                 <button
                   onClick={() => togglePlanStatus(plan.id, plan.isActive)}
-                  className={`flex-1 px-4 py-2 rounded-lg transition-all ${
-                    plan.isActive
+                  className={`flex-1 px-4 py-2 rounded-lg transition-all ${plan.isActive
                       ? 'bg-orange-500/10 text-orange-500 hover:bg-orange-500/20'
                       : 'bg-green-500/10 text-green-500 hover:bg-green-500/20'
-                  }`}
+                    }`}
                 >
                   {plan.isActive ? 'Disable' : 'Enable'}
                 </button>
@@ -812,22 +810,20 @@ const AdminPlans: React.FC = () => {
                   }
                 }}
                 disabled={isUpdating}
-                className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors ${
-                  isUpdating
+                className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors ${isUpdating
                     ? 'bg-gray-600 cursor-not-allowed text-gray-400'
                     : 'bg-gray-700 text-white hover:bg-gray-600'
-                }`}
+                  }`}
               >
                 Cancel
               </button>
               <button
                 onClick={updatePlan}
                 disabled={isUpdating}
-                className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors ${
-                  isUpdating
+                className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors ${isUpdating
                     ? 'bg-gray-400 cursor-not-allowed'
                     : 'bg-gradient-to-r from-red-500 to-orange-500 text-white hover:from-red-600 hover:to-orange-600'
-                }`}
+                  }`}
               >
                 {isUpdating ? (
                   <span className="flex items-center justify-center gap-2">

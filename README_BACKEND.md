@@ -148,7 +148,7 @@ http://localhost:5173
 
 ### Sign Up
 ```bash
-curl -X POST http://localhost:5000/api/auth/signup \
+curl -X POST https://api.autojobzy.com/api/auth/signup \
   -H "Content-Type: application/json" \
   -d '{
     "email": "user@example.com",
@@ -167,7 +167,7 @@ curl -X POST http://localhost:5000/api/auth/signup \
 
 ### Use Token for Protected Routes
 ```bash
-curl -X GET http://localhost:5000/api/job-settings \
+curl -X GET https://api.autojobzy.com/api/job-settings \
   -H "Authorization: Bearer YOUR_JWT_TOKEN"
 ```
 

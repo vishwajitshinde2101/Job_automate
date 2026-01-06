@@ -66,7 +66,7 @@ const SuperAdminPackages: React.FC = () => {
   const fetchPackages = async () => {
     try {
       const token = localStorage.getItem('superAdminToken');
-      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.autojobzy.com/api';
 
       const response = await fetch(`${API_BASE_URL}/superadmin/packages`, {
         headers: {
@@ -93,7 +93,7 @@ const SuperAdminPackages: React.FC = () => {
 
     try {
       const token = localStorage.getItem('superAdminToken');
-      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.autojobzy.com/api';
 
       const response = await fetch(`${API_BASE_URL}/superadmin/packages`, {
         method: 'POST',
@@ -130,7 +130,7 @@ const SuperAdminPackages: React.FC = () => {
 
     try {
       const token = localStorage.getItem('superAdminToken');
-      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.autojobzy.com/api';
 
       const response = await fetch(`${API_BASE_URL}/superadmin/packages/${editingPackage.id}`, {
         method: 'PUT',
@@ -166,7 +166,7 @@ const SuperAdminPackages: React.FC = () => {
   const handleToggleActive = async (pkg: Package) => {
     try {
       const token = localStorage.getItem('superAdminToken');
-      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.autojobzy.com/api';
 
       const response = await fetch(`${API_BASE_URL}/superadmin/packages/${pkg.id}`, {
         method: 'PUT',
@@ -197,7 +197,7 @@ const SuperAdminPackages: React.FC = () => {
 
     try {
       const token = localStorage.getItem('superAdminToken');
-      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.autojobzy.com/api';
 
       const response = await fetch(`${API_BASE_URL}/superadmin/packages/${pkg.id}`, {
         method: 'DELETE',
@@ -298,32 +298,29 @@ const SuperAdminPackages: React.FC = () => {
           <div className="flex gap-2">
             <button
               onClick={() => setFilterType('all')}
-              className={`px-4 py-2 rounded-lg transition-all ${
-                filterType === 'all'
-                  ? 'bg-purple-500 text-white'
-                  : 'bg-dark-800 border border-white/10 text-gray-400 hover:text-white'
-              }`}
+              className={`px-4 py-2 rounded-lg transition-all ${filterType === 'all'
+                ? 'bg-purple-500 text-white'
+                : 'bg-dark-800 border border-white/10 text-gray-400 hover:text-white'
+                }`}
             >
               All Packages ({packages.length})
             </button>
             <button
               onClick={() => setFilterType('individual')}
-              className={`px-4 py-2 rounded-lg transition-all flex items-center gap-2 ${
-                filterType === 'individual'
-                  ? 'bg-blue-500 text-white'
-                  : 'bg-dark-800 border border-white/10 text-gray-400 hover:text-white'
-              }`}
+              className={`px-4 py-2 rounded-lg transition-all flex items-center gap-2 ${filterType === 'individual'
+                ? 'bg-blue-500 text-white'
+                : 'bg-dark-800 border border-white/10 text-gray-400 hover:text-white'
+                }`}
             >
               <User className="w-4 h-4" />
               Individual ({packages.filter(p => p.type === 'individual').length})
             </button>
             <button
               onClick={() => setFilterType('institute')}
-              className={`px-4 py-2 rounded-lg transition-all flex items-center gap-2 ${
-                filterType === 'institute'
-                  ? 'bg-green-500 text-white'
-                  : 'bg-dark-800 border border-white/10 text-gray-400 hover:text-white'
-              }`}
+              className={`px-4 py-2 rounded-lg transition-all flex items-center gap-2 ${filterType === 'institute'
+                ? 'bg-green-500 text-white'
+                : 'bg-dark-800 border border-white/10 text-gray-400 hover:text-white'
+                }`}
             >
               <Building2 className="w-4 h-4" />
               Institute ({packages.filter(p => p.type === 'institute').length})
@@ -344,9 +341,8 @@ const SuperAdminPackages: React.FC = () => {
         {filteredPackages.map((pkg) => (
           <div
             key={pkg.id}
-            className={`bg-dark-800 border ${
-              pkg.isActive ? 'border-purple-500/30' : 'border-white/10'
-            } rounded-lg p-6 hover:border-purple-500 transition-all`}
+            className={`bg-dark-800 border ${pkg.isActive ? 'border-purple-500/30' : 'border-white/10'
+              } rounded-lg p-6 hover:border-purple-500 transition-all`}
           >
             {/* Header */}
             <div className="flex items-start justify-between mb-4">
@@ -354,11 +350,10 @@ const SuperAdminPackages: React.FC = () => {
                 <div className="flex items-center gap-2 mb-2">
                   <h3 className="text-xl font-bold text-white">{pkg.name}</h3>
                   <span
-                    className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
-                      pkg.type === 'individual'
-                        ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
-                        : 'bg-green-500/20 text-green-400 border border-green-500/30'
-                    }`}
+                    className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${pkg.type === 'individual'
+                      ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
+                      : 'bg-green-500/20 text-green-400 border border-green-500/30'
+                      }`}
                   >
                     {pkg.type === 'individual' ? (
                       <>
@@ -423,11 +418,10 @@ const SuperAdminPackages: React.FC = () => {
               </button>
               <button
                 onClick={() => handleToggleActive(pkg)}
-                className={`flex-1 px-4 py-2 border rounded-lg transition-colors flex items-center justify-center gap-2 ${
-                  pkg.isActive
-                    ? 'bg-orange-500/20 border-orange-500/30 text-orange-400 hover:bg-orange-500/30'
-                    : 'bg-green-500/20 border-green-500/30 text-green-400 hover:bg-green-500/30'
-                }`}
+                className={`flex-1 px-4 py-2 border rounded-lg transition-colors flex items-center justify-center gap-2 ${pkg.isActive
+                  ? 'bg-orange-500/20 border-orange-500/30 text-orange-400 hover:bg-orange-500/30'
+                  : 'bg-green-500/20 border-green-500/30 text-green-400 hover:bg-green-500/30'
+                  }`}
               >
                 {pkg.isActive ? 'Deactivate' : 'Activate'}
               </button>
@@ -466,11 +460,10 @@ const SuperAdminPackages: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => setFormData({ ...formData, type: 'individual' })}
-                    className={`p-4 rounded-lg border-2 transition-all ${
-                      formData.type === 'individual'
-                        ? 'border-blue-500 bg-blue-500/20 text-blue-400'
-                        : 'border-white/10 bg-dark-900 text-gray-400 hover:border-blue-500/50'
-                    }`}
+                    className={`p-4 rounded-lg border-2 transition-all ${formData.type === 'individual'
+                      ? 'border-blue-500 bg-blue-500/20 text-blue-400'
+                      : 'border-white/10 bg-dark-900 text-gray-400 hover:border-blue-500/50'
+                      }`}
                   >
                     <User className="w-6 h-6 mx-auto mb-2" />
                     <p className="font-medium">Individual</p>
@@ -479,11 +472,10 @@ const SuperAdminPackages: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => setFormData({ ...formData, type: 'institute' })}
-                    className={`p-4 rounded-lg border-2 transition-all ${
-                      formData.type === 'institute'
-                        ? 'border-green-500 bg-green-500/20 text-green-400'
-                        : 'border-white/10 bg-dark-900 text-gray-400 hover:border-green-500/50'
-                    }`}
+                    className={`p-4 rounded-lg border-2 transition-all ${formData.type === 'institute'
+                      ? 'border-green-500 bg-green-500/20 text-green-400'
+                      : 'border-white/10 bg-dark-900 text-gray-400 hover:border-green-500/50'
+                      }`}
                   >
                     <Building2 className="w-6 h-6 mx-auto mb-2" />
                     <p className="font-medium">Institute</p>
@@ -660,11 +652,10 @@ const SuperAdminPackages: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => setFormData({ ...formData, type: 'individual' })}
-                    className={`p-4 rounded-lg border-2 transition-all ${
-                      formData.type === 'individual'
-                        ? 'border-blue-500 bg-blue-500/20 text-blue-400'
-                        : 'border-white/10 bg-dark-900 text-gray-400 hover:border-blue-500/50'
-                    }`}
+                    className={`p-4 rounded-lg border-2 transition-all ${formData.type === 'individual'
+                      ? 'border-blue-500 bg-blue-500/20 text-blue-400'
+                      : 'border-white/10 bg-dark-900 text-gray-400 hover:border-blue-500/50'
+                      }`}
                   >
                     <User className="w-6 h-6 mx-auto mb-2" />
                     <p className="font-medium">Individual</p>
@@ -673,11 +664,10 @@ const SuperAdminPackages: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => setFormData({ ...formData, type: 'institute' })}
-                    className={`p-4 rounded-lg border-2 transition-all ${
-                      formData.type === 'institute'
-                        ? 'border-green-500 bg-green-500/20 text-green-400'
-                        : 'border-white/10 bg-dark-900 text-gray-400 hover:border-green-500/50'
-                    }`}
+                    className={`p-4 rounded-lg border-2 transition-all ${formData.type === 'institute'
+                      ? 'border-green-500 bg-green-500/20 text-green-400'
+                      : 'border-white/10 bg-dark-900 text-gray-400 hover:border-green-500/50'
+                      }`}
                   >
                     <Building2 className="w-6 h-6 mx-auto mb-2" />
                     <p className="font-medium">Institute</p>

@@ -22,12 +22,14 @@ const InstituteSignup: React.FC = () => {
   const [success, setSuccess] = useState(false);
 
   // Get prefilled data from navigation state
-  const locationState = location.state as { prefillData?: {
-    adminFirstName: string;
-    adminLastName: string;
-    adminEmail: string;
-    adminPassword: string;
-  } } | null;
+  const locationState = location.state as {
+    prefillData?: {
+      adminFirstName: string;
+      adminLastName: string;
+      adminEmail: string;
+      adminPassword: string;
+    }
+  } | null;
 
   const [formData, setFormData] = useState<InstituteSignupData>({
     instituteName: '',
@@ -47,12 +49,12 @@ const InstituteSignup: React.FC = () => {
     setLoading(true);
 
     try {
-      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.autojobzy.com/api';
 
       // Validate all fields
       if (!formData.instituteName.trim() || !formData.instituteEmail.trim() ||
-          !formData.adminFirstName.trim() || !formData.adminLastName.trim() ||
-          !formData.adminEmail.trim() || !formData.adminPassword.trim()) {
+        !formData.adminFirstName.trim() || !formData.adminLastName.trim() ||
+        !formData.adminEmail.trim() || !formData.adminPassword.trim()) {
         throw new Error('Please fill in all required fields');
       }
 

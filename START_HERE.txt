@@ -297,7 +297,7 @@ Before going live:
 ✓ npm run server starts successfully
 ✓ npm run dev starts successfully
 ✓ http://localhost:5173 loads in browser
-✓ http://localhost:5000/api/health returns status
+✓ https://api.autojobzy.com/api/health returns status
 ✓ Can save Naukri credentials
 ✓ Can upload resume (optional)
 ✓ Can click "Start Bot" and see logs
