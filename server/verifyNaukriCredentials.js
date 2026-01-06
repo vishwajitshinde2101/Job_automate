@@ -29,7 +29,7 @@ export async function verifyNaukriCredentials(username, password) {
 
         // Launch browser in headless mode for security
         browser = await puppeteer.launch({
-            headless: true,
+            headless: false,
             args: [
                 '--no-sandbox',
                 '--disable-setuid-sandbox',

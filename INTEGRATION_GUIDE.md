@@ -465,7 +465,7 @@ Visit `http://localhost:5173` → Go to Dashboard → Click "Start Bot"
    - All API calls over HTTPS
 
 4. **Run backend on separate server**
-   - Puppeteer needs headless: true (no window)
+   - Puppeteer needs headless: false (no window)
    - More memory for browser instances
 
 ---
