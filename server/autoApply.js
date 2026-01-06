@@ -812,7 +812,7 @@ export async function startAutomation(options = {}) {
         // ========== STEP 2: LAUNCH BROWSER ==========
         addLog('Launching browser...', 'info');
         browser = await puppeteer.launch({
-            headless: false,
+            headless: true,
             defaultViewport: null,
             args: ['--start-maximized']
         });

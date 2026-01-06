@@ -64,7 +64,7 @@ Backend /api/automation/run-bot:
 ### Step 5: Puppeteer Browser Launches (VISIBLE)
 ```
 autoApply.js → puppeteer.launch({
-    headless: false,        ← SHOWS VISIBLE CHROME WINDOW
+    headless: true,        ← SHOWS VISIBLE CHROME WINDOW
     defaultViewport: null,  ← Full window
     args: ['--start-maximized']
 });
@@ -436,7 +436,7 @@ const SCROLL_DISTANCE = 400;  // Scroll distance (px)
 
 // Puppeteer settings:
 {
-    headless: false,          // Change to true for headless mode
+    headless: true,          // Change to true for headless mode
     defaultViewport: null,    // Full window
     args: ['--start-maximized']  // Maximize window
 }

@@ -45,7 +45,7 @@ export async function updateResumeHeadline(email, password) {
 
         addLog(`Launching browser for user: ${email}`);
         browser = await puppeteer.launch({
-            headless: false,
+            headless: true,
             defaultViewport: null,
             args: ['--start-maximized']
         });
