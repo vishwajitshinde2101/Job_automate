@@ -147,7 +147,7 @@ async function fetchUserFiltersFromDB(userId) {
     console.log(`🔎 Search keyword: "${keyword}"`);
 
     const browser = await puppeteer.launch({
-        headless: true,
+        headless: false,
         defaultViewport: null,
         args: ["--start-maximized"]
     });
