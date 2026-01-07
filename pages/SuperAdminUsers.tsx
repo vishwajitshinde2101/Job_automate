@@ -52,7 +52,7 @@ const SuperAdminUsers: React.FC = () => {
   const fetchUsers = async () => {
     try {
       const token = localStorage.getItem('superAdminToken');
-      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.autojobzy.com/api';
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
 
       const response = await fetch(`${API_BASE_URL}/superadmin/users`, {
         headers: {
@@ -76,7 +76,7 @@ const SuperAdminUsers: React.FC = () => {
   const fetchInstitutes = async () => {
     try {
       const token = localStorage.getItem('superAdminToken');
-      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.autojobzy.com/api';
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
 
       const response = await fetch(`${API_BASE_URL}/superadmin/institutes`, {
         headers: {
@@ -345,8 +345,8 @@ const SuperAdminUsers: React.FC = () => {
                     <td className="px-6 py-4">
                       <span
                         className={`inline-block px-3 py-1 rounded-full text-xs border ${user.instituteId
-                            ? 'bg-purple-500/10 text-purple-400 border-purple-500/30'
-                            : 'bg-blue-500/10 text-blue-400 border-blue-500/30'
+                          ? 'bg-purple-500/10 text-purple-400 border-purple-500/30'
+                          : 'bg-blue-500/10 text-blue-400 border-blue-500/30'
                           }`}
                       >
                         {user.instituteId ? 'Institute' : 'Individual'}

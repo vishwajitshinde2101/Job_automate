@@ -105,7 +105,7 @@ const AdminUsers: React.FC = () => {
         role: 'user',
       });
 
-      const response = await fetch(`https://api.autojobzy.com/api/admin/users?${params}`, {
+      const response = await fetch(`http://localhost:5000/api/admin/users?${params}`, {
         headers: { 'Authorization': `Bearer ${token}` },
       });
 
@@ -124,7 +124,7 @@ const AdminUsers: React.FC = () => {
   const fetchPlans = async () => {
     try {
       const token = localStorage.getItem('adminToken');
-      const response = await fetch('https://api.autojobzy.com/api/admin/plans', {
+      const response = await fetch('http://localhost:5000/api/admin/plans', {
         headers: { 'Authorization': `Bearer ${token}` },
       });
       if (response.ok) {
@@ -139,7 +139,7 @@ const AdminUsers: React.FC = () => {
   const createUser = async () => {
     try {
       const token = localStorage.getItem('adminToken');
-      const response = await fetch('https://api.autojobzy.com/api/auth/signup', {
+      const response = await fetch('http://localhost:5000/api/auth/signup', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -167,7 +167,7 @@ const AdminUsers: React.FC = () => {
 
     try {
       const token = localStorage.getItem('adminToken');
-      const response = await fetch(`https://api.autojobzy.com/api/admin/users/${selectedUser.id}`, {
+      const response = await fetch(`http://localhost:5000/api/admin/users/${selectedUser.id}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -192,7 +192,7 @@ const AdminUsers: React.FC = () => {
 
     try {
       const token = localStorage.getItem('adminToken');
-      const response = await fetch(`https://api.autojobzy.com/api/admin/users/${selectedUser.id}/password`, {
+      const response = await fetch(`http://localhost:5000/api/admin/users/${selectedUser.id}/password`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -219,7 +219,7 @@ const AdminUsers: React.FC = () => {
       const startDate = new Date().toISOString().split('T')[0];
       const endDate = new Date(Date.now() + planDuration * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
-      const response = await fetch(`https://api.autojobzy.com/api/admin/users/${selectedUser.id}/change-plan`, {
+      const response = await fetch(`http://localhost:5000/api/admin/users/${selectedUser.id}/change-plan`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -242,7 +242,7 @@ const AdminUsers: React.FC = () => {
   const toggleUserStatus = async (userId: string, currentStatus: boolean) => {
     try {
       const token = localStorage.getItem('adminToken');
-      const response = await fetch(`https://api.autojobzy.com/api/admin/users/${userId}/status`, {
+      const response = await fetch(`http://localhost:5000/api/admin/users/${userId}/status`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -262,7 +262,7 @@ const AdminUsers: React.FC = () => {
 
     try {
       const token = localStorage.getItem('adminToken');
-      const response = await fetch(`https://api.autojobzy.com/api/admin/users/${userId}`, {
+      const response = await fetch(`http://localhost:5000/api/admin/users/${userId}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` },
       });
@@ -310,7 +310,7 @@ const AdminUsers: React.FC = () => {
 
     try {
       const token = localStorage.getItem('adminToken');
-      const response = await fetch(`https://api.autojobzy.com/api/admin/users/${user.id}`, {
+      const response = await fetch(`http://localhost:5000/api/admin/users/${user.id}`, {
         headers: { 'Authorization': `Bearer ${token}` },
       });
 
@@ -731,10 +731,10 @@ const AdminUsers: React.FC = () => {
                               <div className="flex items-center gap-2 mb-2">
                                 <p className="text-white font-semibold">{sub.plan_name}</p>
                                 <span className={`px-2 py-1 rounded-full text-xs font-medium ${sub.status === 'active'
-                                    ? 'bg-green-500/10 text-green-500'
-                                    : sub.status === 'expired'
-                                      ? 'bg-red-500/10 text-red-500'
-                                      : 'bg-gray-500/10 text-gray-500'
+                                  ? 'bg-green-500/10 text-green-500'
+                                  : sub.status === 'expired'
+                                    ? 'bg-red-500/10 text-red-500'
+                                    : 'bg-gray-500/10 text-gray-500'
                                   }`}>
                                   {sub.status}
                                 </span>

@@ -49,7 +49,7 @@ const AutoProfileUpdate: React.FC = () => {
         return;
       }
 
-      const response = await fetch('https://api.autojobzy.com/api/profile-update/status', {
+      const response = await fetch('http://localhost:5000/api/profile-update/status', {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -91,7 +91,7 @@ const AutoProfileUpdate: React.FC = () => {
         throw new Error('Authentication required. Please login again.');
       }
 
-      const response = await fetch('https://api.autojobzy.com/api/profile-update/naukri/update-resume', {
+      const response = await fetch('http://localhost:5000/api/profile-update/naukri/update-resume', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -143,7 +143,7 @@ const AutoProfileUpdate: React.FC = () => {
       const token = localStorage.getItem('token');
       if (!token) return;
 
-      const response = await fetch('https://api.autojobzy.com/api/profile-update/scheduler/status', {
+      const response = await fetch('http://localhost:5000/api/profile-update/scheduler/status', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
 
@@ -173,7 +173,7 @@ const AutoProfileUpdate: React.FC = () => {
         throw new Error('Authentication required');
       }
 
-      const response = await fetch('https://api.autojobzy.com/api/profile-update/scheduler/configure', {
+      const response = await fetch('http://localhost:5000/api/profile-update/scheduler/configure', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -313,8 +313,8 @@ const AutoProfileUpdate: React.FC = () => {
           onClick={handleUpdateProfile}
           disabled={isUpdating}
           className={`w-full flex items-center justify-center gap-3 px-6 py-4 rounded-lg font-semibold text-lg transition-all duration-300 ${isUpdating
-              ? 'bg-gray-400 cursor-not-allowed text-gray-700'
-              : 'bg-gradient-to-r from-neon-blue to-blue-500 hover:from-blue-600 hover:to-blue-700 text-white shadow-lg hover:shadow-xl transform hover:scale-[1.02]'
+            ? 'bg-gray-400 cursor-not-allowed text-gray-700'
+            : 'bg-gradient-to-r from-neon-blue to-blue-500 hover:from-blue-600 hover:to-blue-700 text-white shadow-lg hover:shadow-xl transform hover:scale-[1.02]'
             }`}
         >
           {isUpdating ? (

@@ -57,7 +57,7 @@ localStorage.getItem('token')
 **Check:**
 ```bash
 # In terminal, check if server is running
-curl https://api.autojobzy.com/api/subscription/plans
+curl http://localhost:5000/api/subscription/plans
 
 # Should return JSON with plans
 # If connection refused, start the server:

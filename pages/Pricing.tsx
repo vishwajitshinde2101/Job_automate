@@ -102,7 +102,7 @@ const Pricing: React.FC = () => {
       try {
         // Create guest order (no authentication required)
         console.log('[Pricing] Creating guest order for plan:', plan.id);
-        const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.autojobzy.com/api';
+        const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
         const response = await fetch(`${API_BASE_URL}/subscription/create-guest-order`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -409,8 +409,8 @@ const Pricing: React.FC = () => {
                 <div
                   key={plan.id}
                   className={`relative bg-gray-800/50 backdrop-blur-sm border rounded-2xl p-8 transition-all duration-300 ${isPopular
-                      ? 'border-indigo-500 scale-105 shadow-2xl shadow-indigo-500/20'
-                      : 'border-gray-700 hover:border-gray-600'
+                    ? 'border-indigo-500 scale-105 shadow-2xl shadow-indigo-500/20'
+                    : 'border-gray-700 hover:border-gray-600'
                     }`}
                 >
                   {/* Popular Badge */}
@@ -462,10 +462,10 @@ const Pricing: React.FC = () => {
                     onClick={() => handleSelectPlan(plan)}
                     disabled={isProcessing || isCurrentPlan}
                     className={`w-full py-3 px-6 rounded-xl font-medium transition-all duration-300 flex items-center justify-center gap-2 ${isCurrentPlan
-                        ? 'bg-gray-700 text-gray-400 cursor-not-allowed'
-                        : isPopular
-                          ? 'bg-gradient-to-r from-indigo-500 to-purple-500 text-white hover:from-indigo-600 hover:to-purple-600'
-                          : 'bg-gray-700 text-white hover:bg-gray-600'
+                      ? 'bg-gray-700 text-gray-400 cursor-not-allowed'
+                      : isPopular
+                        ? 'bg-gradient-to-r from-indigo-500 to-purple-500 text-white hover:from-indigo-600 hover:to-purple-600'
+                        : 'bg-gray-700 text-white hover:bg-gray-600'
                       }`}
                   >
                     {isProcessing ? (

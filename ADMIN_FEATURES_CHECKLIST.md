@@ -244,12 +244,12 @@ When you login to http://localhost:3004/admin/dashboard, you should see:
 3. **Test admin API directly:**
    ```bash
    # Login
-   curl -X POST https://api.autojobzy.com/api/auth/login \
+   curl -X POST http://localhost:5000/api/auth/login \
      -H 'Content-Type: application/json' \
      -d '{"email":"admin@jobautomate.com","password":"Admin@123"}'
 
    # Get analytics (use token from login response)
-   curl -X GET https://api.autojobzy.com/api/admin/analytics/overview \
+   curl -X GET http://localhost:5000/api/admin/analytics/overview \
      -H 'Authorization: Bearer YOUR_TOKEN_HERE'
    ```
 

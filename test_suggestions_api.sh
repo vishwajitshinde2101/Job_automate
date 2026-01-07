@@ -9,7 +9,7 @@ TOKEN="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIyMTcwYjBhZi1jNWEwLTQ1
 
 # Test 1: Create a suggestion
 echo "1. Creating a new suggestion..."
-curl -s -X POST https://api.autojobzy.com/api/suggestions \
+curl -s -X POST http://localhost:5000/api/suggestions \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -23,7 +23,7 @@ echo ""
 
 # Test 2: Get user stats
 echo "2. Getting user statistics..."
-curl -s -X GET https://api.autojobzy.com/api/suggestions/stats/summary \
+curl -s -X GET http://localhost:5000/api/suggestions/stats/summary \
   -H "Authorization: Bearer $TOKEN" | jq .
 
 echo ""
@@ -31,7 +31,7 @@ echo ""
 
 # Test 3: Get all user suggestions
 echo "3. Getting all user suggestions..."
-curl -s -X GET https://api.autojobzy.com/api/suggestions \
+curl -s -X GET http://localhost:5000/api/suggestions \
   -H "Authorization: Bearer $TOKEN" | jq .
 
 echo ""

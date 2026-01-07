@@ -84,7 +84,7 @@ const SuperAdminInstituteDetails: React.FC = () => {
   const fetchInstituteDetails = async () => {
     try {
       const token = localStorage.getItem('superAdminToken');
-      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.autojobzy.com/api';
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
 
       const response = await fetch(`${API_BASE_URL}/superadmin/institutes`, {
         headers: {
@@ -120,7 +120,7 @@ const SuperAdminInstituteDetails: React.FC = () => {
   const fetchPackages = async () => {
     try {
       const token = localStorage.getItem('superAdminToken');
-      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.autojobzy.com/api';
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
 
       const response = await fetch(`${API_BASE_URL}/superadmin/packages`, {
         headers: {
@@ -148,7 +148,7 @@ const SuperAdminInstituteDetails: React.FC = () => {
     try {
       setPackageLoading(true);
       const token = localStorage.getItem('superAdminToken');
-      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.autojobzy.com/api';
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
 
       // Calculate start and end dates
       const startDate = new Date();
@@ -534,8 +534,8 @@ const SuperAdminInstituteDetails: React.FC = () => {
                       key={pkg.id}
                       onClick={() => setSelectedPackageId(pkg.id)}
                       className={`p-4 rounded-lg border-2 transition-all text-left ${selectedPackageId === pkg.id
-                          ? 'border-neon-purple bg-neon-purple/10'
-                          : 'border-gray-700 bg-dark-900 hover:border-gray-600'
+                        ? 'border-neon-purple bg-neon-purple/10'
+                        : 'border-gray-700 bg-dark-900 hover:border-gray-600'
                         }`}
                     >
                       <div className="flex items-start justify-between">
@@ -573,8 +573,8 @@ const SuperAdminInstituteDetails: React.FC = () => {
                       key={months}
                       onClick={() => setDurationMonths(months)}
                       className={`p-3 rounded-lg border-2 transition-all ${durationMonths === months
-                          ? 'border-neon-blue bg-neon-blue/10 text-white'
-                          : 'border-gray-700 bg-dark-900 text-gray-400 hover:border-gray-600'
+                        ? 'border-neon-blue bg-neon-blue/10 text-white'
+                        : 'border-gray-700 bg-dark-900 text-gray-400 hover:border-gray-600'
                         }`}
                     >
                       <div className="font-bold">{months} Months</div>

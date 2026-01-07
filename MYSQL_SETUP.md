@@ -108,7 +108,7 @@ Expected output:
 ```
 ✅ MySQL Connection established successfully
 ✅ Database tables synchronized
-🚀 Server running on https://api.autojobzy.com
+🚀 Server running on http://localhost:5000
 ```
 
 **Terminal 2 - Frontend:**
@@ -160,7 +160,7 @@ updatedAt
 #### **POST /api/auth/signup**
 Create a new account
 ```bash
-curl -X POST https://api.autojobzy.com/api/auth/signup \
+curl -X POST http://localhost:5000/api/auth/signup \
   -H "Content-Type: application/json" \
   -d '{
     "email": "user@example.com",
@@ -187,7 +187,7 @@ Response:
 #### **POST /api/auth/login**
 Login to account
 ```bash
-curl -X POST https://api.autojobzy.com/api/auth/login \
+curl -X POST http://localhost:5000/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{
     "email": "user@example.com",
@@ -198,7 +198,7 @@ curl -X POST https://api.autojobzy.com/api/auth/login \
 #### **GET /api/auth/profile** (Protected)
 Get user profile
 ```bash
-curl -X GET https://api.autojobzy.com/api/auth/profile \
+curl -X GET http://localhost:5000/api/auth/profile \
   -H "Authorization: Bearer YOUR_JWT_TOKEN"
 ```
 
@@ -207,14 +207,14 @@ curl -X GET https://api.autojobzy.com/api/auth/profile \
 #### **GET /api/job-settings** (Protected)
 Get user's job profile settings
 ```bash
-curl -X GET https://api.autojobzy.com/api/job-settings \
+curl -X GET http://localhost:5000/api/job-settings \
   -H "Authorization: Bearer YOUR_JWT_TOKEN"
 ```
 
 #### **POST /api/job-settings** (Protected)
 Save/update job profile settings
 ```bash
-curl -X POST https://api.autojobzy.com/api/job-settings \
+curl -X POST http://localhost:5000/api/job-settings \
   -H "Authorization: Bearer YOUR_JWT_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -232,7 +232,7 @@ curl -X POST https://api.autojobzy.com/api/job-settings \
 #### **POST /api/job-settings/resume** (Protected)
 Upload and extract resume
 ```bash
-curl -X POST https://api.autojobzy.com/api/job-settings/resume \
+curl -X POST http://localhost:5000/api/job-settings/resume \
   -H "Authorization: Bearer YOUR_JWT_TOKEN" \
   -F "resume=@/path/to/resume.pdf"
 ```
@@ -250,7 +250,7 @@ Response:
 #### **GET /api/job-settings/answers-data** (Protected)
 Get all data for AI answers (internal use)
 ```bash
-curl -X GET https://api.autojobzy.com/api/job-settings/answers-data \
+curl -X GET http://localhost:5000/api/job-settings/answers-data \
   -H "Authorization: Bearer YOUR_JWT_TOKEN"
 ```
 
@@ -274,7 +274,7 @@ Response:
 #### **POST /api/automation/start** (Protected)
 Start job automation with DB integration
 ```bash
-curl -X POST https://api.autojobzy.com/api/automation/start \
+curl -X POST http://localhost:5000/api/automation/start \
   -H "Authorization: Bearer YOUR_JWT_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -286,21 +286,21 @@ curl -X POST https://api.autojobzy.com/api/automation/start \
 #### **POST /api/automation/stop** (Protected)
 Stop automation
 ```bash
-curl -X POST https://api.autojobzy.com/api/automation/stop \
+curl -X POST http://localhost:5000/api/automation/stop \
   -H "Authorization: Bearer YOUR_JWT_TOKEN"
 ```
 
 #### **GET /api/automation/logs** (Protected)
 Get automation logs
 ```bash
-curl -X GET https://api.autojobzy.com/api/automation/logs \
+curl -X GET http://localhost:5000/api/automation/logs \
   -H "Authorization: Bearer YOUR_JWT_TOKEN"
 ```
 
 #### **GET /api/automation/status** (Protected)
 Get automation status
 ```bash
-curl -X GET https://api.autojobzy.com/api/automation/status \
+curl -X GET http://localhost:5000/api/automation/status \
   -H "Authorization: Bearer YOUR_JWT_TOKEN"
 ```
 

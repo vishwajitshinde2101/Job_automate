@@ -86,7 +86,7 @@ const SuperAdminInstitutes: React.FC = () => {
   const fetchPackages = async () => {
     try {
       const token = localStorage.getItem('superAdminToken');
-      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.autojobzy.com/api';
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
 
       const response = await fetch(`${API_BASE_URL}/superadmin/packages`, {
         headers: {
@@ -108,7 +108,7 @@ const SuperAdminInstitutes: React.FC = () => {
   const fetchInstitutes = async () => {
     try {
       const token = localStorage.getItem('superAdminToken');
-      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.autojobzy.com/api';
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
 
       const response = await fetch(`${API_BASE_URL}/superadmin/institutes`, {
         headers: {
@@ -135,7 +135,7 @@ const SuperAdminInstitutes: React.FC = () => {
 
     try {
       const token = localStorage.getItem('superAdminToken');
-      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.autojobzy.com/api';
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
 
       // Create institute
       const response = await fetch(`${API_BASE_URL}/superadmin/institutes`, {
@@ -216,7 +216,7 @@ const SuperAdminInstitutes: React.FC = () => {
 
     try {
       const token = localStorage.getItem('superAdminToken');
-      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.autojobzy.com/api';
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
 
       const response = await fetch(`${API_BASE_URL}/superadmin/institutes/${institute.id}`, {
         method: 'DELETE',
@@ -244,7 +244,7 @@ const SuperAdminInstitutes: React.FC = () => {
     try {
       setProcessingApproval(institute.id);
       const token = localStorage.getItem('superAdminToken');
-      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.autojobzy.com/api';
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
 
       const response = await fetch(`${API_BASE_URL}/superadmin/institutes/${institute.id}/approve`, {
         method: 'POST',
@@ -276,7 +276,7 @@ const SuperAdminInstitutes: React.FC = () => {
     try {
       setProcessingApproval(institute.id);
       const token = localStorage.getItem('superAdminToken');
-      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.autojobzy.com/api';
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
 
       const response = await fetch(`${API_BASE_URL}/superadmin/institutes/${institute.id}/reject`, {
         method: 'POST',
@@ -404,8 +404,8 @@ const SuperAdminInstitutes: React.FC = () => {
             <button
               onClick={() => setFilterStatus('all')}
               className={`px-4 py-2 rounded-lg font-medium transition-colors ${filterStatus === 'all'
-                  ? 'bg-neon-blue text-white'
-                  : 'bg-dark-900 text-gray-400 hover:text-white'
+                ? 'bg-neon-blue text-white'
+                : 'bg-dark-900 text-gray-400 hover:text-white'
                 }`}
             >
               All ({institutes.length})
@@ -413,8 +413,8 @@ const SuperAdminInstitutes: React.FC = () => {
             <button
               onClick={() => setFilterStatus('pending')}
               className={`px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2 ${filterStatus === 'pending'
-                  ? 'bg-yellow-500 text-white'
-                  : 'bg-dark-900 text-gray-400 hover:text-white'
+                ? 'bg-yellow-500 text-white'
+                : 'bg-dark-900 text-gray-400 hover:text-white'
                 }`}
             >
               <Clock className="w-4 h-4" />
@@ -423,8 +423,8 @@ const SuperAdminInstitutes: React.FC = () => {
             <button
               onClick={() => setFilterStatus('active')}
               className={`px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2 ${filterStatus === 'active'
-                  ? 'bg-green-500 text-white'
-                  : 'bg-dark-900 text-gray-400 hover:text-white'
+                ? 'bg-green-500 text-white'
+                : 'bg-dark-900 text-gray-400 hover:text-white'
                 }`}
             >
               <CheckCircle className="w-4 h-4" />
@@ -433,8 +433,8 @@ const SuperAdminInstitutes: React.FC = () => {
             <button
               onClick={() => setFilterStatus('suspended')}
               className={`px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2 ${filterStatus === 'suspended'
-                  ? 'bg-red-500 text-white'
-                  : 'bg-dark-900 text-gray-400 hover:text-white'
+                ? 'bg-red-500 text-white'
+                : 'bg-dark-900 text-gray-400 hover:text-white'
                 }`}
             >
               <Ban className="w-4 h-4" />
@@ -680,8 +680,8 @@ const SuperAdminInstitutes: React.FC = () => {
                           type="button"
                           onClick={() => setSelectedPackageId(selectedPackageId === pkg.id ? null : pkg.id)}
                           className={`p-4 rounded-lg border-2 transition-all text-left ${selectedPackageId === pkg.id
-                              ? 'border-neon-purple bg-neon-purple/10'
-                              : 'border-gray-700 bg-dark-900 hover:border-gray-600'
+                            ? 'border-neon-purple bg-neon-purple/10'
+                            : 'border-gray-700 bg-dark-900 hover:border-gray-600'
                             }`}
                         >
                           <div className="flex items-start justify-between">
@@ -722,8 +722,8 @@ const SuperAdminInstitutes: React.FC = () => {
                             type="button"
                             onClick={() => setDurationMonths(months)}
                             className={`p-3 rounded-lg border-2 transition-all ${durationMonths === months
-                                ? 'border-neon-blue bg-neon-blue/10 text-white'
-                                : 'border-gray-700 bg-dark-900 text-gray-400 hover:border-gray-600'
+                              ? 'border-neon-blue bg-neon-blue/10 text-white'
+                              : 'border-gray-700 bg-dark-900 text-gray-400 hover:border-gray-600'
                               }`}
                           >
                             <div className="font-bold">{months} Months</div>

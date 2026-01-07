@@ -236,7 +236,7 @@ npm run dev:full
 # Server should start without database errors ✅
 
 # Test subscription API
-curl https://api.autojobzy.com/api/subscription/plans
+curl http://localhost:5000/api/subscription/plans
 # Output: {"success": true, "data": [...]} ✅
 ```
 

@@ -9,7 +9,7 @@ import { jwtDecode } from 'jwt-decode';
 const testLogin = async () => {
     console.log('🧪 Testing Super Admin Login...\n');
 
-    const API_BASE_URL = 'https://api.autojobzy.com/api';
+    const API_BASE_URL = 'http://localhost:5000/api';
 
     try {
         // Step 1: Login

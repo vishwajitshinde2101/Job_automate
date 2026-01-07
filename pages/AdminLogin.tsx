@@ -37,7 +37,7 @@ const AdminLogin: React.FC = () => {
     setLoading(true);
 
     try {
-      const response = await fetch('https://api.autojobzy.com/api/auth/login', {
+      const response = await fetch('http://localhost:5000/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: trimmedEmail, password: trimmedPassword }),
@@ -139,8 +139,8 @@ const AdminLogin: React.FC = () => {
               type="submit"
               disabled={loading || !email.trim() || !password.trim()}
               className={`w-full py-3 rounded-lg font-bold text-white transition-all ${loading || !email.trim() || !password.trim()
-                  ? 'bg-gray-600 cursor-not-allowed'
-                  : 'bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600 shadow-lg hover:shadow-xl'
+                ? 'bg-gray-600 cursor-not-allowed'
+                : 'bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600 shadow-lg hover:shadow-xl'
                 }`}
             >
               {loading ? (

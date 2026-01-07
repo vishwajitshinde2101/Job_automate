@@ -214,7 +214,7 @@ node server/db/verifyAndFixUserFilters.js
 
 ### 2. API Save Test
 ```bash
-curl -X POST https://api.autojobzy.com/api/filters/user \
+curl -X POST http://localhost:5000/api/filters/user \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer <token>" \
   -d '{
@@ -228,7 +228,7 @@ curl -X POST https://api.autojobzy.com/api/filters/user \
 
 ### 3. API Fetch Test
 ```bash
-curl -X GET https://api.autojobzy.com/api/filters/user \
+curl -X GET http://localhost:5000/api/filters/user \
   -H "Authorization: Bearer <token>"
 ```
 **Result**: ✅ Success - Data retrieved correctly:
@@ -334,7 +334,7 @@ node server/db/verifyAndFixUserFilters.js
 # Look for lines starting with [Save Filters]
 
 # 3. Test API directly
-curl -X POST https://api.autojobzy.com/api/filters/user \
+curl -X POST http://localhost:5000/api/filters/user \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer <your-token>" \
   -d '{"finalUrl": "https://test.com"}'

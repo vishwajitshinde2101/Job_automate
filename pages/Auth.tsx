@@ -29,7 +29,7 @@ const Auth: React.FC<AuthProps> = ({ type }) => {
     setError('');
 
     try {
-      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.autojobzy.com/api';
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
 
       if (type === 'signup') {
         // NEW FLOW: Don't create account yet, go to plan selection first
@@ -229,8 +229,8 @@ const Auth: React.FC<AuthProps> = ({ type }) => {
                   type="button"
                   onClick={() => setUserType('individual')}
                   className={`p-4 rounded-lg border-2 transition-all ${userType === 'individual'
-                      ? 'border-neon-blue bg-neon-blue/10 text-white'
-                      : 'border-gray-700 bg-dark-900 text-gray-400 hover:border-gray-600'
+                    ? 'border-neon-blue bg-neon-blue/10 text-white'
+                    : 'border-gray-700 bg-dark-900 text-gray-400 hover:border-gray-600'
                     }`}
                 >
                   <UserIcon className="w-6 h-6 mx-auto mb-2" />
@@ -248,8 +248,8 @@ const Auth: React.FC<AuthProps> = ({ type }) => {
                     }
                   }}
                   className={`p-4 rounded-lg border-2 transition-all ${userType === 'institute'
-                      ? 'border-neon-purple bg-neon-purple/10 text-white'
-                      : 'border-gray-700 bg-dark-900 text-gray-400 hover:border-gray-600'
+                    ? 'border-neon-purple bg-neon-purple/10 text-white'
+                    : 'border-gray-700 bg-dark-900 text-gray-400 hover:border-gray-600'
                     }`}
                 >
                   <Building2 className="w-6 h-6 mx-auto mb-2" />

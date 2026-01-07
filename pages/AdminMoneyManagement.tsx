@@ -36,7 +36,7 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.autojobzy.com/api';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
 
 interface FinancialOverview {
   revenue: {
@@ -319,8 +319,8 @@ const AdminMoneyManagement: React.FC = () => {
         <button
           onClick={() => setActiveSection('overview')}
           className={`px-4 py-2 font-medium transition-all ${activeSection === 'overview'
-              ? 'text-white border-b-2 border-red-500'
-              : 'text-gray-400 hover:text-white'
+            ? 'text-white border-b-2 border-red-500'
+            : 'text-gray-400 hover:text-white'
             }`}
         >
           Overview
@@ -328,8 +328,8 @@ const AdminMoneyManagement: React.FC = () => {
         <button
           onClick={() => setActiveSection('expenses')}
           className={`px-4 py-2 font-medium transition-all ${activeSection === 'expenses'
-              ? 'text-white border-b-2 border-red-500'
-              : 'text-gray-400 hover:text-white'
+            ? 'text-white border-b-2 border-red-500'
+            : 'text-gray-400 hover:text-white'
             }`}
         >
           Expenses
@@ -337,8 +337,8 @@ const AdminMoneyManagement: React.FC = () => {
         <button
           onClick={() => setActiveSection('transactions')}
           className={`px-4 py-2 font-medium transition-all ${activeSection === 'transactions'
-              ? 'text-white border-b-2 border-red-500'
-              : 'text-gray-400 hover:text-white'
+            ? 'text-white border-b-2 border-red-500'
+            : 'text-gray-400 hover:text-white'
             }`}
         >
           Transactions
@@ -346,8 +346,8 @@ const AdminMoneyManagement: React.FC = () => {
         <button
           onClick={() => setActiveSection('profit-loss')}
           className={`px-4 py-2 font-medium transition-all ${activeSection === 'profit-loss'
-              ? 'text-white border-b-2 border-red-500'
-              : 'text-gray-400 hover:text-white'
+            ? 'text-white border-b-2 border-red-500'
+            : 'text-gray-400 hover:text-white'
             }`}
         >
           Profit & Loss
@@ -695,12 +695,12 @@ const AdminMoneyManagement: React.FC = () => {
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span
                           className={`px-2 py-1 text-xs font-medium rounded-full ${transaction.status === 'active'
-                              ? 'bg-green-500/10 text-green-500'
-                              : transaction.status === 'expired'
-                                ? 'bg-yellow-500/10 text-yellow-500'
-                                : transaction.status === 'cancelled'
-                                  ? 'bg-red-500/10 text-red-500'
-                                  : 'bg-gray-500/10 text-gray-500'
+                            ? 'bg-green-500/10 text-green-500'
+                            : transaction.status === 'expired'
+                              ? 'bg-yellow-500/10 text-yellow-500'
+                              : transaction.status === 'cancelled'
+                                ? 'bg-red-500/10 text-red-500'
+                                : 'bg-gray-500/10 text-gray-500'
                             }`}
                         >
                           {transaction.status}

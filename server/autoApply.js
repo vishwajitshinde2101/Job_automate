@@ -1,5 +1,4 @@
 
-
 /**
 * ======================== AUTO APPLY MODULE ========================
 * Main automation script for applying to jobs on Naukri.
@@ -812,7 +811,7 @@ export async function startAutomation(options = {}) {
         // ========== STEP 2: LAUNCH BROWSER ==========
         addLog('Launching browser...', 'info');
         browser = await puppeteer.launch({
-            headless: true,
+            headless: false,
             defaultViewport: null,
             args: ['--start-maximized']
         });

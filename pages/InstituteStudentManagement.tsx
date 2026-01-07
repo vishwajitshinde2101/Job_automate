@@ -89,7 +89,7 @@ const InstituteStudentManagement: React.FC = () => {
         return;
       }
 
-      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.autojobzy.com/api';
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
 
       // Fetch dashboard stats
       const statsResponse = await fetch(`${API_BASE_URL}/institute-admin/dashboard`, {
@@ -127,7 +127,7 @@ const InstituteStudentManagement: React.FC = () => {
 
     try {
       const token = localStorage.getItem('instituteAdminToken');
-      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.autojobzy.com/api';
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
 
       const response = await fetch(`${API_BASE_URL}/institute-admin/students`, {
         method: 'POST',
@@ -170,7 +170,7 @@ const InstituteStudentManagement: React.FC = () => {
 
     try {
       const token = localStorage.getItem('instituteAdminToken');
-      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.autojobzy.com/api';
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
 
       // Update user details
       const userResponse = await fetch(
@@ -244,7 +244,7 @@ const InstituteStudentManagement: React.FC = () => {
 
     try {
       const token = localStorage.getItem('instituteAdminToken');
-      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.autojobzy.com/api';
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
 
       const response = await fetch(
         `${API_BASE_URL}/institute-admin/students/${selectedStudent.userId}/password`,
@@ -283,7 +283,7 @@ const InstituteStudentManagement: React.FC = () => {
 
     try {
       const token = localStorage.getItem('instituteAdminToken');
-      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.autojobzy.com/api';
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
 
       const response = await fetch(`${API_BASE_URL}/institute-admin/students/${student.id}`, {
         method: 'DELETE',
@@ -313,7 +313,7 @@ const InstituteStudentManagement: React.FC = () => {
 
     try {
       const token = localStorage.getItem('instituteAdminToken');
-      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.autojobzy.com/api';
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
 
       const response = await fetch(
         `${API_BASE_URL}/institute-admin/students/${student.userId}/toggle-active`,
@@ -512,8 +512,8 @@ const InstituteStudentManagement: React.FC = () => {
                       <td className="px-6 py-4">
                         <span
                           className={`px-3 py-1 rounded-full text-xs font-bold ${student.user.isActive
-                              ? 'bg-green-500/10 text-green-500'
-                              : 'bg-gray-500/10 text-gray-500'
+                            ? 'bg-green-500/10 text-green-500'
+                            : 'bg-gray-500/10 text-gray-500'
                             }`}
                         >
                           {student.user.isActive ? 'Active' : 'Inactive'}
@@ -538,8 +538,8 @@ const InstituteStudentManagement: React.FC = () => {
                           <button
                             onClick={() => handleToggleActive(student)}
                             className={`p-2 rounded-lg transition-all ${student.user.isActive
-                                ? 'hover:bg-yellow-500/10 text-yellow-500'
-                                : 'hover:bg-green-500/10 text-green-500'
+                              ? 'hover:bg-yellow-500/10 text-yellow-500'
+                              : 'hover:bg-green-500/10 text-green-500'
                               }`}
                             title={student.user.isActive ? 'Deactivate Student' : 'Activate Student'}
                           >

@@ -724,7 +724,7 @@ const Dashboard: React.FC = () => {
       if (historyFilters.endDate) params.append('endDate', historyFilters.endDate);
 
       const response = await fetch(
-        `https://api.autojobzy.com/api/job-results?${params.toString()}`,
+        `http://localhost:5000/api/job-results?${params.toString()}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,

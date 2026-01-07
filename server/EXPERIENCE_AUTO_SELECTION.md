@@ -174,7 +174,7 @@ WARNING: Experience option '25+ Yrs' not found in dropdown
 
 2. **Via API**:
    ```bash
-   curl -X POST https://api.autojobzy.com/api/job-settings \
+   curl -X POST http://localhost:5000/api/job-settings \
      -H "Authorization: Bearer TOKEN" \
      -H "Content-Type: application/json" \
      -d '{"yearsOfExperience": 5}'

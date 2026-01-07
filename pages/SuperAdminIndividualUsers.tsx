@@ -62,7 +62,7 @@ const SuperAdminIndividualUsers: React.FC = () => {
   const fetchUsers = async () => {
     try {
       const token = localStorage.getItem('superAdminToken');
-      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.autojobzy.com/api';
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
 
       // Fetch only individual users (role='user' or 'admin', no instituteId)
       const response = await fetch(`${API_BASE_URL}/superadmin/users?role=user`, {
@@ -289,10 +289,10 @@ const SuperAdminIndividualUsers: React.FC = () => {
                         {user.subscription ? (
                           <span
                             className={`inline-block px-3 py-1 rounded-full text-xs border ${user.subscription.status === 'active'
-                                ? 'bg-green-500/10 text-green-400 border-green-500/30'
-                                : user.subscription.status === 'expired'
-                                  ? 'bg-orange-500/10 text-orange-400 border-orange-500/30'
-                                  : 'bg-red-500/10 text-red-400 border-red-500/30'
+                              ? 'bg-green-500/10 text-green-400 border-green-500/30'
+                              : user.subscription.status === 'expired'
+                                ? 'bg-orange-500/10 text-orange-400 border-orange-500/30'
+                                : 'bg-red-500/10 text-red-400 border-red-500/30'
                               }`}
                           >
                             {user.subscription.status}
@@ -411,8 +411,8 @@ const SuperAdminIndividualUsers: React.FC = () => {
                       <p className="text-gray-500 text-xs">Account Status</p>
                       <span
                         className={`inline-block px-3 py-1 rounded-full text-xs border mt-1 ${selectedUser.onboardingCompleted
-                            ? 'bg-green-500/10 text-green-400 border-green-500/30'
-                            : 'bg-orange-500/10 text-orange-400 border-orange-500/30'
+                          ? 'bg-green-500/10 text-green-400 border-green-500/30'
+                          : 'bg-orange-500/10 text-orange-400 border-orange-500/30'
                           }`}
                       >
                         {selectedUser.onboardingCompleted ? 'Active' : 'Pending Onboarding'}
@@ -448,8 +448,8 @@ const SuperAdminIndividualUsers: React.FC = () => {
                           <p className="text-gray-500 text-xs">Status</p>
                           <span
                             className={`inline-block px-3 py-1 rounded-full text-xs border mt-1 ${selectedUser.subscription.status === 'active'
-                                ? 'bg-green-500/10 text-green-400 border-green-500/30'
-                                : 'bg-orange-500/10 text-orange-400 border-orange-500/30'
+                              ? 'bg-green-500/10 text-green-400 border-green-500/30'
+                              : 'bg-orange-500/10 text-orange-400 border-orange-500/30'
                               }`}
                           >
                             {selectedUser.subscription.status}

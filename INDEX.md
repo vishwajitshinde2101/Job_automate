@@ -227,12 +227,12 @@ npm run server      # Terminal 1: Backend
 npm run dev         # Terminal 2: Frontend
 
 # Test
-curl https://api.autojobzy.com/api/health
-curl https://api.autojobzy.com/api/credentials/check
+curl http://localhost:5000/api/health
+curl http://localhost:5000/api/credentials/check
 
 # Access
 Frontend: http://localhost:5173
-Backend: https://api.autojobzy.com
+Backend: http://localhost:5000
 ```
 
 ---

@@ -38,7 +38,7 @@ echo ""
 echo "Testing POST /api/filters/user with Search URL..."
 echo ""
 
-RESPONSE=$(curl -s -X POST https://api.autojobzy.com/api/filters/user \
+RESPONSE=$(curl -s -X POST http://localhost:5000/api/filters/user \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $TOKEN" \
   -d '{
@@ -68,7 +68,7 @@ echo "Step 3: Verifying saved data..."
 echo "========================================="
 echo ""
 
-FETCH_RESPONSE=$(curl -s -X GET https://api.autojobzy.com/api/filters/user \
+FETCH_RESPONSE=$(curl -s -X GET http://localhost:5000/api/filters/user \
   -H "Authorization: Bearer $TOKEN")
 
 echo "Fetched data:"

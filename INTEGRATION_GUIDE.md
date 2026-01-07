@@ -250,7 +250,7 @@ const handleStartBot = async () => {
   try {
     setIsRunning(true);
     
-    const response = await fetch('https://api.autojobzy.com/api/automation/start', {
+    const response = await fetch('http://localhost:5000/api/automation/start', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -281,7 +281,7 @@ const handleResumeUpload = async (file: File) => {
   const formData = new FormData();
   formData.append('resume', file);
 
-  const response = await fetch('https://api.autojobzy.com/api/resume/upload', {
+  const response = await fetch('http://localhost:5000/api/resume/upload', {
     method: 'POST',
     body: formData
   });
@@ -378,7 +378,7 @@ node server/index.js
 
 Should show:
 ```
-🚀 Server running on https://api.autojobzy.com
+🚀 Server running on http://localhost:5000
 ```
 
 ### Terminal 2: Start Frontend
@@ -407,12 +407,12 @@ Visit `http://localhost:5173` → Go to Dashboard → Click "Start Bot"
 
 1. **Check backend is running**
    ```bash
-   curl https://api.autojobzy.com/api/health
+   curl http://localhost:5000/api/health
    ```
 
 2. **Check credentials are saved**
    ```bash
-   curl https://api.autojobzy.com/api/credentials/check
+   curl http://localhost:5000/api/credentials/check
    ```
 
 3. **Check OpenAI API key**
@@ -433,7 +433,7 @@ Visit `http://localhost:5173` → Go to Dashboard → Click "Start Bot"
 
 1. **Check API connection**
    ```bash
-   curl https://api.autojobzy.com/api/automation/logs
+   curl http://localhost:5000/api/automation/logs
    ```
 
 2. **Check browser isn't blocked**

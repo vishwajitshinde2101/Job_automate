@@ -329,13 +329,13 @@ if (userExperience >= 3) {
 
 ```bash
 # Update years of experience
-curl -X POST https://api.autojobzy.com/api/job-settings \
+curl -X POST http://localhost:5000/api/job-settings \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"yearsOfExperience": 5}'
 
 # Get job settings
-curl -X GET https://api.autojobzy.com/api/job-settings \
+curl -X GET http://localhost:5000/api/job-settings \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
