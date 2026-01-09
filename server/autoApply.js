@@ -1,22 +1,18 @@
 
+
 /**
- * ======================== AUTO APPLY MODULE ========================
- * Main automation script for applying to jobs on Naukri.
- * Fetches credentials from database (job_settings table).
- * Handles login, job filtering, form filling, and chatbot interactions.
- *
- * Uses OLD login selectors:
- *   #usernameField
- *   #passwordField
- */
+* ======================== AUTO APPLY MODULE ========================
+* Main automation script for applying to jobs on Naukri.
+* Fetches credentials from database (job_settings table).
+* Handles login, job filtering, form filling, and chatbot interactions.
+*
+* Uses OLD login selectors:
+*   #usernameField
+*   #passwordField
+*/
 
 import puppeteer from 'puppeteer';
-import {
-    getAnswer,
-    initializeAgenticService,
-    getCheckboxSelection,
-    getReasoningLog
-} from './aiAnswer.js';
+import { getAnswer } from './aiAnswer.js';
 import sequelize from './db/config.js';
 import XLSX from 'xlsx';
 import JobApplicationResult from './models/JobApplicationResult.js';
@@ -28,10 +24,10 @@ let browser = null;
 let jobResults = [];
 
 /**
- * Add log message with timestamp
- * @param {string} message - Log message
- * @param {string} type - Log type: 'info', 'success', 'error', 'warning'
- */
+* Add log message with timestamp
+* @param {string} message - Log message
+* @param {string} type - Log type: 'info', 'success', 'error', 'warning'
+*/
 function addLog(message, type = 'info') {
     const timestamp = new Date().toLocaleTimeString();
     const log = { timestamp, message, type };
@@ -42,20 +38,20 @@ function addLog(message, type = 'info') {
 }
 
 /**
- * Sleep helper function
- * @param {number} ms - Milliseconds to sleep
- */
+* Sleep helper function
+* @param {number} ms - Milliseconds to sleep
+*/
 function delay(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 /**
- * Safe navigation with retry logic
- * @param {Page} page - Puppeteer page object
- * @param {string} url - URL to navigate to
- * @param {number} maxRetries - Maximum retry attempts
- * @returns {Promise<boolean>} - Success status
- */
+* Safe navigation with retry logic
+* @param {Page} page - Puppeteer page object
+* @param {string} url - URL to navigate to
+* @param {number} maxRetries - Maximum retry attempts
+* @returns {Promise<boolean>} - Success status
+*/
 async function safeGoto(page, url, maxRetries = 3) {
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
         try {
@@ -74,10 +70,10 @@ async function safeGoto(page, url, maxRetries = 3) {
 }
 
 /**
- * Fetch Naukri credentials from job_settings table
- * @param {string} userId - User ID
- * @returns {Promise<{email: string, password: string}>} Credentials from database
- */
+* Fetch Naukri credentials from job_settings table
+* @param {string} userId - User ID
+* @returns {Promise<{email: string, password: string}>} Credentials from database
+*/
 async function fetchCredentialsFromDB(userId) {
     try {
         addLog(`Fetching credentials for user: ${userId}`, 'info');
@@ -109,10 +105,10 @@ async function fetchCredentialsFromDB(userId) {
 }
 
 /**
- * Map years of experience (number) to Naukri dropdown option text
- * @param {number} years - Years of experience from database
- * @returns {string|null} - Matching dropdown option text, or null to skip
- */
+* Map years of experience (number) to Naukri dropdown option text
+* @param {number} years - Years of experience from database
+* @returns {string|null} - Matching dropdown option text, or null to skip
+*/
 function mapExperienceToOption(years) {
     if (years === null || years === undefined || years < 0) return null;
 
@@ -130,10 +126,10 @@ function mapExperienceToOption(years) {
 }
 
 /**
- * Automatically select experience in Naukri search bar dropdown
- * @param {puppeteer.Page} page - Puppeteer page instance
- * @param {number} yearsOfExperience - Years of experience from database
- */
+* Automatically select experience in Naukri search bar dropdown
+* @param {puppeteer.Page} page - Puppeteer page instance
+* @param {number} yearsOfExperience - Years of experience from database
+*/
 async function selectExperienceSearchBox(page, yearsOfExperience) {
     try {
         const experienceText = mapExperienceToOption(yearsOfExperience);
@@ -187,9 +183,9 @@ async function selectExperienceSearchBox(page, yearsOfExperience) {
 }
 
 /**
- * Auto-scroll page to load lazy-loaded content
- * @param {puppeteer.Page} page - Puppeteer page instance
- */
+* Auto-scroll page to load lazy-loaded content
+* @param {puppeteer.Page} page - Puppeteer page instance
+*/
 async function autoScroll(page) {
     await page.evaluate(() => {
         return new Promise(resolve => {
@@ -209,17 +205,17 @@ async function autoScroll(page) {
 }
 
 /**
- * Fetch user preferences from database for checkbox matching
- * @param {string} userId - User ID
- * @returns {Promise<Object>} User preferences object
- */
+* Fetch user preferences from database for checkbox matching
+* @param {string} userId - User ID
+* @returns {Promise<Object>} User preferences object
+*/
 async function fetchUserPreferences(userId) {
     try {
         // Fetch job settings
         const [jobSettings] = await sequelize.query(
             `SELECT target_role, location, current_c_t_c, expected_c_t_c,
-                    notice_period, years_of_experience, search_keywords
-             FROM job_settings WHERE user_id = ? LIMIT 1`,
+                   notice_period, years_of_experience, search_keywords
+            FROM job_settings WHERE user_id = ? LIMIT 1`,
             { replacements: [userId] }
         );
 
@@ -262,10 +258,10 @@ async function fetchUserPreferences(userId) {
 }
 
 /**
- * Normalize text for matching (lowercase, remove extra spaces, special chars)
- * @param {string} text - Text to normalize
- * @returns {string} Normalized text
- */
+* Normalize text for matching (lowercase, remove extra spaces, special chars)
+* @param {string} text - Text to normalize
+* @returns {string} Normalized text
+*/
 function normalizeText(text) {
     if (!text) return '';
     return text.toString()
@@ -276,12 +272,12 @@ function normalizeText(text) {
 }
 
 /**
- * Check if two strings match (exact, partial, or fuzzy match)
- * @param {string} text1 - First text
- * @param {string} text2 - Second text
- * @param {number} threshold - Match threshold (0-1), default 0.6
- * @returns {boolean} Whether texts match
- */
+* Check if two strings match (exact, partial, or fuzzy match)
+* @param {string} text1 - First text
+* @param {string} text2 - Second text
+* @param {number} threshold - Match threshold (0-1), default 0.6
+* @returns {boolean} Whether texts match
+*/
 function isTextMatch(text1, text2, threshold = 0.6) {
     const norm1 = normalizeText(text1);
     const norm2 = normalizeText(text2);
@@ -305,11 +301,11 @@ function isTextMatch(text1, text2, threshold = 0.6) {
 }
 
 /**
- * Intelligent checkbox selection based on user preferences
- * @param {puppeteer.Page} page - Puppeteer page instance
- * @param {string} userId - User ID for fetching preferences
- * @returns {Promise<boolean>} Whether checkbox was handled
- */
+* Intelligent checkbox selection based on user preferences
+* @param {puppeteer.Page} page - Puppeteer page instance
+* @param {string} userId - User ID for fetching preferences
+* @returns {Promise<boolean>} Whether checkbox was handled
+*/
 async function handleCheckBox(page, userId = null) {
     try {
         const checkboxSelector = ".checkBoxContainer input[type='radio'], .checkBoxContainer input[type='checkbox']";
@@ -365,29 +361,79 @@ async function handleCheckBox(page, userId = null) {
 
         addLog(`Checkbox options: ${checkboxData.map(c => c.label || c.value).join(', ')}`, 'info');
 
-        // NEW: Use agentic AI to select best option
-        let selectedIndex = 0;
+        // If userId provided, use intelligent matching
+        let selectedIndices = [];
 
-        try {
-            // Get the question from the chatbot
-            const question = await page.evaluate(() => {
-                const questionEl = document.querySelector('.botItem .botMsg span');
-                return questionEl ? questionEl.innerText.trim() : 'Select option';
-            });
+        if (userId) {
+            const userPrefs = await fetchUserPreferences(userId);
+            addLog(`Matching checkboxes with user preferences...`, 'info');
 
-            // Prepare options for AI
-            const options = checkboxData.map(c => ({ label: c.label || c.value }));
+            // Build a comprehensive list of user preference values to match against
+            const userValues = [
+                userPrefs.targetRole,
+                userPrefs.location,
+                ...userPrefs.skills,
+                ...userPrefs.keywords.split(',').map(k => k.trim()),
+            ].filter(Boolean);
 
-            // Use AI to select best option
-            selectedIndex = await getCheckboxSelection(options, question, userId);
+            // Add work type preferences if available
+            if (userPrefs.filters.wfhType) {
+                const workTypes = Array.isArray(userPrefs.filters.wfhType)
+                    ? userPrefs.filters.wfhType
+                    : [userPrefs.filters.wfhType];
+                userValues.push(...workTypes);
+            }
 
-            addLog(`AI selected option ${selectedIndex + 1}: "${checkboxData[selectedIndex].label || checkboxData[selectedIndex].value}"`, 'success');
-        } catch (error) {
-            addLog(`AI selection error, using fallback: ${error.message}`, 'warning');
-            selectedIndex = 0;
+            // Add experience level if applicable
+            if (userPrefs.experience > 0) {
+                userValues.push(`${userPrefs.experience} years`);
+                userValues.push(`${userPrefs.experience}+ years`);
+
+                // Add experience ranges
+                if (userPrefs.experience <= 2) userValues.push('fresher', '0-2 years', 'entry level');
+                else if (userPrefs.experience <= 5) userValues.push('2-5 years', 'mid level');
+                else if (userPrefs.experience <= 10) userValues.push('5-10 years', 'senior level');
+                else userValues.push('10+ years', 'expert', 'lead');
+            }
+
+            // Match each checkbox against user values
+            for (let i = 0; i < checkboxData.length; i++) {
+                const checkbox = checkboxData[i];
+                const checkboxText = checkbox.label || checkbox.value;
+
+                // Check for match with any user value
+                const isMatch = userValues.some(userVal =>
+                    isTextMatch(checkboxText, userVal, 0.5)
+                );
+
+                if (isMatch) {
+                    selectedIndices.push(i);
+                    addLog(`✓ Matched: "${checkboxText}"`, 'success');
+                }
+            }
+
+            // If no matches found, look for default options like "Any", "Other", "Not Applicable"
+            if (selectedIndices.length === 0) {
+                addLog('No matches found, looking for default options...', 'warning');
+
+                const defaultOptions = ['any', 'other', 'not applicable', 'na', 'none', 'all'];
+                for (let i = 0; i < checkboxData.length; i++) {
+                    const checkboxText = normalizeText(checkboxData[i].label || checkboxData[i].value);
+
+                    if (defaultOptions.some(opt => checkboxText.includes(opt))) {
+                        selectedIndices.push(i);
+                        addLog(`Selected default option: "${checkboxData[i].label || checkboxData[i].value}"`, 'info');
+                        break; // Only select one default option
+                    }
+                }
+            }
         }
 
-        let selectedIndices = [selectedIndex];
+        // If still no selection (or no userId), select first option as fallback
+        if (selectedIndices.length === 0) {
+            selectedIndices = [0];
+            addLog('Using fallback: selecting first option', 'warning');
+        }
 
         // Click selected checkboxes
         const isRadio = checkboxData[0]?.type === 'radio';
@@ -418,11 +464,11 @@ async function handleCheckBox(page, userId = null) {
 }
 
 /**
- * Login to Naukri using old selectors (#usernameField, #passwordField)
- * @param {puppeteer.Page} page - Puppeteer page instance
- * @param {string} email - Naukri email
- * @param {string} password - Naukri password
- */
+* Login to Naukri using old selectors (#usernameField, #passwordField)
+* @param {puppeteer.Page} page - Puppeteer page instance
+* @param {string} email - Naukri email
+* @param {string} password - Naukri password
+*/
 async function loginToNaukri(page, email, password) {
     try {
         addLog('Opening Naukri login page...', 'info');
@@ -490,10 +536,10 @@ async function loginToNaukri(page, email, password) {
 }
 
 /**
- * Handle chatbot questions and provide AI-generated answers
- * @param {puppeteer.Page} jobPage - Puppeteer page instance
- * @param {string} userId - User ID for intelligent checkbox matching
- */
+* Handle chatbot questions and provide AI-generated answers
+* @param {puppeteer.Page} jobPage - Puppeteer page instance
+* @param {string} userId - User ID for intelligent checkbox matching
+*/
 async function handleChatbot(jobPage, userId = null) {
     try {
         await jobPage.waitForSelector('.chatbot_MessageContainer', { timeout: 5000 });
@@ -534,18 +580,6 @@ async function handleChatbot(jobPage, userId = null) {
                 const aiAnswer = await getAnswer(q);
                 addLog(`AI Answer: ${aiAnswer}`, 'success');
 
-                // Reasoning logs disabled (agentic AI disabled)
-                // const reasoningLog = getReasoningLog();
-                // if (reasoningLog.length > 0) {
-                //     const lastReasoning = reasoningLog[reasoningLog.length - 1];
-                //     if (lastReasoning.reasoning && lastReasoning.reasoning.length > 0) {
-                //         addLog(`  Reasoning: ${lastReasoning.reasoning.join(' → ')}`, 'info');
-                //     }
-                //     if (lastReasoning.confidence) {
-                //         addLog(`  Confidence: ${lastReasoning.confidence}%`, 'info');
-                //     }
-                // }
-
                 const inputSelector = ".textArea[contenteditable='true']";
 
                 // ensure input exists
@@ -582,10 +616,10 @@ async function handleChatbot(jobPage, userId = null) {
 }
 
 /**
- * Scrape comprehensive job details from Naukri job page
- * @param {puppeteer.Page} jobPage - Puppeteer page instance
- * @returns {Promise<Object>} Job details object
- */
+* Scrape comprehensive job details from Naukri job page
+* @param {puppeteer.Page} jobPage - Puppeteer page instance
+* @returns {Promise<Object>} Job details object
+*/
 async function scrapeJobDetails(jobPage) {
     try {
         const jobDetails = await jobPage.evaluate(() => {
@@ -694,8 +728,8 @@ async function scrapeJobDetails(jobPage) {
 }
 
 /**
- * Save results to Excel file
- */
+* Save results to Excel file
+*/
 function saveToExcel() {
     try {
         const ws = XLSX.utils.json_to_sheet(jobResults);
@@ -711,14 +745,14 @@ function saveToExcel() {
 }
 
 /**
- * Main automation function
- * @param {Object} options - Configuration options
- * @param {string} options.userId - User ID (required for DB credential lookup)
- * @param {string} options.jobUrl - URL of filtered job listings page
- * @param {number} options.maxPages - Maximum pages to process (default: 10)
- * @param {string} options.naukriEmail - Optional email (overrides DB)
- * @param {string} options.naukriPassword - Optional password (overrides DB)
- */
+* Main automation function
+* @param {Object} options - Configuration options
+* @param {string} options.userId - User ID (required for DB credential lookup)
+* @param {string} options.jobUrl - URL of filtered job listings page
+* @param {number} options.maxPages - Maximum pages to process (default: 10)
+* @param {string} options.naukriEmail - Optional email (overrides DB)
+* @param {string} options.naukriPassword - Optional password (overrides DB)
+*/
 export async function startAutomation(options = {}) {
     if (isRunning) {
         addLog('Automation already running', 'warning');
@@ -777,9 +811,9 @@ export async function startAutomation(options = {}) {
             try {
                 const [rows] = await sequelize.query(
                     `SELECT final_url 
-             FROM user_filters 
-             WHERE user_id = :userId
-             LIMIT 1`,
+            FROM user_filters 
+            WHERE user_id = :userId
+            LIMIT 1`,
                     { replacements: { userId } }
                 );
 
@@ -811,7 +845,7 @@ export async function startAutomation(options = {}) {
         // ========== STEP 2: LAUNCH BROWSER ==========
         addLog('Launching browser...', 'info');
         browser = await puppeteer.launch({
-            headless: true,
+            headless: false,
             defaultViewport: null,
             args: ['--start-maximized']
         });
@@ -844,29 +878,10 @@ export async function startAutomation(options = {}) {
             }
         }
 
-        // ========== STEP 3.75: AGENTIC AI DISABLED ==========
-        // if (userId) {
-        //     try {
-        //         const dbConfig = {
-        //             host: process.env.DB_HOST || 'database-1.c72i2s6muax7.ap-south-1.rds.amazonaws.com',
-        //             user: process.env.DB_USER || 'admin',
-        //             password: process.env.DB_PASSWORD || 'YsjlUaX5yFJGtZqjmrSj',
-        //             database: process.env.DB_NAME || 'jobautomate',
-        //             port: parseInt(process.env.DB_PORT || '3306', 10)
-        //         };
-        //         initializeAgenticService(userId, dbConfig);
-        //         addLog('Agentic AI system initialized', 'success');
-        //     } catch (error) {
-        //         addLog(`Failed to initialize agentic AI: ${error.message}`, 'warning');
-        //     }
-        // }
-
         // ========== STEP 4: PROCESS JOB PAGES ==========
         // Use the finalJobUrl directly without modification
         let currentPage = 1;
         let totalJobsApplied = 0;
-        let totalJobsSkipped = 0;
-        const skipReasons = {}; // Track reasons for skipping
 
         while (currentPage <= maxPages && isRunning) {
             // For first page, use URL as-is. For subsequent pages, append page parameter
@@ -1007,16 +1022,12 @@ export async function startAutomation(options = {}) {
                 const externalApply = await jobPage.$('#company-site-button');
                 const applyBtn = await jobPage.$('#apply-button');
 
-                // Determine apply type
                 let applyType = 'No Apply Button';
                 if (externalApply) applyType = 'External Apply';
                 else if (applyBtn) applyType = 'Direct Apply';
 
-                // Default status - will be updated after successful application
-                let applicationStatus = 'Skipped';
-
                 // Save job result with scraped details
-                const jobResult = {
+                jobResults.push({
                     datetime: new Date().toISOString(),
                     pageNumber: currentPage,
                     jobNumber: `${i + 1}/${jobLinks.length}`,
@@ -1030,7 +1041,6 @@ export async function startAutomation(options = {}) {
                     MatchScore: `${matchResult.matchScore}/${matchResult.matchScoreTotal}`,
                     matchStatus: matchResult.matchStatus,
                     applyType: applyType,
-                    applicationStatus: applicationStatus,
 
                     // Scraped job details
                     jobTitle: scrapedDetails.jobTitle,
@@ -1048,28 +1058,10 @@ export async function startAutomation(options = {}) {
                     roleCategory: scrapedDetails.roleCategory,
                     companyRating: scrapedDetails.companyRating,
                     jobHighlights: scrapedDetails.jobHighlights
-                };
-
-                // Add to results array
-                jobResults.push(jobResult);
+                });
 
                 // Skip external apply or poor match
                 if (externalApply || !applyBtn || !canApply) {
-                    totalJobsSkipped++;
-
-                    // Track skip reason
-                    let skipReason = '';
-                    if (externalApply) {
-                        skipReason = 'External Apply';
-                    } else if (!applyBtn) {
-                        skipReason = 'No Apply Button';
-                    } else if (!canApply) {
-                        skipReason = 'Poor Match';
-                    }
-
-                    skipReasons[skipReason] = (skipReasons[skipReason] || 0) + 1;
-                    addLog(`⏭️  Job skipped (${skipReason}) - Total skipped: ${totalJobsSkipped}`, 'warning');
-
                     await jobPage.close();
                     await delay(1000);
                     continue;
@@ -1082,9 +1074,6 @@ export async function startAutomation(options = {}) {
 
                 // Handle chatbot with intelligent checkbox matching
                 await handleChatbot(jobPage, userId);
-
-                // Mark as Applied ONLY after successful application
-                jobResult.applicationStatus = 'Applied';
 
                 totalJobsApplied++;
                 addLog(`Job application submitted! Total applied: ${totalJobsApplied}`, 'success');
@@ -1118,7 +1107,6 @@ export async function startAutomation(options = {}) {
                     matchScoreTotal: 5,
                     matchStatus: result.matchStatus,
                     applyType: result.applyType,
-                    applicationStatus: result.applicationStatus || null,
                     // Job details from scraping
                     jobTitle: result.jobTitle || null,
                     companyName: result.companyName || null,
@@ -1168,32 +1156,10 @@ export async function startAutomation(options = {}) {
             }
         }
 
-        // ========== FINAL SUMMARY ==========
-        addLog('', 'info');
-        addLog('========================================', 'info');
-        addLog('📊 AUTOMATION SUMMARY', 'success');
-        addLog('========================================', 'info');
-        addLog(`✅ Jobs Applied: ${totalJobsApplied}`, 'success');
-        addLog(`⏭️  Jobs Skipped: ${totalJobsSkipped}`, 'warning');
-        addLog(`📈 Total Jobs Processed: ${totalJobsApplied + totalJobsSkipped}`, 'info');
-
-        if (Object.keys(skipReasons).length > 0) {
-            addLog('', 'info');
-            addLog('Skip Breakdown:', 'info');
-            for (const [reason, count] of Object.entries(skipReasons)) {
-                addLog(`   • ${reason}: ${count}`, 'warning');
-            }
-        }
-
-        addLog('========================================', 'info');
-        addLog('Automation complete!', 'success');
-
+        addLog(`Automation complete! Applied to ${totalJobsApplied} jobs.`, 'success');
         return {
             success: true,
             jobsApplied: totalJobsApplied,
-            jobsSkipped: totalJobsSkipped,
-            skipReasons: skipReasons,
-            totalProcessed: totalJobsApplied + totalJobsSkipped,
             logs: automationLogs,
         };
     } catch (error) {
@@ -1216,9 +1182,9 @@ export async function startAutomation(options = {}) {
 }
 
 /**
- * Stop the currently running automation
- * Forcefully closes the browser and clears all state
- */
+* Stop the currently running automation
+* Forcefully closes the browser and clears all state
+*/
 export async function stopAutomation() {
     if (!isRunning) {
         addLog('No automation running', 'warning');
@@ -1256,25 +1222,25 @@ export async function stopAutomation() {
 }
 
 /**
- * Get current logs
- * @returns {Array} Array of log entries
- */
+* Get current logs
+* @returns {Array} Array of log entries
+*/
 export function getLogs() {
     return automationLogs;
 }
 
 /**
- * Clear logs
- */
+* Clear logs
+*/
 export function clearLogs() {
     automationLogs = [];
     addLog('Logs cleared', 'info');
 }
 
 /**
- * Check if automation is running
- * @returns {boolean} Whether automation is running
- */
+* Check if automation is running
+* @returns {boolean} Whether automation is running
+*/
 export function isAutomationRunning() {
     return isRunning;
 }
@@ -1356,4 +1322,3 @@ async function handleRadioButtons(page, userId = null) {
         return false;
     }
 }
-
