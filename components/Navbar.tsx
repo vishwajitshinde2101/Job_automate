@@ -1,13 +1,12 @@
 
 import React, { useState, useEffect } from 'react';
-import { Menu, X, Cpu, User as UserIcon, LogOut, LayoutDashboard, Download, ChevronDown } from 'lucide-react';
+import { Menu, X, Cpu, User as UserIcon, LogOut, LayoutDashboard, Download, ChevronDown, ArrowRight } from 'lucide-react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 
 const Navbar: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const [showDownloadDropdown, setShowDownloadDropdown] = useState(false);
   const { user, logout } = useApp();
   const navigate = useNavigate();
   const location = useLocation();
@@ -66,15 +65,14 @@ const Navbar: React.FC = () => {
                     </>
                   )}
                   {isLandingPage && (
-                    <div className="relative">
+                    <Link to="/download">
                       <button
-                        onClick={() => setShowDownloadDropdown(!showDownloadDropdown)}
                         className="group relative bg-gradient-to-r from-neon-blue via-neon-purple to-neon-blue bg-[length:200%_100%] text-white hover:bg-right-bottom transition-all duration-500 px-8 py-3 rounded-full font-bold text-lg shadow-[0_0_30px_rgba(0,243,255,0.6)] hover:shadow-[0_0_40px_rgba(188,19,254,0.8)] flex items-center gap-2 animate-gradient-x overflow-hidden"
                       >
                         <span className="absolute inset-0 bg-white opacity-0 group-hover:opacity-20 transition-opacity duration-300"></span>
                         <Download className="w-5 h-5 group-hover:animate-bounce relative z-10" />
                         <span className="relative z-10">Download the Application</span>
-                        <ChevronDown className={`w-4 h-4 transition-transform duration-300 relative z-10 ${showDownloadDropdown ? 'rotate-180' : ''}`} />
+                        <ArrowRight className="w-4 h-4 relative z-10 group-hover:translate-x-1 transition-transform" />
 
                         {/* Pulsing badge */}
                         <span className="absolute -top-1 -right-1 flex h-3 w-3">
@@ -82,54 +80,7 @@ const Navbar: React.FC = () => {
                           <span className="relative inline-flex rounded-full h-3 w-3 bg-neon-green"></span>
                         </span>
                       </button>
-
-                      {showDownloadDropdown && (
-                        <div className="absolute right-0 mt-3 w-72 bg-gradient-to-br from-white to-gray-50 dark:from-dark-800 dark:to-dark-900 rounded-2xl shadow-2xl border-2 border-neon-blue/30 overflow-hidden z-50 animate-slide-down">
-                          {/* Glow effect on top */}
-                          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-neon-blue via-neon-purple to-neon-blue"></div>
-
-                          <a
-                            href="#"
-                            className="group/item flex items-center gap-4 px-6 py-5 hover:bg-gradient-to-r hover:from-neon-blue/10 hover:to-neon-purple/10 transition-all duration-300 border-b border-gray-200 dark:border-gray-700 relative overflow-hidden"
-                            onClick={() => setShowDownloadDropdown(false)}
-                          >
-                            <div className="absolute inset-0 bg-gradient-to-r from-neon-blue/0 via-neon-blue/20 to-neon-blue/0 translate-x-[-100%] group-hover/item:translate-x-[100%] transition-transform duration-700"></div>
-
-                            <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-neon-blue/20 to-neon-purple/20 group-hover/item:scale-110 transition-transform duration-300">
-                              <Download className="w-6 h-6 text-neon-blue group-hover/item:animate-bounce" />
-                            </div>
-                            <div className="flex-1 relative z-10">
-                              <div className="font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                                Download for Mac
-                                <span className="text-xs px-2 py-0.5 rounded-full bg-green-500/20 text-green-600 dark:text-green-400 font-normal">Free</span>
-                              </div>
-                              <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">macOS 10.15 or later</div>
-                            </div>
-                            <ChevronDown className="w-5 h-5 text-gray-400 -rotate-90 group-hover/item:translate-x-1 transition-transform" />
-                          </a>
-
-                          <a
-                            href="#"
-                            className="group/item flex items-center gap-4 px-6 py-5 hover:bg-gradient-to-r hover:from-neon-purple/10 hover:to-neon-blue/10 transition-all duration-300 relative overflow-hidden"
-                            onClick={() => setShowDownloadDropdown(false)}
-                          >
-                            <div className="absolute inset-0 bg-gradient-to-r from-neon-purple/0 via-neon-purple/20 to-neon-purple/0 translate-x-[-100%] group-hover/item:translate-x-[100%] transition-transform duration-700"></div>
-
-                            <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-neon-purple/20 to-neon-blue/20 group-hover/item:scale-110 transition-transform duration-300">
-                              <Download className="w-6 h-6 text-neon-purple group-hover/item:animate-bounce" />
-                            </div>
-                            <div className="flex-1 relative z-10">
-                              <div className="font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                                Download for Windows
-                                <span className="text-xs px-2 py-0.5 rounded-full bg-green-500/20 text-green-600 dark:text-green-400 font-normal">Free</span>
-                              </div>
-                              <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Windows 10 or later</div>
-                            </div>
-                            <ChevronDown className="w-5 h-5 text-gray-400 -rotate-90 group-hover/item:translate-x-1 transition-transform" />
-                          </a>
-                        </div>
-                      )}
-                    </div>
+                    </Link>
                   )}
                 </>
               ) : (
@@ -164,36 +115,21 @@ const Navbar: React.FC = () => {
                     <Link to="/signup" className="block px-3 py-2 rounded-md text-base font-medium text-black bg-neon-blue hover:bg-neon-blue/90" onClick={() => setIsOpen(false)}>Sign Up</Link>
                   </>
                 ) : (
-                  <>
-                    <a
-                      href="#"
-                      className="group flex items-center gap-3 px-4 py-4 rounded-xl text-base font-bold text-white bg-gradient-to-r from-neon-blue to-neon-purple hover:shadow-[0_0_20px_rgba(0,243,255,0.6)] transition-all duration-300 relative overflow-hidden"
-                      onClick={() => setIsOpen(false)}
-                    >
-                      <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-10 transition-opacity"></div>
-                      <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-white/20">
-                        <Download className="w-5 h-5 text-white group-hover:animate-bounce" />
-                      </div>
-                      <div className="flex-1 relative z-10">
-                        <div>Download for Mac</div>
-                        <div className="text-xs text-white/70 font-normal">macOS 10.15+</div>
-                      </div>
-                    </a>
-                    <a
-                      href="#"
-                      className="group flex items-center gap-3 px-4 py-4 rounded-xl text-base font-bold text-white bg-gradient-to-r from-neon-purple to-neon-blue hover:shadow-[0_0_20px_rgba(188,19,254,0.6)] transition-all duration-300 relative overflow-hidden"
-                      onClick={() => setIsOpen(false)}
-                    >
-                      <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-10 transition-opacity"></div>
-                      <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-white/20">
-                        <Download className="w-5 h-5 text-white group-hover:animate-bounce" />
-                      </div>
-                      <div className="flex-1 relative z-10">
-                        <div>Download for Windows</div>
-                        <div className="text-xs text-white/70 font-normal">Windows 10+</div>
-                      </div>
-                    </a>
-                  </>
+                  <Link
+                    to="/download"
+                    className="group flex items-center gap-3 px-4 py-4 rounded-xl text-base font-bold text-white bg-gradient-to-r from-neon-blue to-neon-purple hover:shadow-[0_0_20px_rgba(0,243,255,0.6)] transition-all duration-300 relative overflow-hidden"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-10 transition-opacity"></div>
+                    <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-white/20">
+                      <Download className="w-5 h-5 text-white group-hover:animate-bounce" />
+                    </div>
+                    <div className="flex-1 relative z-10">
+                      <div>Download the Application</div>
+                      <div className="text-xs text-white/70 font-normal">Mac & Windows</div>
+                    </div>
+                    <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                  </Link>
                 )}
               </>
             ) : (

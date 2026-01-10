@@ -16,6 +16,7 @@ import Contact from './pages/Contact';
 import AboutUs from './pages/AboutUs';
 import WhyWeBuilt from './pages/WhyWeBuilt';
 import ApplicationHistory from './pages/ApplicationHistory';
+import Downloads from './pages/Downloads';
 import AdminLogin from './pages/AdminLogin';
 import AdminDashboard from './pages/AdminDashboard';
 import AdminProtectedRoute from './components/AdminProtectedRoute';
@@ -63,7 +64,7 @@ const AppContent: React.FC = () => {
 
   // Define protected and public routes
   const protectedRoutes = ['/dashboard', '/plans', '/setup', '/history', '/institute-admin'];
-  const publicRoutes = ['/', '/login', '/signup', '/pricing', '/privacy-policy', '/terms', '/refund-policy', '/contact', '/about', '/why-we-built', '/api-tester'];
+  const publicRoutes = ['/', '/login', '/signup', '/pricing', '/privacy-policy', '/terms', '/refund-policy', '/contact', '/about', '/why-we-built', '/download', '/api-tester'];
 
   // Monitor navigation and automatically logout when leaving Dashboard to public routes
   useEffect(() => {
@@ -129,6 +130,7 @@ const AppContent: React.FC = () => {
           <Route path="/contact" element={<Contact />} />
           <Route path="/about" element={<AboutUs />} />
           <Route path="/why-we-built" element={<WhyWeBuilt />} />
+          <Route path="/download" element={<Downloads />} />
 
           {/* Institute Routes */}
           <Route path="/institute-signup" element={<InstituteSignup />} />
