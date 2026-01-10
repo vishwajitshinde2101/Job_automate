@@ -205,8 +205,9 @@ const Downloads: React.FC = () => {
                 </div>
 
                 <a
-                  href="#"
+                  href="https://autojobzy-desktop-downloads.s3.eu-north-1.amazonaws.com/windows/AutoJobzy-1.0.0.zip"
                   className="group/btn flex items-center justify-center gap-2 w-full bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-bold py-4 rounded-xl hover:shadow-[0_0_30px_rgba(6,182,212,0.6)] transition-all duration-300 relative overflow-hidden"
+                  download
                 >
                   <div className="absolute inset-0 bg-white opacity-0 group-hover/btn:opacity-10 transition-opacity"></div>
                   <Download className="w-5 h-5 group-hover/btn:animate-bounce" />
