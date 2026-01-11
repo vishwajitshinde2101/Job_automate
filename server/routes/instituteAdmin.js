@@ -18,8 +18,54 @@ import { Op } from 'sequelize';
 
 const router = express.Router();
 
-// Middleware to check if user is institute admin
-const isInstituteAdmin = async (req, res, next) => {
+// Middleware to check if user is institute admin or staff
+const isInstituteAdminOrStaff = async (req, res, next) => {
+    try {
+        if (req.userRole !== 'institute_admin' && req.userRole !== 'staff') {
+            return res.status(403).json({ error: 'Access denied. Institute admin or staff only.' });
+        }
+
+        // Get institute ID based on role
+        let instituteId;
+        let institute;
+
+        if (req.userRole === 'institute_admin') {
+            const admin = await InstituteAdmin.findOne({
+                where: { userId: req.userId },
+                include: [{ model: Institute, as: 'institute' }],
+            });
+
+            if (!admin) {
+                return res.status(404).json({ error: 'Institute admin not found' });
+            }
+
+            instituteId = admin.instituteId;
+            institute = admin.institute;
+        } else if (req.userRole === 'staff') {
+            const staff = await InstituteStaff.findOne({
+                where: { userId: req.userId },
+                include: [{ model: Institute, as: 'institute' }],
+            });
+
+            if (!staff) {
+                return res.status(404).json({ error: 'Institute staff not found' });
+            }
+
+            instituteId = staff.instituteId;
+            institute = staff.institute;
+        }
+
+        req.instituteId = instituteId;
+        req.institute = institute;
+        next();
+    } catch (error) {
+        console.error('Error in isInstituteAdminOrStaff middleware:', error);
+        res.status(500).json({ error: 'Server error' });
+    }
+};
+
+// Middleware to check if user is institute admin ONLY (for admin-only actions)
+const isInstituteAdminOnly = async (req, res, next) => {
     try {
         if (req.userRole !== 'institute_admin') {
             return res.status(403).json({ error: 'Access denied. Institute admin only.' });
@@ -39,7 +85,7 @@ const isInstituteAdmin = async (req, res, next) => {
         req.institute = admin.institute;
         next();
     } catch (error) {
-        console.error('Error in isInstituteAdmin middleware:', error);
+        console.error('Error in isInstituteAdminOnly middleware:', error);
         res.status(500).json({ error: 'Server error' });
     }
 };
@@ -50,9 +96,9 @@ const isInstituteAdmin = async (req, res, next) => {
 
 /**
  * GET /api/institute-admin/packages
- * Get all available packages for institutes
+ * Get all available packages for institutes (Admin only)
  */
-router.get('/packages', authenticateToken, isInstituteAdmin, async (req, res) => {
+router.get('/packages', authenticateToken, isInstituteAdminOnly, async (req, res) => {
     try {
         const packages = await Package.findAll({
             where: {
@@ -71,9 +117,9 @@ router.get('/packages', authenticateToken, isInstituteAdmin, async (req, res) =>
 
 /**
  * GET /api/institute-admin/dashboard
- * Get dashboard with subscription and student info
+ * Get dashboard with subscription and student info (Admin & Staff)
  */
-router.get('/dashboard', authenticateToken, isInstituteAdmin, async (req, res) => {
+router.get('/dashboard', authenticateToken, isInstituteAdminOrStaff, async (req, res) => {
     try {
         // Get active subscription
         const subscription = await InstituteSubscription.findOne({
@@ -144,7 +190,7 @@ router.get('/dashboard', authenticateToken, isInstituteAdmin, async (req, res) =
  * GET /api/institute-admin/students
  * Get all students in institute
  */
-router.get('/students', authenticateToken, isInstituteAdmin, async (req, res) => {
+router.get('/students', authenticateToken, isInstituteAdminOrStaff, async (req, res) => {
     try {
         const { page = 1, limit = 50, search, status } = req.query;
 
@@ -198,7 +244,7 @@ router.get('/students', authenticateToken, isInstituteAdmin, async (req, res) =>
  * POST /api/institute-admin/students
  * Add new student to institute
  */
-router.post('/students', authenticateToken, isInstituteAdmin, async (req, res) => {
+router.post('/students', authenticateToken, isInstituteAdminOrStaff, async (req, res) => {
     try {
         const {
             firstName,
@@ -294,7 +340,7 @@ router.post('/students', authenticateToken, isInstituteAdmin, async (req, res) =
  * PUT /api/institute-admin/students/:id
  * Update student details
  */
-router.put('/students/:id', authenticateToken, isInstituteAdmin, async (req, res) => {
+router.put('/students/:id', authenticateToken, isInstituteAdminOrStaff, async (req, res) => {
     try {
         const { id } = req.params;
         const { enrollmentNumber, batch, course, status } = req.body;
@@ -328,7 +374,7 @@ router.put('/students/:id', authenticateToken, isInstituteAdmin, async (req, res
  * DELETE /api/institute-admin/students/:id
  * Remove student from institute
  */
-router.delete('/students/:id', authenticateToken, isInstituteAdmin, async (req, res) => {
+router.delete('/students/:id', authenticateToken, isInstituteAdminOrStaff, async (req, res) => {
     try {
         const { id } = req.params;
 
@@ -355,7 +401,7 @@ router.delete('/students/:id', authenticateToken, isInstituteAdmin, async (req, 
  * PUT /api/institute-admin/students/:userId/password
  * Change student password
  */
-router.put('/students/:userId/password', authenticateToken, isInstituteAdmin, async (req, res) => {
+router.put('/students/:userId/password', authenticateToken, isInstituteAdminOrStaff, async (req, res) => {
     try {
         const { userId } = req.params;
         const { password } = req.body;
@@ -394,7 +440,7 @@ router.put('/students/:userId/password', authenticateToken, isInstituteAdmin, as
  * PUT /api/institute-admin/students/:userId/details
  * Update student user details (firstName, lastName, email)
  */
-router.put('/students/:userId/details', authenticateToken, isInstituteAdmin, async (req, res) => {
+router.put('/students/:userId/details', authenticateToken, isInstituteAdminOrStaff, async (req, res) => {
     try {
         const { userId } = req.params;
         const { firstName, lastName, email, isActive } = req.body;
@@ -442,7 +488,7 @@ router.put('/students/:userId/details', authenticateToken, isInstituteAdmin, asy
  * PUT /api/institute-admin/students/:userId/toggle-active
  * Toggle student active/inactive status
  */
-router.put('/students/:userId/toggle-active', authenticateToken, isInstituteAdmin, async (req, res) => {
+router.put('/students/:userId/toggle-active', authenticateToken, isInstituteAdminOrStaff, async (req, res) => {
     try {
         const { userId } = req.params;
 
@@ -487,7 +533,7 @@ router.put('/students/:userId/toggle-active', authenticateToken, isInstituteAdmi
  * POST /api/institute-admin/create-subscription-order
  * Create Razorpay order for package subscription
  */
-router.post('/create-subscription-order', authenticateToken, isInstituteAdmin, async (req, res) => {
+router.post('/create-subscription-order', authenticateToken, isInstituteAdminOnly, async (req, res) => {
     try {
         const { packageId } = req.body;
 
@@ -543,7 +589,7 @@ router.post('/create-subscription-order', authenticateToken, isInstituteAdmin, a
  * POST /api/institute-admin/verify-payment
  * Verify payment and create subscription
  */
-router.post('/verify-payment', authenticateToken, isInstituteAdmin, async (req, res) => {
+router.post('/verify-payment', authenticateToken, isInstituteAdminOnly, async (req, res) => {
     try {
         const { razorpay_payment_id, razorpay_order_id, razorpay_signature, packageId } = req.body;
 
@@ -605,7 +651,7 @@ router.post('/verify-payment', authenticateToken, isInstituteAdmin, async (req, 
  * GET /api/institute-admin/staff
  * Get all staff in institute
  */
-router.get('/staff', authenticateToken, isInstituteAdmin, async (req, res) => {
+router.get('/staff', authenticateToken, isInstituteAdminOrStaff, async (req, res) => {
     try {
         const staff = await InstituteStaff.findAll({
             where: { instituteId: req.instituteId },
@@ -633,9 +679,9 @@ router.get('/staff', authenticateToken, isInstituteAdmin, async (req, res) => {
 
 /**
  * POST /api/institute-admin/staff
- * Add new staff member
+ * Add new staff member (Admin only)
  */
-router.post('/staff', authenticateToken, isInstituteAdmin, async (req, res) => {
+router.post('/staff', authenticateToken, isInstituteAdminOnly, async (req, res) => {
     try {
         const { firstName, lastName, email, password, role } = req.body;
 
@@ -685,9 +731,9 @@ router.post('/staff', authenticateToken, isInstituteAdmin, async (req, res) => {
 
 /**
  * DELETE /api/institute-admin/staff/:id
- * Remove staff member
+ * Remove staff member (Admin only)
  */
-router.delete('/staff/:id', authenticateToken, isInstituteAdmin, async (req, res) => {
+router.delete('/staff/:id', authenticateToken, isInstituteAdminOnly, async (req, res) => {
     try {
         const { id } = req.params;
 
