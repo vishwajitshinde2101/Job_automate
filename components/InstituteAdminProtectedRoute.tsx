@@ -16,7 +16,9 @@ const InstituteAdminProtectedRoute: React.FC<InstituteAdminProtectedRouteProps> 
   try {
     const instituteAdminUser = instituteAdminUserStr ? JSON.parse(instituteAdminUserStr) : null;
 
-    if (!instituteAdminUser || instituteAdminUser.role !== 'institute_admin') {
+    // Allow both institute_admin and staff roles
+    if (!instituteAdminUser ||
+        (instituteAdminUser.role !== 'institute_admin' && instituteAdminUser.role !== 'staff')) {
       localStorage.removeItem('instituteAdminToken');
       localStorage.removeItem('instituteAdminUser');
       return <Navigate to="/institute-admin/login" replace />;
