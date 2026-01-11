@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Users, UserCheck, UserX, Briefcase, TrendingUp, Calendar } from 'lucide-react';
+import { API_BASE_URL } from '../config/api';
 
 interface OverviewStats {
   summary: {
@@ -71,7 +72,7 @@ const AdminOverview: React.FC = () => {
   const fetchAnalytics = async () => {
     try {
       const token = localStorage.getItem('adminToken');
-      const response = await fetch('http://localhost:5000/api/admin/analytics/overview', {
+      const response = await fetch('${API_BASE_URL}/admin/analytics/overview', {
         headers: {
           'Authorization': `Bearer ${token}`,
         },

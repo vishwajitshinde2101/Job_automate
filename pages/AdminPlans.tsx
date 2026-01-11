@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Plus, Edit2, Trash2, Check, X, Crown, Clock, RefreshCw } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { API_BASE_URL } from '../config/api';
 
 interface PlanFeature {
   id: string;
@@ -66,7 +67,7 @@ const AdminPlans: React.FC = () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('adminToken');
-      const response = await fetch('http://localhost:5000/api/admin/plans', {
+      const response = await fetch('${API_BASE_URL}/admin/plans', {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -174,7 +175,7 @@ const AdminPlans: React.FC = () => {
 
     try {
       const token = localStorage.getItem('adminToken');
-      const response = await fetch('http://localhost:5000/api/admin/plans', {
+      const response = await fetch('${API_BASE_URL}/admin/plans', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -229,7 +230,7 @@ const AdminPlans: React.FC = () => {
 
     try {
       const token = localStorage.getItem('adminToken');
-      const response = await fetch(`http://localhost:5000/api/admin/plans/${editingPlan.id}`, {
+      const response = await fetch(`${API_BASE_URL}/admin/plans/${editingPlan.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -259,7 +260,7 @@ const AdminPlans: React.FC = () => {
   const togglePlanStatus = async (planId: string, currentStatus: boolean) => {
     try {
       const token = localStorage.getItem('adminToken');
-      const response = await fetch(`http://localhost:5000/api/admin/plans/${planId}`, {
+      const response = await fetch(`${API_BASE_URL}/admin/plans/${planId}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -285,7 +286,7 @@ const AdminPlans: React.FC = () => {
 
     try {
       const token = localStorage.getItem('adminToken');
-      const response = await fetch(`http://localhost:5000/api/admin/plans/${planId}`, {
+      const response = await fetch(`${API_BASE_URL}/admin/plans/${planId}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` },
       });

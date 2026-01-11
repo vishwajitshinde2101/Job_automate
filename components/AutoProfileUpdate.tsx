@@ -7,6 +7,7 @@
 import React, { useState, useEffect } from 'react';
 import { RefreshCw, CheckCircle, XCircle, Clock, AlertCircle, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { API_BASE_URL } from '../config/api';
 
 interface UpdateStatus {
   status: 'idle' | 'running' | 'success' | 'failed';
@@ -49,7 +50,7 @@ const AutoProfileUpdate: React.FC = () => {
         return;
       }
 
-      const response = await fetch('http://localhost:5000/api/profile-update/status', {
+      const response = await fetch('${API_BASE_URL}/profile-update/status', {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -91,7 +92,7 @@ const AutoProfileUpdate: React.FC = () => {
         throw new Error('Authentication required. Please login again.');
       }
 
-      const response = await fetch('http://localhost:5000/api/profile-update/naukri/update-resume', {
+      const response = await fetch('${API_BASE_URL}/profile-update/naukri/update-resume', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -143,7 +144,7 @@ const AutoProfileUpdate: React.FC = () => {
       const token = localStorage.getItem('token');
       if (!token) return;
 
-      const response = await fetch('http://localhost:5000/api/profile-update/scheduler/status', {
+      const response = await fetch('${API_BASE_URL}/profile-update/scheduler/status', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
 
@@ -173,7 +174,7 @@ const AutoProfileUpdate: React.FC = () => {
         throw new Error('Authentication required');
       }
 
-      const response = await fetch('http://localhost:5000/api/profile-update/scheduler/configure', {
+      const response = await fetch('${API_BASE_URL}/profile-update/scheduler/configure', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

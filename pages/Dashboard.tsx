@@ -12,6 +12,7 @@ import AutoProfileUpdate from '../components/AutoProfileUpdate';
 import { runBot, stopAutomation, getAutomationLogs, updateJobSettings, getJobSettings, getSkills, saveSkillsBulk, deleteSkill, getAllFilters, getUserFilters, saveUserFilters, runFilter, getFilterLogs, verifyNaukriCredentials } from '../services/automationApi';
 import { getSubscriptionStatus, createOrder, initiatePayment } from '../services/subscriptionApi';
 import { getPlans, Plan } from '../services/plansApi';
+import { API_BASE_URL } from '../config/api';
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -665,7 +666,7 @@ const Dashboard: React.FC = () => {
       if (historyFilters.endDate) params.append('endDate', historyFilters.endDate);
 
       const response = await fetch(
-        `http://localhost:5000/api/job-results?${params.toString()}`,
+        `${API_BASE_URL}/job-results?${params.toString()}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
