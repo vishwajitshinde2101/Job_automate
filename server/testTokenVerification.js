@@ -5,8 +5,11 @@
 
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
-dotenv.config();
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+dotenv.config({ path: path.join(__dirname, '..', '.env') });
 
 // The token from your curl request
 const testToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIzZmQyYzIyMy1jNTEzLTQxZDgtOTlhOC02NzE5ZWNiZjU0YmMiLCJyb2xlIjoic3VwZXJhZG1pbiIsImlhdCI6MTc2ODE0OTM0MCwiZXhwIjoxNzcwNzQxMzQwfQ.MygMntjG6LPFcr4W_U6PhQOMrztkkSJS0H1pc_xepSA';
