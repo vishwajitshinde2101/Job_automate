@@ -9,7 +9,10 @@ import {
   AlertCircle,
   CheckCircle,
   Clock,
-  BarChart3,
+  Settings,
+  ChevronRight,
+  Activity,
+  UserPlus,
 } from 'lucide-react';
 import SuperAdminSidebar from '../components/SuperAdminSidebar';
 
@@ -60,243 +63,297 @@ const SuperAdminDashboard: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-dark-900 p-8">
-        <div className="flex items-center justify-center h-96">
+      <SuperAdminSidebar>
+        <div className="min-h-screen bg-dark-900 flex items-center justify-center">
           <div className="text-center">
             <div className="w-16 h-16 border-4 border-neon-blue border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
             <p className="text-gray-400">Loading dashboard...</p>
           </div>
         </div>
-      </div>
+      </SuperAdminSidebar>
     );
   }
 
   if (error) {
     return (
-      <div className="min-h-screen bg-dark-900 p-8">
-        <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-6 text-center">
-          <AlertCircle className="w-12 h-12 text-red-400 mx-auto mb-4" />
-          <p className="text-red-400 text-lg">{error}</p>
+      <SuperAdminSidebar>
+        <div className="min-h-screen bg-dark-900 flex items-center justify-center p-8">
+          <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-6 text-center max-w-md">
+            <AlertCircle className="w-12 h-12 text-red-400 mx-auto mb-4" />
+            <p className="text-red-400 text-lg">{error}</p>
+          </div>
         </div>
-      </div>
+      </SuperAdminSidebar>
     );
   }
-
-  const statCards = [
-    {
-      title: 'Total Institutes',
-      value: stats?.totalInstitutes || 0,
-      icon: Building2,
-      color: 'blue',
-      bgColor: 'bg-blue-500/10',
-      borderColor: 'border-blue-500/30',
-      textColor: 'text-blue-400',
-    },
-    {
-      title: 'Active Institutes',
-      value: stats?.activeInstitutes || 0,
-      icon: CheckCircle,
-      color: 'green',
-      bgColor: 'bg-green-500/10',
-      borderColor: 'border-green-500/30',
-      textColor: 'text-green-400',
-    },
-    {
-      title: 'Total Students',
-      value: stats?.totalStudents || 0,
-      icon: Users,
-      color: 'purple',
-      bgColor: 'bg-purple-500/10',
-      borderColor: 'border-purple-500/30',
-      textColor: 'text-purple-400',
-    },
-    {
-      title: 'Active Subscriptions',
-      value: stats?.activeSubscriptions || 0,
-      icon: Package,
-      color: 'cyan',
-      bgColor: 'bg-cyan-500/10',
-      borderColor: 'border-cyan-500/30',
-      textColor: 'text-cyan-400',
-    },
-    {
-      title: 'Pending Payments',
-      value: stats?.pendingPayments || 0,
-      icon: Clock,
-      color: 'orange',
-      bgColor: 'bg-orange-500/10',
-      borderColor: 'border-orange-500/30',
-      textColor: 'text-orange-400',
-    },
-    {
-      title: 'Total Revenue',
-      value: `₹${(stats?.totalRevenue || 0).toLocaleString('en-IN')}`,
-      icon: DollarSign,
-      color: 'emerald',
-      bgColor: 'bg-emerald-500/10',
-      borderColor: 'border-emerald-500/30',
-      textColor: 'text-emerald-400',
-    },
-    {
-      title: 'Institute Admins',
-      value: stats?.totalAdmins || 0,
-      icon: Users,
-      color: 'indigo',
-      bgColor: 'bg-indigo-500/10',
-      borderColor: 'border-indigo-500/30',
-      textColor: 'text-indigo-400',
-    },
-    {
-      title: 'Staff Members',
-      value: stats?.totalStaff || 0,
-      icon: Users,
-      color: 'pink',
-      bgColor: 'bg-pink-500/10',
-      borderColor: 'border-pink-500/30',
-      textColor: 'text-pink-400',
-    },
-  ];
 
   return (
     <SuperAdminSidebar>
       <div className="min-h-screen bg-dark-900">
-      {/* Header */}
-      <div className="bg-dark-800 border-b border-white/10">
-        <div className="container mx-auto px-8 py-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-white mb-2">Super Admin Dashboard</h1>
-              <p className="text-gray-400">Manage institutes, packages, and subscriptions</p>
-            </div>
-            <div className="flex gap-3">
-              <button
-                onClick={() => navigate('/superadmin/institutes')}
-                className="px-6 py-3 bg-neon-blue hover:bg-blue-600 text-white rounded-lg font-semibold transition-colors"
-              >
-                <Building2 className="w-5 h-5 inline mr-2" />
-                Manage Institutes
-              </button>
-              <button
-                onClick={() => navigate('/superadmin/packages')}
-                className="px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-semibold transition-colors"
-              >
-                <Package className="w-5 h-5 inline mr-2" />
-                Manage Packages
-              </button>
-            </div>
+        {/* Header */}
+        <div className="bg-dark-800 border-b border-white/10">
+          <div className="px-8 py-6">
+            <h1 className="text-2xl font-bold text-white">Dashboard</h1>
+            <p className="text-gray-400 text-sm mt-1">Overview of your platform</p>
           </div>
         </div>
-      </div>
 
-      {/* Stats Grid */}
-      <div className="container mx-auto px-8 py-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {statCards.map((card, index) => (
-            <div
-              key={index}
-              className={`${card.bgColor} border ${card.borderColor} rounded-lg p-6 hover:scale-105 transition-transform cursor-pointer`}
-            >
+        {/* Content */}
+        <div className="px-8 py-8">
+          {/* Main Stats Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            {/* Total Institutes */}
+            <div className="bg-dark-800 border border-white/10 rounded-lg p-6">
               <div className="flex items-center justify-between mb-4">
-                <card.icon className={`w-8 h-8 ${card.textColor}`} />
-                <BarChart3 className={`w-5 h-5 ${card.textColor} opacity-50`} />
+                <div className="w-12 h-12 bg-blue-500/10 rounded-lg flex items-center justify-center">
+                  <Building2 className="w-6 h-6 text-blue-400" />
+                </div>
               </div>
               <div>
-                <p className="text-gray-400 text-sm mb-1">{card.title}</p>
-                <p className={`text-3xl font-bold ${card.textColor}`}>{card.value}</p>
+                <p className="text-gray-400 text-sm mb-1">Total Institutes</p>
+                <p className="text-3xl font-bold text-white">{stats?.totalInstitutes || 0}</p>
+                <p className="text-green-400 text-xs mt-2">
+                  {stats?.activeInstitutes || 0} active
+                </p>
               </div>
             </div>
-          ))}
-        </div>
 
-        {/* Quick Actions */}
-        <div className="mt-8 bg-dark-800 border border-white/10 rounded-lg p-6">
-          <h2 className="text-xl font-bold text-white mb-4">Quick Actions</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <button
-              onClick={() => navigate('/superadmin/institutes?action=create')}
-              className="p-4 bg-dark-900 border border-white/10 rounded-lg hover:border-neon-blue transition-colors text-left"
-            >
-              <Building2 className="w-6 h-6 text-neon-blue mb-2" />
-              <h3 className="text-white font-semibold mb-1">Create Institute</h3>
-              <p className="text-gray-400 text-sm">Add a new educational institute</p>
-            </button>
+            {/* Total Students */}
+            <div className="bg-dark-800 border border-white/10 rounded-lg p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-12 h-12 bg-purple-500/10 rounded-lg flex items-center justify-center">
+                  <Users className="w-6 h-6 text-purple-400" />
+                </div>
+              </div>
+              <div>
+                <p className="text-gray-400 text-sm mb-1">Total Students</p>
+                <p className="text-3xl font-bold text-white">{stats?.totalStudents || 0}</p>
+                <p className="text-gray-500 text-xs mt-2">Across all institutes</p>
+              </div>
+            </div>
 
-            <button
-              onClick={() => navigate('/superadmin/packages?action=create')}
-              className="p-4 bg-dark-900 border border-white/10 rounded-lg hover:border-purple-500 transition-colors text-left"
-            >
-              <Package className="w-6 h-6 text-purple-400 mb-2" />
-              <h3 className="text-white font-semibold mb-1">Create Package</h3>
-              <p className="text-gray-400 text-sm">Design new subscription plan</p>
-            </button>
+            {/* Active Subscriptions */}
+            <div className="bg-dark-800 border border-white/10 rounded-lg p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-12 h-12 bg-green-500/10 rounded-lg flex items-center justify-center">
+                  <CheckCircle className="w-6 h-6 text-green-400" />
+                </div>
+              </div>
+              <div>
+                <p className="text-gray-400 text-sm mb-1">Active Subscriptions</p>
+                <p className="text-3xl font-bold text-white">{stats?.activeSubscriptions || 0}</p>
+                <p className="text-orange-400 text-xs mt-2">
+                  {stats?.pendingPayments || 0} pending payments
+                </p>
+              </div>
+            </div>
 
-            <button
-              onClick={() => navigate('/superadmin/institutes')}
-              className="p-4 bg-dark-900 border border-white/10 rounded-lg hover:border-green-500 transition-colors text-left"
-            >
-              <TrendingUp className="w-6 h-6 text-green-400 mb-2" />
-              <h3 className="text-white font-semibold mb-1">View Reports</h3>
-              <p className="text-gray-400 text-sm">Institute performance analytics</p>
-            </button>
+            {/* Total Revenue */}
+            <div className="bg-dark-800 border border-white/10 rounded-lg p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-12 h-12 bg-emerald-500/10 rounded-lg flex items-center justify-center">
+                  <DollarSign className="w-6 h-6 text-emerald-400" />
+                </div>
+              </div>
+              <div>
+                <p className="text-gray-400 text-sm mb-1">Total Revenue</p>
+                <p className="text-3xl font-bold text-white">
+                  ₹{(stats?.totalRevenue || 0).toLocaleString('en-IN')}
+                </p>
+                <p className="text-gray-500 text-xs mt-2">From subscriptions</p>
+              </div>
+            </div>
           </div>
-        </div>
 
-        {/* Recent Activity Summary */}
-        <div className="mt-8 bg-dark-800 border border-white/10 rounded-lg p-6">
-          <h2 className="text-xl font-bold text-white mb-4">System Overview</h2>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between p-4 bg-dark-900 rounded-lg">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-green-500/10 border border-green-500/30 rounded-lg flex items-center justify-center">
-                  <CheckCircle className="w-5 h-5 text-green-400" />
-                </div>
-                <div>
-                  <p className="text-white font-semibold">Active Subscriptions</p>
-                  <p className="text-gray-400 text-sm">
-                    {stats?.activeSubscriptions || 0} institutes with active plans
-                  </p>
+          {/* Two Column Layout */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Left Column - Quick Navigation */}
+            <div className="lg:col-span-2 space-y-6">
+              {/* Management Cards */}
+              <div className="bg-dark-800 border border-white/10 rounded-lg p-6">
+                <h2 className="text-lg font-semibold text-white mb-4">Management</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <button
+                    onClick={() => navigate('/superadmin/institutes')}
+                    className="group p-4 bg-dark-900 border border-white/5 rounded-lg hover:border-neon-blue/50 transition-all text-left"
+                  >
+                    <div className="flex items-center justify-between mb-3">
+                      <Building2 className="w-6 h-6 text-neon-blue" />
+                      <ChevronRight className="w-5 h-5 text-gray-600 group-hover:text-neon-blue transition-colors" />
+                    </div>
+                    <h3 className="text-white font-semibold mb-1">Institute Management</h3>
+                    <p className="text-gray-400 text-sm">Manage all institutes</p>
+                  </button>
+
+                  <button
+                    onClick={() => navigate('/superadmin/packages')}
+                    className="group p-4 bg-dark-900 border border-white/5 rounded-lg hover:border-purple-500/50 transition-all text-left"
+                  >
+                    <div className="flex items-center justify-between mb-3">
+                      <Package className="w-6 h-6 text-purple-400" />
+                      <ChevronRight className="w-5 h-5 text-gray-600 group-hover:text-purple-400 transition-colors" />
+                    </div>
+                    <h3 className="text-white font-semibold mb-1">Package Management</h3>
+                    <p className="text-gray-400 text-sm">Create & manage packages</p>
+                  </button>
+
+                  <button
+                    onClick={() => navigate('/superadmin/users')}
+                    className="group p-4 bg-dark-900 border border-white/5 rounded-lg hover:border-green-500/50 transition-all text-left"
+                  >
+                    <div className="flex items-center justify-between mb-3">
+                      <Users className="w-6 h-6 text-green-400" />
+                      <ChevronRight className="w-5 h-5 text-gray-600 group-hover:text-green-400 transition-colors" />
+                    </div>
+                    <h3 className="text-white font-semibold mb-1">User Management</h3>
+                    <p className="text-gray-400 text-sm">View all system users</p>
+                  </button>
+
+                  <button
+                    onClick={() => navigate('/superadmin/individual-users')}
+                    className="group p-4 bg-dark-900 border border-white/5 rounded-lg hover:border-orange-500/50 transition-all text-left"
+                  >
+                    <div className="flex items-center justify-between mb-3">
+                      <UserPlus className="w-6 h-6 text-orange-400" />
+                      <ChevronRight className="w-5 h-5 text-gray-600 group-hover:text-orange-400 transition-colors" />
+                    </div>
+                    <h3 className="text-white font-semibold mb-1">Individual Users</h3>
+                    <p className="text-gray-400 text-sm">Manage individual users</p>
+                  </button>
                 </div>
               </div>
-              <span className="text-2xl font-bold text-green-400">
-                {stats?.activeSubscriptions || 0}
-              </span>
+
+              {/* System Stats */}
+              <div className="bg-dark-800 border border-white/10 rounded-lg p-6">
+                <h2 className="text-lg font-semibold text-white mb-4">System Statistics</h2>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between p-4 bg-dark-900 rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-blue-500/10 rounded-lg flex items-center justify-center">
+                        <Users className="w-5 h-5 text-blue-400" />
+                      </div>
+                      <div>
+                        <p className="text-white font-medium">Institute Admins</p>
+                        <p className="text-gray-400 text-sm">Total admin accounts</p>
+                      </div>
+                    </div>
+                    <span className="text-2xl font-bold text-blue-400">{stats?.totalAdmins || 0}</span>
+                  </div>
+
+                  <div className="flex items-center justify-between p-4 bg-dark-900 rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-purple-500/10 rounded-lg flex items-center justify-center">
+                        <Users className="w-5 h-5 text-purple-400" />
+                      </div>
+                      <div>
+                        <p className="text-white font-medium">Staff Members</p>
+                        <p className="text-gray-400 text-sm">Total staff accounts</p>
+                      </div>
+                    </div>
+                    <span className="text-2xl font-bold text-purple-400">{stats?.totalStaff || 0}</span>
+                  </div>
+                </div>
+              </div>
             </div>
 
-            <div className="flex items-center justify-between p-4 bg-dark-900 rounded-lg">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-orange-500/10 border border-orange-500/30 rounded-lg flex items-center justify-center">
-                  <Clock className="w-5 h-5 text-orange-400" />
-                </div>
-                <div>
-                  <p className="text-white font-semibold">Pending Payments</p>
-                  <p className="text-gray-400 text-sm">
-                    {stats?.pendingPayments || 0} subscriptions awaiting payment
-                  </p>
-                </div>
-              </div>
-              <span className="text-2xl font-bold text-orange-400">
-                {stats?.pendingPayments || 0}
-              </span>
-            </div>
+            {/* Right Column - Activity & Status */}
+            <div className="space-y-6">
+              {/* Status Overview */}
+              <div className="bg-dark-800 border border-white/10 rounded-lg p-6">
+                <h2 className="text-lg font-semibold text-white mb-4">Status Overview</h2>
+                <div className="space-y-3">
+                  <div className="p-3 bg-dark-900 rounded-lg">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-gray-400 text-sm">Active Institutes</span>
+                      <span className="text-green-400 font-semibold">{stats?.activeInstitutes || 0}</span>
+                    </div>
+                    <div className="w-full bg-dark-700 rounded-full h-2">
+                      <div
+                        className="bg-green-400 h-2 rounded-full"
+                        style={{
+                          width: `${((stats?.activeInstitutes || 0) / (stats?.totalInstitutes || 1)) * 100}%`,
+                        }}
+                      ></div>
+                    </div>
+                  </div>
 
-            <div className="flex items-center justify-between p-4 bg-dark-900 rounded-lg">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-emerald-500/10 border border-emerald-500/30 rounded-lg flex items-center justify-center">
-                  <DollarSign className="w-5 h-5 text-emerald-400" />
-                </div>
-                <div>
-                  <p className="text-white font-semibold">Total Revenue</p>
-                  <p className="text-gray-400 text-sm">From all paid subscriptions</p>
+                  <div className="p-3 bg-dark-900 rounded-lg">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-gray-400 text-sm">Paid Subscriptions</span>
+                      <span className="text-emerald-400 font-semibold">
+                        {(stats?.activeSubscriptions || 0) - (stats?.pendingPayments || 0)}
+                      </span>
+                    </div>
+                    <div className="w-full bg-dark-700 rounded-full h-2">
+                      <div
+                        className="bg-emerald-400 h-2 rounded-full"
+                        style={{
+                          width: `${(((stats?.activeSubscriptions || 0) - (stats?.pendingPayments || 0)) / (stats?.activeSubscriptions || 1)) * 100}%`,
+                        }}
+                      ></div>
+                    </div>
+                  </div>
+
+                  <div className="p-3 bg-dark-900 rounded-lg">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-gray-400 text-sm">Pending Payments</span>
+                      <span className="text-orange-400 font-semibold">{stats?.pendingPayments || 0}</span>
+                    </div>
+                    <div className="w-full bg-dark-700 rounded-full h-2">
+                      <div
+                        className="bg-orange-400 h-2 rounded-full"
+                        style={{
+                          width: `${((stats?.pendingPayments || 0) / (stats?.activeSubscriptions || 1)) * 100}%`,
+                        }}
+                      ></div>
+                    </div>
+                  </div>
                 </div>
               </div>
-              <span className="text-2xl font-bold text-emerald-400">
-                ₹{(stats?.totalRevenue || 0).toLocaleString('en-IN')}
-              </span>
+
+              {/* Quick Stats */}
+              <div className="bg-dark-800 border border-white/10 rounded-lg p-6">
+                <h2 className="text-lg font-semibold text-white mb-4">Quick Stats</h2>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Activity className="w-4 h-4 text-gray-400" />
+                      <span className="text-gray-400 text-sm">Total Institutes</span>
+                    </div>
+                    <span className="text-white font-semibold">{stats?.totalInstitutes || 0}</span>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Users className="w-4 h-4 text-gray-400" />
+                      <span className="text-gray-400 text-sm">Total Students</span>
+                    </div>
+                    <span className="text-white font-semibold">{stats?.totalStudents || 0}</span>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Package className="w-4 h-4 text-gray-400" />
+                      <span className="text-gray-400 text-sm">Subscriptions</span>
+                    </div>
+                    <span className="text-white font-semibold">{stats?.activeSubscriptions || 0}</span>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <DollarSign className="w-4 h-4 text-gray-400" />
+                      <span className="text-gray-400 text-sm">Revenue</span>
+                    </div>
+                    <span className="text-white font-semibold">
+                      ₹{((stats?.totalRevenue || 0) / 1000).toFixed(0)}K
+                    </span>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
     </SuperAdminSidebar>
   );
 };

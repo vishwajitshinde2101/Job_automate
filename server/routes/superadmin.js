@@ -732,4 +732,110 @@ router.get('/institutes/:id/invoice', authenticateToken, isSuperAdmin, async (re
     }
 });
 
+// ============================================================================
+// INSTITUTE MEMBERS MANAGEMENT
+// ============================================================================
+
+/**
+ * GET /api/superadmin/institutes/:id/students
+ * Get all students for a specific institute
+ */
+router.get('/institutes/:id/students', authenticateToken, isSuperAdmin, async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        // Verify institute exists
+        const institute = await Institute.findByPk(id);
+        if (!institute) {
+            return res.status(404).json({ error: 'Institute not found' });
+        }
+
+        // Fetch all students for this institute
+        const students = await InstituteStudent.findAll({
+            where: { instituteId: id },
+            include: [
+                {
+                    model: User,
+                    as: 'user',
+                    attributes: ['id', 'firstName', 'lastName', 'email', 'phone'],
+                },
+            ],
+            order: [['createdAt', 'DESC']],
+        });
+
+        res.json(students);
+    } catch (error) {
+        console.error('Error fetching students:', error);
+        res.status(500).json({ error: 'Failed to fetch students' });
+    }
+});
+
+/**
+ * GET /api/superadmin/institutes/:id/admins
+ * Get all admins for a specific institute
+ */
+router.get('/institutes/:id/admins', authenticateToken, isSuperAdmin, async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        // Verify institute exists
+        const institute = await Institute.findByPk(id);
+        if (!institute) {
+            return res.status(404).json({ error: 'Institute not found' });
+        }
+
+        // Fetch all admins for this institute
+        const admins = await InstituteAdmin.findAll({
+            where: { instituteId: id },
+            include: [
+                {
+                    model: User,
+                    as: 'user',
+                    attributes: ['id', 'firstName', 'lastName', 'email', 'phone'],
+                },
+            ],
+            order: [['createdAt', 'DESC']],
+        });
+
+        res.json(admins);
+    } catch (error) {
+        console.error('Error fetching admins:', error);
+        res.status(500).json({ error: 'Failed to fetch admins' });
+    }
+});
+
+/**
+ * GET /api/superadmin/institutes/:id/staff
+ * Get all staff for a specific institute
+ */
+router.get('/institutes/:id/staff', authenticateToken, isSuperAdmin, async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        // Verify institute exists
+        const institute = await Institute.findByPk(id);
+        if (!institute) {
+            return res.status(404).json({ error: 'Institute not found' });
+        }
+
+        // Fetch all staff for this institute
+        const staff = await InstituteStaff.findAll({
+            where: { instituteId: id },
+            include: [
+                {
+                    model: User,
+                    as: 'user',
+                    attributes: ['id', 'firstName', 'lastName', 'email', 'phone'],
+                },
+            ],
+            order: [['createdAt', 'DESC']],
+        });
+
+        res.json(staff);
+    } catch (error) {
+        console.error('Error fetching staff:', error);
+        res.status(500).json({ error: 'Failed to fetch staff' });
+    }
+});
+
 export default router;
