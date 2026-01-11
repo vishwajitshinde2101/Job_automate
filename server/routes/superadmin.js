@@ -838,4 +838,47 @@ router.get('/institutes/:id/staff', authenticateToken, isSuperAdmin, async (req,
     }
 });
 
+// ============================================================================
+// USER MANAGEMENT
+// ============================================================================
+
+/**
+ * PUT /api/superadmin/users/:id/toggle-active
+ * Toggle user active status (activate/deactivate)
+ */
+router.put('/users/:id/toggle-active', authenticateToken, isSuperAdmin, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { isActive } = req.body;
+
+        // Find user
+        const user = await User.findByPk(id);
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        // Prevent deactivating super admins
+        if (user.role === 'superadmin' && isActive === false) {
+            return res.status(403).json({ error: 'Cannot deactivate super admin accounts' });
+        }
+
+        // Update user status
+        await user.update({ isActive });
+
+        res.json({
+            message: `User ${isActive ? 'activated' : 'deactivated'} successfully`,
+            user: {
+                id: user.id,
+                email: user.email,
+                firstName: user.firstName,
+                lastName: user.lastName,
+                isActive: user.isActive,
+            },
+        });
+    } catch (error) {
+        console.error('Error toggling user status:', error);
+        res.status(500).json({ error: 'Failed to update user status' });
+    }
+});
+
 export default router;
