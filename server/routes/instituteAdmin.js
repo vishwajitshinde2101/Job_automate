@@ -756,4 +756,47 @@ router.delete('/staff/:id', authenticateToken, isInstituteAdminOnly, async (req,
     }
 });
 
+// ============================================================================
+// INSTITUTE SETTINGS
+// ============================================================================
+
+/**
+ * PUT /api/institute-admin/institute/settings
+ * Update institute details (Admin only)
+ */
+router.put('/institute/settings', authenticateToken, isInstituteAdminOnly, async (req, res) => {
+    try {
+        const { name, phone, address, website } = req.body;
+        const institute = await Institute.findByPk(req.instituteId);
+
+        if (!institute) {
+            return res.status(404).json({ error: 'Institute not found' });
+        }
+
+        // Update institute details
+        await institute.update({
+            name: name || institute.name,
+            phone: phone || institute.phone,
+            address: address || institute.address,
+            website: website || institute.website,
+        });
+
+        res.json({
+            message: 'Institute details updated successfully',
+            institute: {
+                id: institute.id,
+                name: institute.name,
+                email: institute.email,
+                phone: institute.phone,
+                address: institute.address,
+                website: institute.website,
+                status: institute.status,
+            },
+        });
+    } catch (error) {
+        console.error('Error updating institute:', error);
+        res.status(500).json({ error: 'Failed to update institute details' });
+    }
+});
+
 export default router;

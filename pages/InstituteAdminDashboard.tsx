@@ -113,6 +113,13 @@ const InstituteAdminDashboard: React.FC = () => {
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [showAddStaffModal, setShowAddStaffModal] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
+  const [isEditingSettings, setIsEditingSettings] = useState(false);
+  const [settingsFormData, setSettingsFormData] = useState({
+    name: '',
+    phone: '',
+    address: '',
+    website: '',
+  });
 
   const [formData, setFormData] = useState({
     firstName: '',
@@ -518,6 +525,58 @@ const InstituteAdminDashboard: React.FC = () => {
 
       setSuccess('Staff member removed successfully!');
       fetchStaff();
+    } catch (err: any) {
+      setError(err.message);
+    }
+  };
+
+  const handleEditSettings = () => {
+    setSettingsFormData({
+      name: institute.name,
+      phone: institute.phone || '',
+      address: institute.address || '',
+      website: institute.website || '',
+    });
+    setIsEditingSettings(true);
+  };
+
+  const handleCancelEditSettings = () => {
+    setIsEditingSettings(false);
+    setSettingsFormData({
+      name: '',
+      phone: '',
+      address: '',
+      website: '',
+    });
+  };
+
+  const handleSaveSettings = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setSuccess('');
+
+    try {
+      const token = localStorage.getItem('instituteAdminToken');
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+
+      const response = await fetch(`${API_BASE_URL}/institute-admin/institute/settings`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(settingsFormData),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to update settings');
+      }
+
+      setSuccess('Institute details updated successfully!');
+      setIsEditingSettings(false);
+      fetchDashboardData();
     } catch (err: any) {
       setError(err.message);
     }
@@ -1127,47 +1186,141 @@ const InstituteAdminDashboard: React.FC = () => {
         {/* Settings Tab */}
         {activeTab === 'settings' && (
           <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-white">Institute Settings</h2>
+            <div className="flex items-center justify-between">
+              <h2 className="text-2xl font-bold text-white">Institute Settings</h2>
+              {!isEditingSettings && (
+                <button
+                  onClick={handleEditSettings}
+                  className="bg-neon-purple text-white px-6 py-3 rounded-lg font-bold hover:bg-purple-600 transition-all flex items-center gap-2"
+                >
+                  <Edit2 className="w-5 h-5" />
+                  Edit Details
+                </button>
+              )}
+            </div>
 
             <div className="bg-dark-800 border border-white/10 rounded-xl p-6">
               <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
                 <Building2 className="w-6 h-6 text-neon-purple" />
                 Institute Details
               </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">
-                    Institute Name
-                  </label>
-                  <p className="text-white mt-1">{institute.name}</p>
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">
-                    Email
-                  </label>
-                  <p className="text-white mt-1">{institute.email}</p>
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">
-                    Phone
-                  </label>
-                  <p className="text-white mt-1">{institute.phone || 'Not provided'}</p>
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">
-                    Website
-                  </label>
-                  <p className="text-white mt-1">{institute.website || 'Not provided'}</p>
-                </div>
-                {institute.address && (
-                  <div className="md:col-span-2">
-                    <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">
-                      Address
-                    </label>
-                    <p className="text-white mt-1">{institute.address}</p>
+
+              {isEditingSettings ? (
+                <form onSubmit={handleSaveSettings} className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+                        Institute Name *
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        className="w-full bg-dark-900 border border-gray-700 rounded-lg py-3 px-4 text-white focus:border-neon-purple focus:ring-1 focus:ring-neon-purple outline-none transition-all mt-2"
+                        value={settingsFormData.name}
+                        onChange={(e) => setSettingsFormData({ ...settingsFormData, name: e.target.value })}
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+                        Email (Read Only)
+                      </label>
+                      <input
+                        type="email"
+                        disabled
+                        className="w-full bg-dark-900 border border-gray-700 rounded-lg py-3 px-4 text-gray-500 opacity-60 cursor-not-allowed mt-2"
+                        value={institute.email}
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+                        Phone
+                      </label>
+                      <input
+                        type="tel"
+                        className="w-full bg-dark-900 border border-gray-700 rounded-lg py-3 px-4 text-white focus:border-neon-purple focus:ring-1 focus:ring-neon-purple outline-none transition-all mt-2"
+                        value={settingsFormData.phone}
+                        onChange={(e) => setSettingsFormData({ ...settingsFormData, phone: e.target.value })}
+                        placeholder="Enter phone number"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+                        Website
+                      </label>
+                      <input
+                        type="url"
+                        className="w-full bg-dark-900 border border-gray-700 rounded-lg py-3 px-4 text-white focus:border-neon-purple focus:ring-1 focus:ring-neon-purple outline-none transition-all mt-2"
+                        value={settingsFormData.website}
+                        onChange={(e) => setSettingsFormData({ ...settingsFormData, website: e.target.value })}
+                        placeholder="https://example.com"
+                      />
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+                        Address
+                      </label>
+                      <textarea
+                        rows={3}
+                        className="w-full bg-dark-900 border border-gray-700 rounded-lg py-3 px-4 text-white focus:border-neon-purple focus:ring-1 focus:ring-neon-purple outline-none transition-all mt-2"
+                        value={settingsFormData.address}
+                        onChange={(e) => setSettingsFormData({ ...settingsFormData, address: e.target.value })}
+                        placeholder="Enter full address"
+                      />
+                    </div>
                   </div>
-                )}
-              </div>
+
+                  <div className="flex gap-3 pt-4">
+                    <button
+                      type="button"
+                      onClick={handleCancelEditSettings}
+                      className="flex-1 bg-dark-900 text-gray-400 font-bold py-3 rounded-lg hover:bg-dark-700 transition-all"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="flex-1 bg-neon-purple text-white font-bold py-3 rounded-lg hover:bg-purple-600 transition-all"
+                    >
+                      Save Changes
+                    </button>
+                  </div>
+                </form>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+                      Institute Name
+                    </label>
+                    <p className="text-white mt-1">{institute.name}</p>
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+                      Email
+                    </label>
+                    <p className="text-white mt-1">{institute.email}</p>
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+                      Phone
+                    </label>
+                    <p className="text-white mt-1">{institute.phone || 'Not provided'}</p>
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+                      Website
+                    </label>
+                    <p className="text-white mt-1">{institute.website || 'Not provided'}</p>
+                  </div>
+                  {institute.address && (
+                    <div className="md:col-span-2">
+                      <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+                        Address
+                      </label>
+                      <p className="text-white mt-1">{institute.address}</p>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         )}
