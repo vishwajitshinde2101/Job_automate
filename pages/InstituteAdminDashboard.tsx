@@ -576,9 +576,20 @@ const InstituteAdminDashboard: React.FC = () => {
   const usagePercentage =
     stats.studentLimit > 0 ? (stats.studentCount / stats.studentLimit) * 100 : 0;
 
-  // Get admin email from localStorage
+  // Get admin email and role from localStorage
   const adminUserStr = localStorage.getItem('instituteAdminUser');
-  const adminEmail = adminUserStr ? JSON.parse(adminUserStr).email : '';
+  const adminUser = adminUserStr ? JSON.parse(adminUserStr) : null;
+  const adminEmail = adminUser ? adminUser.email : '';
+  const userRole = adminUser ? adminUser.role : 'institute_admin';
+
+  // Prevent staff from accessing admin-only tabs
+  useEffect(() => {
+    if (userRole === 'staff' && (activeTab === 'subscription' || activeTab === 'settings')) {
+      setActiveTab('overview');
+      setError('Access denied. This section is only available to administrators.');
+      setTimeout(() => setError(''), 3000);
+    }
+  }, [activeTab, userRole]);
 
   return (
     <div className="min-h-screen bg-dark-900 flex">
@@ -588,6 +599,7 @@ const InstituteAdminDashboard: React.FC = () => {
         onSectionChange={setActiveTab}
         instituteName={institute.name}
         adminEmail={adminEmail}
+        userRole={userRole}
       />
 
       {/* Main Content */}

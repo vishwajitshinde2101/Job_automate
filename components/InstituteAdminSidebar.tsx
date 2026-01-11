@@ -16,6 +16,7 @@ interface InstituteAdminSidebarProps {
   onSectionChange: (section: string) => void;
   instituteName: string;
   adminEmail?: string;
+  userRole?: string; // 'institute_admin' or 'staff'
 }
 
 const InstituteAdminSidebar: React.FC<InstituteAdminSidebarProps> = ({
@@ -23,6 +24,7 @@ const InstituteAdminSidebar: React.FC<InstituteAdminSidebarProps> = ({
   onSectionChange,
   instituteName,
   adminEmail,
+  userRole = 'institute_admin',
 }) => {
   const navigate = useNavigate();
 
@@ -32,33 +34,49 @@ const InstituteAdminSidebar: React.FC<InstituteAdminSidebarProps> = ({
     navigate('/institute-admin/login');
   };
 
-  const menuItems = [
+  // All available menu items
+  const allMenuItems = [
     {
       id: 'overview',
       label: 'Overview',
       icon: LayoutDashboard,
+      adminOnly: false,
     },
     {
       id: 'students',
       label: 'Students',
       icon: GraduationCap,
+      adminOnly: false,
     },
     {
       id: 'staff',
       label: 'Staff',
       icon: Users,
+      adminOnly: false,
     },
     {
       id: 'subscription',
       label: 'Subscription',
       icon: CreditCard,
+      adminOnly: true, // Only institute_admin can access
     },
     {
       id: 'settings',
       label: 'Settings',
       icon: Settings,
+      adminOnly: true, // Only institute_admin can access
     },
   ];
+
+  // Filter menu items based on role
+  const menuItems = allMenuItems.filter(item => {
+    // If user is admin, show all items
+    if (userRole === 'institute_admin') {
+      return true;
+    }
+    // If user is staff, hide admin-only items
+    return !item.adminOnly;
+  });
 
   return (
     <div className="w-64 bg-dark-800 border-r border-white/10 flex flex-col h-screen fixed left-0 top-0">
@@ -70,7 +88,9 @@ const InstituteAdminSidebar: React.FC<InstituteAdminSidebarProps> = ({
           </div>
           <div className="flex-1 min-w-0">
             <h2 className="text-sm font-bold text-white truncate">{instituteName}</h2>
-            <p className="text-xs text-gray-400">Institute Admin</p>
+            <p className="text-xs text-gray-400">
+              {userRole === 'institute_admin' ? 'Institute Admin' : 'Institute Staff'}
+            </p>
           </div>
         </div>
       </div>
@@ -106,7 +126,9 @@ const InstituteAdminSidebar: React.FC<InstituteAdminSidebarProps> = ({
               <User className="w-5 h-5 text-white" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-white truncate">Admin</p>
+              <p className="text-sm font-medium text-white truncate">
+                {userRole === 'institute_admin' ? 'Admin' : 'Staff'}
+              </p>
               {adminEmail && (
                 <p className="text-xs text-gray-400 truncate">{adminEmail}</p>
               )}
