@@ -38,16 +38,17 @@ const InstituteAdminLogin: React.FC = () => {
 
       const data = await response.json();
 
-      // Verify user is institute_admin
-      if (data.user.role !== 'institute_admin') {
-        throw new Error('Access denied. This login is only for Institute Admins.');
+      // Verify user is institute_admin or staff
+      if (data.user.role !== 'institute_admin' && data.user.role !== 'staff') {
+        throw new Error('Access denied. This login is only for Institute Admins and Staff.');
       }
 
       // Store token and user data with institute-admin specific keys
       localStorage.setItem('instituteAdminToken', data.token);
       localStorage.setItem('instituteAdminUser', JSON.stringify(data.user));
 
-      toast.success(`Welcome, ${data.user.firstName}!`);
+      const roleLabel = data.user.role === 'institute_admin' ? 'Admin' : 'Staff';
+      toast.success(`Welcome ${roleLabel}, ${data.user.firstName}!`);
 
       // Redirect directly to institute admin dashboard
       navigate('/institute-admin');
@@ -81,10 +82,10 @@ const InstituteAdminLogin: React.FC = () => {
               <Building2 className="w-8 h-8 text-neon-purple" />
             </div>
             <h1 className="text-3xl font-heading font-bold text-white mb-2">
-              Institute Admin Login
+              Institute Login
             </h1>
             <p className="text-gray-400 text-sm">
-              Access your institute management dashboard
+              Admin & Staff Portal - Access your institute dashboard
             </p>
           </div>
 
@@ -147,9 +148,9 @@ const InstituteAdminLogin: React.FC = () => {
             <div className="flex items-start gap-3">
               <AlertCircle className="w-5 h-5 text-neon-purple flex-shrink-0 mt-0.5" />
               <div>
-                <p className="text-neon-purple font-semibold text-sm">Institute Admin Access</p>
+                <p className="text-neon-purple font-semibold text-sm">Institute Portal Access</p>
                 <p className="text-gray-400 text-xs mt-1">
-                  This login is exclusively for institute administrators. If you're a student or individual user, please use the regular login page.
+                  This login is for institute administrators and staff members. If you're a student or individual user, please use the regular login page.
                 </p>
               </div>
             </div>
@@ -158,7 +159,7 @@ const InstituteAdminLogin: React.FC = () => {
           {/* Links */}
           <div className="mt-6 text-center">
             <p className="text-gray-500 text-sm">
-              Not an institute admin?{' '}
+              Not part of an institute?{' '}
               <button
                 onClick={() => navigate('/login')}
                 className="text-neon-blue hover:underline"
