@@ -549,4 +549,187 @@ router.get('/users', authenticateToken, isSuperAdmin, async (req, res) => {
     }
 });
 
+// ============================================================================
+// INVOICE GENERATION
+// ============================================================================
+
+/**
+ * GET /api/superadmin/institutes/:id/invoice
+ * Generate and download invoice PDF for institute
+ */
+router.get('/institutes/:id/invoice', authenticateToken, isSuperAdmin, async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        // Get institute details
+        const institute = await Institute.findByPk(id);
+        if (!institute) {
+            return res.status(404).json({ error: 'Institute not found' });
+        }
+
+        // Get latest subscription
+        const subscription = await InstituteSubscription.findOne({
+            where: { instituteId: id },
+            include: [{ model: Package, as: 'package' }],
+            order: [['createdAt', 'DESC']],
+        });
+
+        if (!subscription) {
+            return res.status(404).json({ error: 'No subscription found for this institute' });
+        }
+
+        // Dynamically import PDFDocument
+        const PDFDocument = (await import('pdfkit')).default;
+
+        // Create PDF document
+        const doc = new PDFDocument({ margin: 50 });
+
+        // Set response headers
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader(
+            'Content-Disposition',
+            `attachment; filename=AutoJobzy_Invoice_${institute.name.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`
+        );
+
+        // Pipe PDF to response
+        doc.pipe(res);
+
+        // Invoice Header - Company Branding
+        doc.fontSize(24)
+            .fillColor('#00F3FF')
+            .text('AutoJobzy', 50, 50);
+
+        doc.fontSize(10)
+            .fillColor('#666666')
+            .text('Automated Job Application Platform', 50, 80)
+            .text('Email: support@autojobzy.com', 50, 95)
+            .text('Website: www.autojobzy.com', 50, 110);
+
+        // Invoice Title
+        doc.fontSize(20)
+            .fillColor('#000000')
+            .text('INVOICE', 400, 50, { align: 'right' });
+
+        // Invoice Number and Date
+        const invoiceNumber = `INV-${String(subscription.id).padStart(6, '0')}`;
+        const invoiceDate = new Date().toLocaleDateString('en-IN', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+        });
+
+        doc.fontSize(10)
+            .fillColor('#666666')
+            .text(`Invoice No: ${invoiceNumber}`, 400, 80, { align: 'right' })
+            .text(`Date: ${invoiceDate}`, 400, 95, { align: 'right' });
+
+        // Line separator
+        doc.moveTo(50, 140)
+            .lineTo(550, 140)
+            .stroke('#CCCCCC');
+
+        // Bill To Section
+        doc.fontSize(12)
+            .fillColor('#000000')
+            .text('BILL TO:', 50, 160);
+
+        doc.fontSize(11)
+            .fillColor('#333333')
+            .text(institute.name, 50, 180)
+            .text(institute.email, 50, 195);
+
+        if (institute.phone) {
+            doc.text(`Phone: ${institute.phone}`, 50, 210);
+        }
+
+        if (institute.address) {
+            doc.text(institute.address, 50, 225, { width: 250 });
+        }
+
+        // Package Details Section
+        const tableTop = 300;
+        doc.fontSize(12)
+            .fillColor('#000000')
+            .text('SUBSCRIPTION DETAILS:', 50, tableTop - 20);
+
+        // Table Header
+        const headerY = tableTop;
+        doc.rect(50, headerY, 500, 25)
+            .fillAndStroke('#00F3FF', '#00F3FF');
+
+        doc.fontSize(10)
+            .fillColor('#000000')
+            .text('Description', 60, headerY + 8)
+            .text('Duration', 300, headerY + 8)
+            .text('Amount', 450, headerY + 8);
+
+        // Table Row
+        const rowY = headerY + 25;
+        doc.rect(50, rowY, 500, 30)
+            .stroke('#CCCCCC');
+
+        doc.fontSize(10)
+            .fillColor('#333333')
+            .text(subscription.package.name, 60, rowY + 8, { width: 220 })
+            .text(
+                `${new Date(subscription.startDate).toLocaleDateString('en-IN')} - ${new Date(subscription.endDate).toLocaleDateString('en-IN')}`,
+                300,
+                rowY + 8,
+                { width: 130 }
+            )
+            .text(`₹${subscription.paymentAmount || subscription.package.pricePerMonth}`, 450, rowY + 8, { align: 'right', width: 90 });
+
+        // Subtotal and Total Section
+        const subtotalY = rowY + 60;
+
+        doc.fontSize(10)
+            .fillColor('#666666')
+            .text('Subtotal:', 350, subtotalY)
+            .text(`₹${subscription.paymentAmount || subscription.package.pricePerMonth}`, 450, subtotalY, { align: 'right', width: 90 });
+
+        doc.text('Tax (0%):', 350, subtotalY + 20)
+            .text('₹0', 450, subtotalY + 20, { align: 'right', width: 90 });
+
+        // Total
+        doc.fontSize(12)
+            .fillColor('#000000')
+            .text('Total:', 350, subtotalY + 45)
+            .text(`₹${subscription.paymentAmount || subscription.package.pricePerMonth}`, 450, subtotalY + 45, { align: 'right', width: 90 });
+
+        // Payment Status
+        const paymentStatusY = subtotalY + 80;
+        const statusColor = subscription.paymentStatus === 'paid' ? '#10B981' : '#F59E0B';
+        const statusText = subscription.paymentStatus.toUpperCase();
+
+        doc.fontSize(10)
+            .fillColor(statusColor)
+            .text(`Payment Status: ${statusText}`, 50, paymentStatusY);
+
+        if (subscription.paymentDate) {
+            doc.fillColor('#666666')
+                .text(`Payment Date: ${new Date(subscription.paymentDate).toLocaleDateString('en-IN')}`, 50, paymentStatusY + 20);
+        }
+
+        // Footer
+        const footerY = 700;
+        doc.moveTo(50, footerY)
+            .lineTo(550, footerY)
+            .stroke('#CCCCCC');
+
+        doc.fontSize(8)
+            .fillColor('#999999')
+            .text('Thank you for your business!', 50, footerY + 10)
+            .text('For any queries, contact us at support@autojobzy.com', 50, footerY + 25)
+            .text('This is a computer-generated invoice and does not require a signature.', 50, footerY + 40);
+
+        // Finalize PDF
+        doc.end();
+
+        console.log(`✅ Invoice generated for institute: ${institute.name}`);
+    } catch (error) {
+        console.error('Error generating invoice:', error);
+        res.status(500).json({ error: 'Failed to generate invoice' });
+    }
+});
+
 export default router;

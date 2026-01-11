@@ -34,6 +34,7 @@
     "node-schedule": "^2.1.1",
     "openai": "^4.24.0",
     "pdf-parse": "^1.1.1",
+    "pdfkit": "^0.17.2",
     "puppeteer": "^24.32.1",
     "razorpay": "^2.9.6",
     "react": "^19.2.1",

@@ -18,6 +18,8 @@ import {
   Plus,
   X,
   Loader2,
+  Download,
+  FileText,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -74,6 +76,7 @@ const SuperAdminInstituteDetails: React.FC = () => {
   const [selectedPackageId, setSelectedPackageId] = useState<number | null>(null);
   const [packageLoading, setPackageLoading] = useState(false);
   const [durationMonths, setDurationMonths] = useState<number>(12);
+  const [downloadingInvoice, setDownloadingInvoice] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -210,6 +213,49 @@ const SuperAdminInstituteDetails: React.FC = () => {
     }
   };
 
+  const handleDownloadInvoice = async () => {
+    if (!subscription) {
+      toast.error('No active subscription found for this institute');
+      return;
+    }
+
+    try {
+      setDownloadingInvoice(true);
+      const token = localStorage.getItem('superAdminToken');
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+
+      const response = await fetch(`${API_BASE_URL}/superadmin/institutes/${id}/invoice`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to generate invoice');
+      }
+
+      // Get the PDF blob
+      const blob = await response.blob();
+
+      // Create download link
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `AutoJobzy_Invoice_${institute.name.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      toast.success('Invoice downloaded successfully!');
+    } catch (error: any) {
+      console.error('Error downloading invoice:', error);
+      toast.error(error.message || 'Failed to download invoice');
+    } finally {
+      setDownloadingInvoice(false);
+    }
+  };
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-IN', {
       year: 'numeric',
@@ -262,7 +308,7 @@ const SuperAdminInstituteDetails: React.FC = () => {
               <div className="w-16 h-16 bg-neon-blue/10 border border-neon-blue/30 rounded-lg flex items-center justify-center">
                 <Building2 className="w-8 h-8 text-neon-blue" />
               </div>
-              <div>
+              <div className="flex-1">
                 <h1 className="text-3xl font-bold text-white">{institute.name}</h1>
                 <div className="flex items-center gap-3 mt-1">
                   <span className={`inline-block px-3 py-1 rounded-full text-sm border ${getStatusColor(institute.status)}`}>
@@ -273,6 +319,27 @@ const SuperAdminInstituteDetails: React.FC = () => {
                   </span>
                 </div>
               </div>
+
+              {/* Download Invoice Button */}
+              {subscription && (
+                <button
+                  onClick={handleDownloadInvoice}
+                  disabled={downloadingInvoice}
+                  className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-neon-blue to-neon-purple text-white rounded-lg hover:shadow-[0_0_20px_rgba(0,243,255,0.3)] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {downloadingInvoice ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      <span>Generating...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Download className="w-5 h-5" />
+                      <span>Download Invoice</span>
+                    </>
+                  )}
+                </button>
+              )}
             </div>
           </div>
         </div>
