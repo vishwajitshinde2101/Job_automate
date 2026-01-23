@@ -16,6 +16,11 @@ import {
   ChevronUp,
   Activity,
   Building2,
+  FileUser,
+  BrainCircuit,
+  Mail,
+  MessageSquare,
+  HelpCircle,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { useNavigate } from 'react-router-dom';
@@ -63,6 +68,11 @@ const DashboardSidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) =
     { id: 'activity', label: 'My Activity', icon: Activity },
     { id: 'config', label: 'Job Profile', icon: Settings },
     { id: 'auto-profile-update', label: 'Auto Profile Update', icon: RefreshCw },
+    { id: 'resume-builder', label: 'Resume Builder', icon: FileUser },
+    { id: 'ai-career-coach', label: 'AI Career Coach', icon: BrainCircuit },
+    { id: 'mock-interview', label: 'Mock Interview', icon: MessageSquare },
+    { id: 'interview-qa', label: 'Interview Q&A', icon: HelpCircle },
+    { id: 'email-management', label: 'Email Management', icon: Mail },
     { id: 'history', label: 'Application History', icon: FileText },
   ];
 

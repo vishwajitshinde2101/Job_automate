@@ -9,7 +9,12 @@ import SuggestAndEarn from '../components/SuggestAndEarn';
 import AppSettings from '../components/AppSettings';
 import UserAnalytics from '../components/UserAnalytics';
 import AutoProfileUpdate from '../components/AutoProfileUpdate';
-import { runBot, stopAutomation, getAutomationLogs, updateJobSettings, getJobSettings, getSkills, saveSkillsBulk, deleteSkill, getAllFilters, getUserFilters, saveUserFilters, runFilter, getFilterLogs, verifyNaukriCredentials } from '../services/automationApi';
+import ResumeBuilder from '../components/ResumeBuilder';
+import AICareerCoach from '../components/AICareerCoach';
+import EmailManagement from '../components/EmailManagement';
+import MockInterview from '../components/MockInterview';
+import InterviewQA from '../components/InterviewQA';
+import { runBot, stopAutomation, getAutomationLogs, updateJobSettings, getJobSettings, getSkills, saveSkillsBulk, updateSkill, deleteSkill, getAllFilters, getUserFilters, saveUserFilters, runFilter, getFilterLogs, verifyNaukriCredentials } from '../services/automationApi';
 import { getSubscriptionStatus, createOrder, initiatePayment } from '../services/subscriptionApi';
 import { getPlans, Plan } from '../services/plansApi';
 import { API_BASE_URL } from '../config/api';
@@ -270,6 +275,8 @@ const Dashboard: React.FC = () => {
 
   // Skills state
   const [skills, setSkills] = useState<any[]>([]);
+  const [editingSkillId, setEditingSkillId] = useState<string | null>(null);
+  const [editSkillData, setEditSkillData] = useState<any>(null);
   const [newSkill, setNewSkill] = useState({
     skillName: '',
     displayName: '',
@@ -814,6 +821,35 @@ const Dashboard: React.FC = () => {
     } finally {
       setIsVerifying(false);
     }
+  };
+
+  const handleEditSkill = (skill: any) => {
+    setEditingSkillId(skill.id);
+    setEditSkillData({
+      skillName: skill.skillName,
+      displayName: skill.displayName,
+      rating: skill.rating,
+      outOf: skill.outOf,
+      experience: skill.experience,
+    });
+  };
+
+  const handleSaveSkillEdit = async (skillId: string) => {
+    try {
+      await updateSkill(skillId, editSkillData);
+      await loadSkills();
+      setSuccess('✅ Skill updated successfully!');
+      setTimeout(() => setSuccess(null), 2000);
+      setEditingSkillId(null);
+      setEditSkillData(null);
+    } catch (err: any) {
+      setError(`❌ Failed to update skill: ${err.message}`);
+    }
+  };
+
+  const handleCancelSkillEdit = () => {
+    setEditingSkillId(null);
+    setEditSkillData(null);
   };
 
   const handleDeleteSkill = async (skillId: string) => {
@@ -1637,28 +1673,101 @@ const Dashboard: React.FC = () => {
                   {skills.length > 0 && (
                     <div className="space-y-2 max-h-60 overflow-y-auto">
                       {skills.map((skill) => (
-                        <div key={skill.id} className="bg-dark-800 p-3 rounded-lg border border-white/10 flex items-center justify-between">
-                          <div className="flex items-center gap-3 flex-1">
-                            <div className="flex items-center gap-1">
-                              <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
-                              <span className="text-white font-medium text-sm">{skill.displayName || skill.skillName}</span>
+                        <div key={skill.id} className="bg-dark-800 p-3 rounded-lg border border-white/10">
+                          {editingSkillId === skill.id ? (
+                            // Edit Mode
+                            <div className="space-y-2">
+                              <div className="grid grid-cols-2 gap-2">
+                                <input
+                                  type="text"
+                                  value={editSkillData.displayName}
+                                  onChange={(e) => setEditSkillData({ ...editSkillData, displayName: e.target.value })}
+                                  className="bg-dark-900 border border-gray-700 rounded px-2 py-1 text-white text-sm focus:border-neon-green outline-none"
+                                  placeholder="Display Name"
+                                />
+                                <input
+                                  type="text"
+                                  value={editSkillData.experience}
+                                  onChange={(e) => setEditSkillData({ ...editSkillData, experience: e.target.value })}
+                                  className="bg-dark-900 border border-gray-700 rounded px-2 py-1 text-white text-sm focus:border-neon-green outline-none"
+                                  placeholder="Experience"
+                                />
+                              </div>
+                              <div className="grid grid-cols-2 gap-2">
+                                <input
+                                  type="number"
+                                  step="0.5"
+                                  min="0"
+                                  max="5"
+                                  value={editSkillData.rating}
+                                  onChange={(e) => setEditSkillData({ ...editSkillData, rating: parseFloat(e.target.value) })}
+                                  className="bg-dark-900 border border-gray-700 rounded px-2 py-1 text-white text-sm focus:border-neon-green outline-none"
+                                  placeholder="Rating"
+                                />
+                                <input
+                                  type="number"
+                                  min="1"
+                                  max="10"
+                                  value={editSkillData.outOf}
+                                  onChange={(e) => setEditSkillData({ ...editSkillData, outOf: parseInt(e.target.value) })}
+                                  className="bg-dark-900 border border-gray-700 rounded px-2 py-1 text-white text-sm focus:border-neon-green outline-none"
+                                  placeholder="Out Of"
+                                />
+                              </div>
+                              <div className="flex items-center gap-2 justify-end">
+                                <button
+                                  type="button"
+                                  onClick={() => handleSaveSkillEdit(skill.id)}
+                                  className="bg-neon-green text-dark-900 px-3 py-1 rounded text-xs font-bold hover:bg-neon-green/80 transition-colors flex items-center gap-1"
+                                >
+                                  <CheckCircle className="w-3 h-3" /> Save
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={handleCancelSkillEdit}
+                                  className="bg-gray-700 text-white px-3 py-1 rounded text-xs font-bold hover:bg-gray-600 transition-colors flex items-center gap-1"
+                                >
+                                  <X className="w-3 h-3" /> Cancel
+                                </button>
+                              </div>
                             </div>
-                            <div className="flex items-center gap-3 text-xs text-gray-400">
-                              <span className="bg-dark-900 px-2 py-1 rounded border border-gray-700">
-                                {skill.rating}/{skill.outOf}
-                              </span>
-                              <span className="bg-dark-900 px-2 py-1 rounded border border-gray-700">
-                                {skill.experience}
-                              </span>
+                          ) : (
+                            // View Mode
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-3 flex-1">
+                                <div className="flex items-center gap-1">
+                                  <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
+                                  <span className="text-white font-medium text-sm">{skill.displayName || skill.skillName}</span>
+                                </div>
+                                <div className="flex items-center gap-3 text-xs text-gray-400">
+                                  <span className="bg-dark-900 px-2 py-1 rounded border border-gray-700">
+                                    {skill.rating}/{skill.outOf}
+                                  </span>
+                                  <span className="bg-dark-900 px-2 py-1 rounded border border-gray-700">
+                                    {skill.experience}
+                                  </span>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() => handleEditSkill(skill)}
+                                  className="text-neon-blue hover:text-neon-blue/80 transition-colors"
+                                  title="Edit Skill"
+                                >
+                                  <Activity className="w-4 h-4" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteSkill(skill.id)}
+                                  className="text-red-400 hover:text-red-300 transition-colors"
+                                  title="Delete Skill"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </div>
                             </div>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => handleDeleteSkill(skill.id)}
-                            className="text-red-400 hover:text-red-300 transition-colors"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                          )}
                         </div>
                       ))}
                     </div>
@@ -1677,6 +1786,14 @@ const Dashboard: React.FC = () => {
                     <h3 className="text-white font-bold flex items-center gap-2 text-sm">
                       <Filter className="text-neon-green w-4 h-4" /> Job Search Filters
                     </h3>
+                    <button
+                      type="button"
+                      onClick={() => setOpenFilterDropdown(openFilterDropdown ? null : 'main')}
+                      className="text-xs text-neon-green hover:text-neon-green/80 flex items-center gap-1"
+                    >
+                      {openFilterDropdown === 'main' ? <ChevronLeft className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+                      {openFilterDropdown === 'main' ? 'Hide' : 'Show'} Filter Editor
+                    </button>
                   </div>
 
                   {/* Job Search URL Input */}
@@ -1695,6 +1812,220 @@ const Dashboard: React.FC = () => {
                       Paste your customized job search URL from Naukri.com. This URL will be used when running automation.
                     </p>
                   </div>
+
+                  {/* Visual Filter Configurator */}
+                  {openFilterDropdown === 'main' && (
+                    <div className="border-t border-gray-700 pt-4 mt-4 space-y-4">
+                      <p className="text-xs text-gray-400">
+                        Configure your job search filters visually. Changes will update your search URL automatically.
+                      </p>
+
+                      {/* Freshness Filter (Single Select) */}
+                      <div className="space-y-2">
+                        <label className="text-xs text-gray-300 font-semibold">Freshness</label>
+                        <select
+                          value={selectedFilters.freshness || ''}
+                          onChange={(e) => setSelectedFilters({ ...selectedFilters, freshness: e.target.value })}
+                          className="w-full bg-dark-800 border border-gray-700 rounded-lg py-2 px-3 text-white text-sm focus:border-neon-green outline-none"
+                        >
+                          <option value="">Any</option>
+                          {filters.freshness?.map((f: any) => (
+                            <option key={f.id} value={f.id}>{f.label} {f.count ? `(${f.count})` : ''}</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      {/* Salary Range (Multi Select) */}
+                      <div className="space-y-2">
+                        <label className="text-xs text-gray-300 font-semibold">Salary Range</label>
+                        <div className="relative">
+                          <button
+                            type="button"
+                            onClick={() => setOpenFilterDropdown(openFilterDropdown === 'salary' ? 'main' : 'salary')}
+                            className="w-full bg-dark-800 border border-gray-700 rounded-lg py-2 px-3 text-white text-sm text-left flex items-center justify-between hover:border-neon-green focus:border-neon-green outline-none"
+                          >
+                            <span className={selectedFilters.salaryRange?.length > 0 ? 'text-white' : 'text-gray-500'}>
+                              {selectedFilters.salaryRange?.length > 0
+                                ? `${selectedFilters.salaryRange.length} selected`
+                                : 'Select salary ranges'}
+                            </span>
+                            <ChevronRight className={`w-4 h-4 transition-transform ${openFilterDropdown === 'salary' ? 'rotate-90' : ''}`} />
+                          </button>
+                          {openFilterDropdown === 'salary' && (
+                            <div className="absolute z-10 w-full mt-1 bg-dark-800 border border-gray-700 rounded-lg shadow-xl max-h-60 overflow-y-auto">
+                              {filters.salaryRange?.map((f: any) => (
+                                <label key={f.id} className="flex items-center gap-2 px-3 py-2 hover:bg-dark-700 cursor-pointer">
+                                  <input
+                                    type="checkbox"
+                                    checked={selectedFilters.salaryRange?.includes(f.id) || false}
+                                    onChange={(e) => {
+                                      const newSalary = e.target.checked
+                                        ? [...(selectedFilters.salaryRange || []), f.id]
+                                        : (selectedFilters.salaryRange || []).filter((id: string) => id !== f.id);
+                                      setSelectedFilters({ ...selectedFilters, salaryRange: newSalary });
+                                    }}
+                                    className="rounded border-gray-600"
+                                  />
+                                  <span className="text-sm text-white">{f.label} {f.count ? `(${f.count})` : ''}</span>
+                                </label>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                        {selectedFilters.salaryRange?.length > 0 && (
+                          <div className="flex flex-wrap gap-1">
+                            {selectedFilters.salaryRange.map((id: string) => {
+                              const filter = filters.salaryRange?.find((f: any) => f.id === id);
+                              return filter ? (
+                                <span key={id} className="inline-flex items-center gap-1 bg-neon-green/10 text-neon-green text-xs px-2 py-1 rounded">
+                                  {filter.label}
+                                  <X
+                                    className="w-3 h-3 cursor-pointer hover:text-red-400"
+                                    onClick={() => {
+                                      const newSalary = selectedFilters.salaryRange.filter((sid: string) => sid !== id);
+                                      setSelectedFilters({ ...selectedFilters, salaryRange: newSalary });
+                                    }}
+                                  />
+                                </span>
+                              ) : null;
+                            })}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Work From Home Type */}
+                      <div className="space-y-2">
+                        <label className="text-xs text-gray-300 font-semibold">Work From Home</label>
+                        <div className="relative">
+                          <button
+                            type="button"
+                            onClick={() => setOpenFilterDropdown(openFilterDropdown === 'wfh' ? 'main' : 'wfh')}
+                            className="w-full bg-dark-800 border border-gray-700 rounded-lg py-2 px-3 text-white text-sm text-left flex items-center justify-between hover:border-neon-green focus:border-neon-green outline-none"
+                          >
+                            <span className={selectedFilters.wfhType?.length > 0 ? 'text-white' : 'text-gray-500'}>
+                              {selectedFilters.wfhType?.length > 0
+                                ? `${selectedFilters.wfhType.length} selected`
+                                : 'Select WFH options'}
+                            </span>
+                            <ChevronRight className={`w-4 h-4 transition-transform ${openFilterDropdown === 'wfh' ? 'rotate-90' : ''}`} />
+                          </button>
+                          {openFilterDropdown === 'wfh' && (
+                            <div className="absolute z-10 w-full mt-1 bg-dark-800 border border-gray-700 rounded-lg shadow-xl max-h-60 overflow-y-auto">
+                              {filters.wfhType?.map((f: any) => (
+                                <label key={f.id} className="flex items-center gap-2 px-3 py-2 hover:bg-dark-700 cursor-pointer">
+                                  <input
+                                    type="checkbox"
+                                    checked={selectedFilters.wfhType?.includes(f.id) || false}
+                                    onChange={(e) => {
+                                      const newWfh = e.target.checked
+                                        ? [...(selectedFilters.wfhType || []), f.id]
+                                        : (selectedFilters.wfhType || []).filter((id: string) => id !== f.id);
+                                      setSelectedFilters({ ...selectedFilters, wfhType: newWfh });
+                                    }}
+                                    className="rounded border-gray-600"
+                                  />
+                                  <span className="text-sm text-white">{f.label} {f.count ? `(${f.count})` : ''}</span>
+                                </label>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                        {selectedFilters.wfhType?.length > 0 && (
+                          <div className="flex flex-wrap gap-1">
+                            {selectedFilters.wfhType.map((id: string) => {
+                              const filter = filters.wfhType?.find((f: any) => f.id === id);
+                              return filter ? (
+                                <span key={id} className="inline-flex items-center gap-1 bg-neon-blue/10 text-neon-blue text-xs px-2 py-1 rounded">
+                                  {filter.label}
+                                  <X
+                                    className="w-3 h-3 cursor-pointer hover:text-red-400"
+                                    onClick={() => {
+                                      const newWfh = selectedFilters.wfhType.filter((wid: string) => wid !== id);
+                                      setSelectedFilters({ ...selectedFilters, wfhType: newWfh });
+                                    }}
+                                  />
+                                </span>
+                              ) : null;
+                            })}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Cities */}
+                      <div className="space-y-2">
+                        <label className="text-xs text-gray-300 font-semibold">Cities</label>
+                        <div className="relative">
+                          <button
+                            type="button"
+                            onClick={() => setOpenFilterDropdown(openFilterDropdown === 'cities' ? 'main' : 'cities')}
+                            className="w-full bg-dark-800 border border-gray-700 rounded-lg py-2 px-3 text-white text-sm text-left flex items-center justify-between hover:border-neon-green focus:border-neon-green outline-none"
+                          >
+                            <span className={selectedFilters.citiesGid?.length > 0 ? 'text-white' : 'text-gray-500'}>
+                              {selectedFilters.citiesGid?.length > 0
+                                ? `${selectedFilters.citiesGid.length} selected`
+                                : 'Select cities'}
+                            </span>
+                            <ChevronRight className={`w-4 h-4 transition-transform ${openFilterDropdown === 'cities' ? 'rotate-90' : ''}`} />
+                          </button>
+                          {openFilterDropdown === 'cities' && (
+                            <div className="absolute z-10 w-full mt-1 bg-dark-800 border border-gray-700 rounded-lg shadow-xl max-h-60 overflow-y-auto">
+                              {filters.citiesGid?.map((f: any) => (
+                                <label key={f.id} className="flex items-center gap-2 px-3 py-2 hover:bg-dark-700 cursor-pointer">
+                                  <input
+                                    type="checkbox"
+                                    checked={selectedFilters.citiesGid?.includes(f.id) || false}
+                                    onChange={(e) => {
+                                      const newCities = e.target.checked
+                                        ? [...(selectedFilters.citiesGid || []), f.id]
+                                        : (selectedFilters.citiesGid || []).filter((id: string) => id !== f.id);
+                                      setSelectedFilters({ ...selectedFilters, citiesGid: newCities });
+                                    }}
+                                    className="rounded border-gray-600"
+                                  />
+                                  <span className="text-sm text-white">{f.label} {f.count ? `(${f.count})` : ''}</span>
+                                </label>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                        {selectedFilters.citiesGid?.length > 0 && (
+                          <div className="flex flex-wrap gap-1">
+                            {selectedFilters.citiesGid.map((id: string) => {
+                              const filter = filters.citiesGid?.find((f: any) => f.id === id);
+                              return filter ? (
+                                <span key={id} className="inline-flex items-center gap-1 bg-purple-500/10 text-purple-400 text-xs px-2 py-1 rounded">
+                                  {filter.label}
+                                  <X
+                                    className="w-3 h-3 cursor-pointer hover:text-red-400"
+                                    onClick={() => {
+                                      const newCities = selectedFilters.citiesGid.filter((cid: string) => cid !== id);
+                                      setSelectedFilters({ ...selectedFilters, citiesGid: newCities });
+                                    }}
+                                  />
+                                </span>
+                              ) : null;
+                            })}
+                          </div>
+                        )}
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          try {
+                            await saveUserFilters(selectedFilters);
+                            setSuccess('Filters saved successfully!');
+                            setTimeout(() => setSuccess(null), 3000);
+                          } catch (err: any) {
+                            setError(err.message);
+                          }
+                        }}
+                        className="w-full bg-neon-green hover:bg-neon-green/80 text-dark-900 font-bold py-2 rounded-lg transition-all flex items-center justify-center gap-2"
+                      >
+                        <Save className="w-4 h-4" /> Save Filter Configuration
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 {/* Save Button with Completion Check */}
@@ -2805,6 +3136,21 @@ const Dashboard: React.FC = () => {
 
       case 'auto-profile-update':
         return <AutoProfileUpdate />;
+
+      case 'resume-builder':
+        return <ResumeBuilder />;
+
+      case 'ai-career-coach':
+        return <AICareerCoach />;
+
+      case 'mock-interview':
+        return <MockInterview />;
+
+      case 'interview-qa':
+        return <InterviewQA />;
+
+      case 'email-management':
+        return <EmailManagement />;
 
       case 'billing':
         return (

@@ -262,6 +262,15 @@ export async function saveSkillsBulk(skills) {
 }
 
 /**
+ * Update a specific skill
+ * @param {string} skillId - Skill ID to update
+ * @param {Object} skillData - Updated skill data
+ */
+export async function updateSkill(skillId, skillData) {
+    return apiCall(`/skills/${skillId}`, 'PUT', skillData);
+}
+
+/**
  * Delete a specific skill
  * @param {string} skillId - Skill ID to delete
  */
