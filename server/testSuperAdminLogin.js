@@ -9,7 +9,7 @@ import { jwtDecode } from 'jwt-decode';
 const testLogin = async () => {
     console.log('🧪 Testing Super Admin Login...\n');
 
-    const API_BASE_URL = 'http://localhost:5000/api';
+    const API_BASE_URL = 'https://api.autojobzy.com/api';
 
     try {
         // Step 1: Login
@@ -112,7 +112,7 @@ const testLogin = async () => {
 
         console.log('\n🎉 All tests passed! Super admin is ready to use.');
         console.log('\n📝 Next steps:');
-        console.log('   1. Open browser and go to: http://localhost:3000/auth');
+        console.log('   1. Open browser and go to: https://autojobzy.com/auth');
         console.log('   2. Login with: superadmin@jobautomation.com / Admin@123');
         console.log('   3. You should be redirected to: /superadmin/dashboard');
 

@@ -11,6 +11,9 @@ import InstituteAdmin from './InstituteAdmin.js';
 import InstituteStaff from './InstituteStaff.js';
 import InstituteStudent from './InstituteStudent.js';
 import User from './User.js';
+import InstituteRole from './InstituteRole.js';
+import InstitutePermission from './InstitutePermission.js';
+import InstituteRolePermission from './InstituteRolePermission.js';
 
 // Institute -> InstituteSubscription (one-to-many)
 Institute.hasMany(InstituteSubscription, {
@@ -112,6 +115,74 @@ InstituteStudent.belongsTo(User, {
     as: 'admin',
 });
 
+// ============================================================================
+// RBAC ASSOCIATIONS
+// ============================================================================
+
+// Institute -> InstituteRole (one-to-many)
+Institute.hasMany(InstituteRole, {
+    foreignKey: 'instituteId',
+    as: 'roles',
+});
+InstituteRole.belongsTo(Institute, {
+    foreignKey: 'instituteId',
+    as: 'institute',
+});
+
+// InstituteRole -> InstituteRolePermission (one-to-many)
+InstituteRole.hasMany(InstituteRolePermission, {
+    foreignKey: 'roleId',
+    as: 'rolePermissions',
+});
+InstituteRolePermission.belongsTo(InstituteRole, {
+    foreignKey: 'roleId',
+    as: 'role',
+});
+
+// InstitutePermission -> InstituteRolePermission (one-to-many)
+InstitutePermission.hasMany(InstituteRolePermission, {
+    foreignKey: 'permissionId',
+    as: 'rolePermissions',
+});
+InstituteRolePermission.belongsTo(InstitutePermission, {
+    foreignKey: 'permissionId',
+    as: 'permission',
+});
+
+// Many-to-Many: InstituteRole <-> InstitutePermission through InstituteRolePermission
+InstituteRole.belongsToMany(InstitutePermission, {
+    through: InstituteRolePermission,
+    foreignKey: 'roleId',
+    otherKey: 'permissionId',
+    as: 'permissions',
+});
+InstitutePermission.belongsToMany(InstituteRole, {
+    through: InstituteRolePermission,
+    foreignKey: 'permissionId',
+    otherKey: 'roleId',
+    as: 'roles',
+});
+
+// InstituteStaff -> InstituteRole (many-to-one)
+InstituteStaff.belongsTo(InstituteRole, {
+    foreignKey: 'roleId',
+    as: 'instituteRole',
+});
+InstituteRole.hasMany(InstituteStaff, {
+    foreignKey: 'roleId',
+    as: 'staffMembers',
+});
+
+// InstituteStudent -> InstituteRole (many-to-one)
+InstituteStudent.belongsTo(InstituteRole, {
+    foreignKey: 'roleId',
+    as: 'instituteRole',
+});
+InstituteRole.hasMany(InstituteStudent, {
+    foreignKey: 'roleId',
+    as: 'students',
+});
+
 console.log('✅ Model associations defined');
 
 export default {
@@ -122,4 +193,7 @@ export default {
     InstituteStaff,
     InstituteStudent,
     User,
+    InstituteRole,
+    InstitutePermission,
+    InstituteRolePermission,
 };

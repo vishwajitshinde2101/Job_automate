@@ -283,8 +283,8 @@ OpenAI errors
   → Verify key in .env: echo $OPENAI_API_KEY
 
 No logs appearing
-  → Check backend running: curl http://localhost:5000/api/health
-  → Check logs endpoint: curl http://localhost:5000/api/automation/logs
+  → Check backend running: curl https://api.autojobzy.com/api/health
+  → Check logs endpoint: curl https://api.autojobzy.com/api/automation/logs
   → Check console: F12 → Network tab
 
 
@@ -296,7 +296,7 @@ See CHECKLIST.md for complete verification with all steps.
 Quick test:
   ☐ Backend starts: npm run server
   ☐ Frontend loads: npm run dev
-  ☐ API responds: curl http://localhost:5000/api/health
+  ☐ API responds: curl https://api.autojobzy.com/api/health
   ☐ Browser works: http://localhost:5173
   ☐ Dashboard loads without errors
   ☐ Credentials can be saved

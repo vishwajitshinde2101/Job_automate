@@ -5,6 +5,7 @@ import {
   LayoutDashboard,
   GraduationCap,
   Users,
+  Shield,
   CreditCard,
   Settings,
   LogOut,
@@ -53,6 +54,12 @@ const InstituteAdminSidebar: React.FC<InstituteAdminSidebarProps> = ({
       label: 'Staff',
       icon: Users,
       adminOnly: false,
+    },
+    {
+      id: 'roles',
+      label: 'Roles & Permissions',
+      icon: Shield,
+      adminOnly: true, // Only institute_admin can access
     },
     {
       id: 'subscription',

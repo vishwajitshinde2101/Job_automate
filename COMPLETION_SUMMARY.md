@@ -369,7 +369,7 @@ const commonAnswers = {
 ```bash
 npm run server
 # Then in another terminal:
-curl http://localhost:5000/api/health
+curl https://api.autojobzy.com/api/health
 ```
 
 ---

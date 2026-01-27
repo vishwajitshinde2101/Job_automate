@@ -150,18 +150,18 @@ console.log('✅ JobApplicationResult table ready');
 **Get job results:**
 ```bash
 curl -H "Authorization: Bearer YOUR_JWT_TOKEN" \
-  http://localhost:5000/api/job-results
+  https://api.autojobzy.com/api/job-results
 ```
 
 **Get statistics:**
 ```bash
 curl -H "Authorization: Bearer YOUR_JWT_TOKEN" \
-  http://localhost:5000/api/job-results/stats
+  https://api.autojobzy.com/api/job-results/stats
 ```
 
 **Bulk insert test data:**
 ```bash
-curl -X POST http://localhost:5000/api/job-results/bulk \
+curl -X POST https://api.autojobzy.com/api/job-results/bulk \
   -H "Authorization: Bearer YOUR_JWT_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{

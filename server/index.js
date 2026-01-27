@@ -26,6 +26,7 @@ import suggestionsRoutes from './routes/suggestions.js';
 import profileUpdateRoutes from './routes/profileUpdate.js';
 import superadminRoutes from './routes/superadmin.js';
 import instituteAdminRoutes from './routes/instituteAdmin.js';
+import rbacRoutes from './routes/rbac.js';
 import aiRoutes from './routes/ai.js';
 import gmailRoutes from './routes/gmail.js';
 import interviewRoutes from './routes/interview.js';
@@ -49,6 +50,9 @@ import './models/InstituteSubscription.js';
 import './models/InstituteAdmin.js';
 import './models/InstituteStaff.js';
 import './models/InstituteStudent.js';
+import './models/InstituteRole.js';
+import './models/InstitutePermission.js';
+import './models/InstituteRolePermission.js';
 import './models/associations.js'; // Define model associations
 
 dotenv.config();
@@ -123,6 +127,7 @@ app.use('/api/suggestions', suggestionsRoutes);
 app.use('/api/profile-update', profileUpdateRoutes);
 app.use('/api/superadmin', superadminRoutes);
 app.use('/api/institute-admin', instituteAdminRoutes);
+app.use('/api/rbac', rbacRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/gmail', gmailRoutes);
 app.use('/api/interview', interviewRoutes);

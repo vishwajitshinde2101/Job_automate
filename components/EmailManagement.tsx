@@ -66,7 +66,7 @@ const EmailManagement: React.FC = () => {
 
   const checkGmailConnection = async () => {
     try {
-      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.autojobzy.com/api';
       const token = localStorage.getItem('token');
 
       const response = await fetch(`${API_BASE_URL}/gmail/status`, {
@@ -87,7 +87,7 @@ const EmailManagement: React.FC = () => {
 
   const connectGmail = async () => {
     try {
-      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.autojobzy.com/api';
       const token = localStorage.getItem('token');
 
       const response = await fetch(`${API_BASE_URL}/gmail/auth-url`, {
@@ -120,7 +120,7 @@ const EmailManagement: React.FC = () => {
     setError('');
 
     try {
-      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.autojobzy.com/api';
       const token = localStorage.getItem('token');
 
       const response = await fetch(
@@ -147,7 +147,7 @@ const EmailManagement: React.FC = () => {
 
   const viewEmail = async (emailId: string) => {
     try {
-      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.autojobzy.com/api';
       const token = localStorage.getItem('token');
 
       const response = await fetch(`${API_BASE_URL}/gmail/email/${emailId}`, {
@@ -177,7 +177,7 @@ const EmailManagement: React.FC = () => {
     setError('');
 
     try {
-      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.autojobzy.com/api';
       const token = localStorage.getItem('token');
 
       const response = await fetch(`${API_BASE_URL}/gmail/send`, {

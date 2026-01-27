@@ -132,7 +132,7 @@ Dashboard.tsx
     ↓
 Call automationApi.js → startAutomation()
     ↓
-HTTP POST to http://localhost:5000/api/automation/start
+HTTP POST to https://api.autojobzy.com/api/automation/start
 ```
 
 ### On Backend
@@ -307,7 +307,7 @@ npm run build
 
 ### To Access the App
 - Frontend: http://localhost:5173
-- Backend: http://localhost:5000
+- Backend: https://api.autojobzy.com
 - API Docs: See INTEGRATION_GUIDE.md
 
 ### Important Files to Customize

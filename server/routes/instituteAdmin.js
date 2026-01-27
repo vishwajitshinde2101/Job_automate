@@ -189,12 +189,19 @@ router.get('/dashboard', authenticateToken, isInstituteAdminOrStaff, async (req,
 /**
  * GET /api/institute-admin/students
  * Get all students in institute
+ * Staff members can only see students they added
+ * Admin can see all students
  */
 router.get('/students', authenticateToken, isInstituteAdminOrStaff, async (req, res) => {
     try {
         const { page = 1, limit = 50, search, status } = req.query;
 
         const where = { instituteId: req.instituteId };
+
+        // If staff member, only show students they added
+        if (req.userRole === 'staff') {
+            where.addedBy = req.userId;
+        }
 
         if (status) {
             where.status = status;
@@ -243,6 +250,8 @@ router.get('/students', authenticateToken, isInstituteAdminOrStaff, async (req, 
 /**
  * POST /api/institute-admin/students
  * Add new student to institute
+ * Staff can add students (automatically assigned to them)
+ * Admin can add students and assign to any staff
  */
 router.post('/students', authenticateToken, isInstituteAdminOrStaff, async (req, res) => {
     try {
@@ -339,21 +348,28 @@ router.post('/students', authenticateToken, isInstituteAdminOrStaff, async (req,
 /**
  * PUT /api/institute-admin/students/:id
  * Update student details
+ * Staff can only edit students they added
+ * Admin can edit all students
  */
 router.put('/students/:id', authenticateToken, isInstituteAdminOrStaff, async (req, res) => {
     try {
         const { id } = req.params;
         const { enrollmentNumber, batch, course, status } = req.body;
 
-        const student = await InstituteStudent.findOne({
-            where: {
-                id,
-                instituteId: req.instituteId,
-            },
-        });
+        const where = {
+            id,
+            instituteId: req.instituteId,
+        };
+
+        // If staff member, only allow editing students they added
+        if (req.userRole === 'staff') {
+            where.addedBy = req.userId;
+        }
+
+        const student = await InstituteStudent.findOne({ where });
 
         if (!student) {
-            return res.status(404).json({ error: 'Student not found' });
+            return res.status(404).json({ error: 'Student not found or you do not have permission to edit this student' });
         }
 
         await student.update({
@@ -373,20 +389,27 @@ router.put('/students/:id', authenticateToken, isInstituteAdminOrStaff, async (r
 /**
  * DELETE /api/institute-admin/students/:id
  * Remove student from institute
+ * Staff can only delete students they added
+ * Admin can delete all students
  */
 router.delete('/students/:id', authenticateToken, isInstituteAdminOrStaff, async (req, res) => {
     try {
         const { id } = req.params;
 
-        const student = await InstituteStudent.findOne({
-            where: {
-                id,
-                instituteId: req.instituteId,
-            },
-        });
+        const where = {
+            id,
+            instituteId: req.instituteId,
+        };
+
+        // If staff member, only allow deleting students they added
+        if (req.userRole === 'staff') {
+            where.addedBy = req.userId;
+        }
+
+        const student = await InstituteStudent.findOne({ where });
 
         if (!student) {
-            return res.status(404).json({ error: 'Student not found' });
+            return res.status(404).json({ error: 'Student not found or you do not have permission to delete this student' });
         }
 
         await student.destroy();
@@ -400,6 +423,8 @@ router.delete('/students/:id', authenticateToken, isInstituteAdminOrStaff, async
 /**
  * PUT /api/institute-admin/students/:userId/password
  * Change student password
+ * Staff can only change password of students they added
+ * Admin can change password of all students
  */
 router.put('/students/:userId/password', authenticateToken, isInstituteAdminOrStaff, async (req, res) => {
     try {
@@ -408,6 +433,21 @@ router.put('/students/:userId/password', authenticateToken, isInstituteAdminOrSt
 
         if (!password || password.length < 6) {
             return res.status(400).json({ error: 'Password must be at least 6 characters long' });
+        }
+
+        // If staff, verify they added this student
+        if (req.userRole === 'staff') {
+            const studentRecord = await InstituteStudent.findOne({
+                where: {
+                    userId,
+                    instituteId: req.instituteId,
+                    addedBy: req.userId,
+                },
+            });
+
+            if (!studentRecord) {
+                return res.status(404).json({ error: 'Student not found or you do not have permission to change this student\'s password' });
+            }
         }
 
         // Get student and verify it belongs to this institute
@@ -427,7 +467,7 @@ router.put('/students/:userId/password', authenticateToken, isInstituteAdminOrSt
         const hashedPassword = await bcrypt.hash(password, 10);
         await student.update({ password: hashedPassword });
 
-        console.log(`✅ Student password changed: ${student.email} by institute admin ${req.userId}`);
+        console.log(`✅ Student password changed: ${student.email} by ${req.userRole} ${req.userId}`);
 
         res.json({ message: 'Student password updated successfully' });
     } catch (error) {
@@ -439,11 +479,28 @@ router.put('/students/:userId/password', authenticateToken, isInstituteAdminOrSt
 /**
  * PUT /api/institute-admin/students/:userId/details
  * Update student user details (firstName, lastName, email)
+ * Staff can only update details of students they added
+ * Admin can update details of all students
  */
 router.put('/students/:userId/details', authenticateToken, isInstituteAdminOrStaff, async (req, res) => {
     try {
         const { userId } = req.params;
         const { firstName, lastName, email, isActive } = req.body;
+
+        // If staff, verify they added this student
+        if (req.userRole === 'staff') {
+            const studentRecord = await InstituteStudent.findOne({
+                where: {
+                    userId,
+                    instituteId: req.instituteId,
+                    addedBy: req.userId,
+                },
+            });
+
+            if (!studentRecord) {
+                return res.status(404).json({ error: 'Student not found or you do not have permission to update this student' });
+            }
+        }
 
         // Get student and verify it belongs to this institute
         const student = await User.findOne({
@@ -466,7 +523,7 @@ router.put('/students/:userId/details', authenticateToken, isInstituteAdminOrSta
             isActive: isActive !== undefined ? isActive : student.isActive,
         });
 
-        console.log(`✅ Student details updated: ${student.email} by institute admin ${req.userId}`);
+        console.log(`✅ Student details updated: ${student.email} by ${req.userRole} ${req.userId}`);
 
         res.json({
             message: 'Student details updated successfully',
@@ -487,10 +544,27 @@ router.put('/students/:userId/details', authenticateToken, isInstituteAdminOrSta
 /**
  * PUT /api/institute-admin/students/:userId/toggle-active
  * Toggle student active/inactive status
+ * Staff can only toggle status of students they added
+ * Admin can toggle status of all students
  */
 router.put('/students/:userId/toggle-active', authenticateToken, isInstituteAdminOrStaff, async (req, res) => {
     try {
         const { userId } = req.params;
+
+        // If staff, verify they added this student
+        if (req.userRole === 'staff') {
+            const studentRecord = await InstituteStudent.findOne({
+                where: {
+                    userId,
+                    instituteId: req.instituteId,
+                    addedBy: req.userId,
+                },
+            });
+
+            if (!studentRecord) {
+                return res.status(404).json({ error: 'Student not found or you do not have permission to toggle this student\'s status' });
+            }
+        }
 
         // Get student and verify it belongs to this institute
         const student = await User.findOne({
@@ -510,7 +584,7 @@ router.put('/students/:userId/toggle-active', authenticateToken, isInstituteAdmi
             isActive: !student.isActive,
         });
 
-        console.log(`✅ Student status toggled: ${student.email} is now ${student.isActive ? 'active' : 'inactive'} by institute admin ${req.userId}`);
+        console.log(`✅ Student status toggled: ${student.email} is now ${student.isActive ? 'active' : 'inactive'} by ${req.userRole} ${req.userId}`);
 
         res.json({
             message: `Student ${student.isActive ? 'activated' : 'deactivated'} successfully`,
@@ -522,6 +596,61 @@ router.put('/students/:userId/toggle-active', authenticateToken, isInstituteAdmi
     } catch (error) {
         console.error('Error toggling student status:', error);
         res.status(500).json({ error: 'Failed to toggle student status' });
+    }
+});
+
+/**
+ * PUT /api/institute-admin/students/:id/assign-staff
+ * Assign or reassign student to a staff member (Admin only)
+ */
+router.put('/students/:id/assign-staff', authenticateToken, isInstituteAdminOnly, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { staffUserId } = req.body;
+
+        // Validate staffUserId
+        if (!staffUserId) {
+            return res.status(400).json({ error: 'Staff user ID is required' });
+        }
+
+        // Verify staff belongs to this institute
+        const staffMember = await InstituteStaff.findOne({
+            where: {
+                userId: staffUserId,
+                instituteId: req.instituteId,
+            },
+        });
+
+        if (!staffMember) {
+            return res.status(404).json({ error: 'Staff member not found or does not belong to your institute' });
+        }
+
+        // Find student
+        const student = await InstituteStudent.findOne({
+            where: {
+                id,
+                instituteId: req.instituteId,
+            },
+        });
+
+        if (!student) {
+            return res.status(404).json({ error: 'Student not found' });
+        }
+
+        // Assign student to staff
+        await student.update({
+            addedBy: staffUserId,
+        });
+
+        console.log(`✅ Student ${id} assigned to staff ${staffUserId} by admin ${req.userId}`);
+
+        res.json({
+            message: 'Student assigned to staff successfully',
+            student,
+        });
+    } catch (error) {
+        console.error('Error assigning student to staff:', error);
+        res.status(500).json({ error: 'Failed to assign student to staff' });
     }
 });
 

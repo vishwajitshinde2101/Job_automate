@@ -5,8 +5,8 @@
 
 // Get API base URL from environment variable
 // In production: https://api.autojobzy.com/api
-// In development: http://localhost:5000/api
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+// In development: https://api.autojobzy.com/api
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.autojobzy.com/api';
 
 // Remove trailing slash if present
 export const getApiUrl = (endpoint: string): string => {

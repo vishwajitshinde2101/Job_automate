@@ -22,6 +22,7 @@ import {
   X,
 } from 'lucide-react';
 import InstituteAdminSidebar from '../components/InstituteAdminSidebar';
+import RoleManagement from '../components/RoleManagement';
 
 interface DashboardData {
   institute: {
@@ -73,7 +74,7 @@ interface Student {
   };
 }
 
-type TabType = 'overview' | 'students' | 'staff' | 'subscription' | 'settings';
+type TabType = 'overview' | 'students' | 'staff' | 'roles' | 'subscription' | 'settings';
 
 interface Staff {
   id: string;
@@ -144,8 +145,20 @@ const InstituteAdminDashboard: React.FC = () => {
     confirmPassword: '',
   });
 
+  // Get admin email and role from localStorage
+  const [adminEmail, setAdminEmail] = useState('');
+  const [userRole, setUserRole] = useState('institute_admin');
+
   useEffect(() => {
     fetchDashboardData();
+
+    // Initialize user data from localStorage
+    const adminUserStr = localStorage.getItem('instituteAdminUser');
+    const adminUser = adminUserStr ? JSON.parse(adminUserStr) : null;
+    if (adminUser) {
+      setAdminEmail(adminUser.email || '');
+      setUserRole(adminUser.role || 'institute_admin');
+    }
   }, []);
 
   useEffect(() => {
@@ -155,6 +168,15 @@ const InstituteAdminDashboard: React.FC = () => {
       fetchStaff();
     }
   }, [activeTab]);
+
+  // Prevent staff from accessing admin-only tabs
+  useEffect(() => {
+    if (userRole === 'staff' && (activeTab === 'subscription' || activeTab === 'settings' || activeTab === 'roles')) {
+      setActiveTab('overview');
+      setError('Access denied. This section is only available to administrators.');
+      setTimeout(() => setError(''), 3000);
+    }
+  }, [activeTab, userRole]);
 
   const fetchDashboardData = async () => {
     try {
@@ -167,7 +189,7 @@ const InstituteAdminDashboard: React.FC = () => {
         return;
       }
 
-      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.autojobzy.com/api';
 
       const response = await fetch(`${API_BASE_URL}/institute-admin/dashboard`, {
         headers: {
@@ -193,7 +215,7 @@ const InstituteAdminDashboard: React.FC = () => {
   const fetchStudents = async () => {
     try {
       const token = localStorage.getItem('instituteAdminToken');
-      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.autojobzy.com/api';
 
       const response = await fetch(`${API_BASE_URL}/institute-admin/students`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -214,7 +236,7 @@ const InstituteAdminDashboard: React.FC = () => {
   const fetchStaff = async () => {
     try {
       const token = localStorage.getItem('instituteAdminToken');
-      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.autojobzy.com/api';
 
       const response = await fetch(`${API_BASE_URL}/institute-admin/staff`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -239,7 +261,7 @@ const InstituteAdminDashboard: React.FC = () => {
 
     try {
       const token = localStorage.getItem('instituteAdminToken');
-      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.autojobzy.com/api';
 
       const response = await fetch(`${API_BASE_URL}/institute-admin/students`, {
         method: 'POST',
@@ -283,7 +305,7 @@ const InstituteAdminDashboard: React.FC = () => {
 
     try {
       const token = localStorage.getItem('instituteAdminToken');
-      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.autojobzy.com/api';
 
       await fetch(`${API_BASE_URL}/institute-admin/students/${selectedStudent.userId}/details`, {
         method: 'PUT',
@@ -339,7 +361,7 @@ const InstituteAdminDashboard: React.FC = () => {
 
     try {
       const token = localStorage.getItem('instituteAdminToken');
-      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.autojobzy.com/api';
 
       const response = await fetch(
         `${API_BASE_URL}/institute-admin/students/${selectedStudent.userId}/password`,
@@ -380,7 +402,7 @@ const InstituteAdminDashboard: React.FC = () => {
 
     try {
       const token = localStorage.getItem('instituteAdminToken');
-      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.autojobzy.com/api';
 
       const response = await fetch(`${API_BASE_URL}/institute-admin/students/${student.id}`, {
         method: 'DELETE',
@@ -415,7 +437,7 @@ const InstituteAdminDashboard: React.FC = () => {
 
     try {
       const token = localStorage.getItem('instituteAdminToken');
-      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.autojobzy.com/api';
 
       const response = await fetch(
         `${API_BASE_URL}/institute-admin/students/${student.userId}/toggle-active`,
@@ -465,7 +487,7 @@ const InstituteAdminDashboard: React.FC = () => {
 
     try {
       const token = localStorage.getItem('instituteAdminToken');
-      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.autojobzy.com/api';
 
       const response = await fetch(`${API_BASE_URL}/institute-admin/staff`, {
         method: 'POST',
@@ -511,7 +533,7 @@ const InstituteAdminDashboard: React.FC = () => {
 
     try {
       const token = localStorage.getItem('instituteAdminToken');
-      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.autojobzy.com/api';
 
       const response = await fetch(`${API_BASE_URL}/institute-admin/staff/${staffMember.id}`, {
         method: 'DELETE',
@@ -557,7 +579,7 @@ const InstituteAdminDashboard: React.FC = () => {
 
     try {
       const token = localStorage.getItem('instituteAdminToken');
-      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.autojobzy.com/api';
 
       const response = await fetch(`${API_BASE_URL}/institute-admin/institute/settings`, {
         method: 'PUT',
@@ -634,21 +656,6 @@ const InstituteAdminDashboard: React.FC = () => {
   const { institute, subscription, stats } = dashboardData!;
   const usagePercentage =
     stats.studentLimit > 0 ? (stats.studentCount / stats.studentLimit) * 100 : 0;
-
-  // Get admin email and role from localStorage
-  const adminUserStr = localStorage.getItem('instituteAdminUser');
-  const adminUser = adminUserStr ? JSON.parse(adminUserStr) : null;
-  const adminEmail = adminUser ? adminUser.email : '';
-  const userRole = adminUser ? adminUser.role : 'institute_admin';
-
-  // Prevent staff from accessing admin-only tabs
-  useEffect(() => {
-    if (userRole === 'staff' && (activeTab === 'subscription' || activeTab === 'settings')) {
-      setActiveTab('overview');
-      setError('Access denied. This section is only available to administrators.');
-      setTimeout(() => setError(''), 3000);
-    }
-  }, [activeTab, userRole]);
 
   return (
     <div className="min-h-screen bg-dark-900 flex">
@@ -1082,6 +1089,9 @@ const InstituteAdminDashboard: React.FC = () => {
             </div>
           </div>
         )}
+
+        {/* Roles Tab */}
+        {activeTab === 'roles' && <RoleManagement />}
 
         {/* Subscription Tab */}
         {activeTab === 'subscription' && (

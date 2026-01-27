@@ -113,7 +113,7 @@ export default router;
 
 ### Request:
 ```bash
-GET http://localhost:5000/api/job-results?page=1&limit=20
+GET https://api.autojobzy.com/api/job-results?page=1&limit=20
 Authorization: Bearer <JWT_TOKEN>
 ```
 
@@ -189,7 +189,7 @@ Authorization: Bearer <JWT_TOKEN>
 const fetchHistory = async (page: number) => {
     const token = localStorage.getItem('token');
     const response = await fetch(
-        `http://localhost:5000/api/job-results?page=${page}&limit=${limit}`,
+        `https://api.autojobzy.com/api/job-results?page=${page}&limit=${limit}`,
         {
             headers: { Authorization: `Bearer ${token}` }
         }
@@ -280,25 +280,25 @@ const totalPages = Math.ceil(totalRecords / limit);
 ```bash
 # Get first page (20 records)
 curl -H "Authorization: Bearer YOUR_JWT_TOKEN" \
-  "http://localhost:5000/api/job-results?page=1&limit=20"
+  "https://api.autojobzy.com/api/job-results?page=1&limit=20"
 
 # Get second page
 curl -H "Authorization: Bearer YOUR_JWT_TOKEN" \
-  "http://localhost:5000/api/job-results?page=2&limit=20"
+  "https://api.autojobzy.com/api/job-results?page=2&limit=20"
 
 # Filter by match status
 curl -H "Authorization: Bearer YOUR_JWT_TOKEN" \
-  "http://localhost:5000/api/job-results?page=1&limit=20&matchStatus=Good%20Match"
+  "https://api.autojobzy.com/api/job-results?page=1&limit=20&matchStatus=Good%20Match"
 
 # Filter by date range
 curl -H "Authorization: Bearer YOUR_JWT_TOKEN" \
-  "http://localhost:5000/api/job-results?page=1&limit=20&startDate=2025-12-01&endDate=2025-12-31"
+  "https://api.autojobzy.com/api/job-results?page=1&limit=20&startDate=2025-12-01&endDate=2025-12-31"
 ```
 
 ### Using Postman:
 
 1. **Method:** GET
-2. **URL:** `http://localhost:5000/api/job-results?page=1&limit=20`
+2. **URL:** `https://api.autojobzy.com/api/job-results?page=1&limit=20`
 3. **Headers:**
    - `Authorization: Bearer <YOUR_JWT_TOKEN>`
 4. **Response:** JSON with paginated results

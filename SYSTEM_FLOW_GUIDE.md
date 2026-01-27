@@ -681,7 +681,7 @@ This visual differentiation helps users instantly recognize which system they're
 
 - **Production URL**: `https://job-automate.onrender.com`
 - **API Base URL**: `https://job-automate.onrender.com/api`
-- **Development**: `http://localhost:3001` (Frontend) + `http://localhost:5000` (Backend)
+- **Development**: `http://localhost:3001` (Frontend) + `https://api.autojobzy.com` (Backend)
 
 ---
 

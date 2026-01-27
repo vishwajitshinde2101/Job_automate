@@ -36,6 +36,7 @@ import InstituteStudentManagement from './pages/InstituteStudentManagement';
 import InstituteAdminProtectedRoute from './components/InstituteAdminProtectedRoute';
 import { AppProvider, useApp } from './context/AppContext';
 import { ThemeProvider } from './context/ThemeContext';
+import { PermissionsProvider } from './src/context/PermissionsContext';
 import { Toaster } from 'react-hot-toast';
 import { HelmetProvider } from 'react-helmet-async';
 
@@ -165,9 +166,11 @@ const App: React.FC = () => {
     <HelmetProvider>
       <ThemeProvider>
         <AppProvider>
-          <Router>
-            <AppContent />
-          </Router>
+          <PermissionsProvider>
+            <Router>
+              <AppContent />
+            </Router>
+          </PermissionsProvider>
         </AppProvider>
       </ThemeProvider>
     </HelmetProvider>
