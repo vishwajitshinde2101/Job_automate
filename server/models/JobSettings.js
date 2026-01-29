@@ -91,6 +91,11 @@ const JobSettings = sequelize.define('JobSettings', {
         type: DataTypes.STRING,
         allowNull: true,
     },
+    resumeUrl: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+        comment: 'S3 URL of uploaded resume',
+    },
     resumeText: {
         type: DataTypes.TEXT('long'),
         allowNull: true,

@@ -235,6 +235,7 @@ const Dashboard: React.FC = () => {
     noticePeriod: 'Immediate',
     availability: 'Flexible',
     resumeName: '',
+    resumeUrl: '', // S3 URL for uploaded resume
     resumeScore: 0,
     maxPages: 5,
     yearsOfExperience: 0,
@@ -552,31 +553,151 @@ const Dashboard: React.FC = () => {
     }
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
+
+      // Validate file size (5MB max)
+      const maxSize = 5 * 1024 * 1024; // 5MB
+      if (file.size > maxSize) {
+        setError('File size exceeds 5MB limit');
+        setTimeout(() => setError(null), 3000);
+        return;
+      }
+
+      // Validate file type
+      const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain'];
+      if (!allowedTypes.includes(file.type)) {
+        setError('Invalid file type. Please upload PDF, DOC, DOCX, or TXT file');
+        setTimeout(() => setError(null), 3000);
+        return;
+      }
+
       setAnalyzing(true);
       setUploadProgress(0);
 
-      const interval = setInterval(() => {
-        setUploadProgress(prev => {
-          if (prev >= 100) {
-            clearInterval(interval);
-            return 100;
-          }
-          return prev + 10;
-        });
-      }, 150);
+      try {
+        // Create FormData for file upload
+        const formData = new FormData();
+        formData.append('resume', file);
 
-      setTimeout(() => {
+        const token = localStorage.getItem('token');
+        if (!token) {
+          throw new Error('Authentication required. Please login again.');
+        }
+
+        // Simulate progress
+        const progressInterval = setInterval(() => {
+          setUploadProgress(prev => {
+            if (prev >= 90) {
+              clearInterval(progressInterval);
+              return 90;
+            }
+            return prev + 15;
+          });
+        }, 200);
+
+        // Upload to S3 via API
+        const response = await fetch(`${API_BASE_URL}/job-settings/resume`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+          body: formData,
+        });
+
+        clearInterval(progressInterval);
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Resume upload failed');
+        }
+
+        const data = await response.json();
+
+        if (data.success) {
+          setUploadProgress(100);
+
+          // Update form with resume data from S3
+          setConfigForm(prev => ({
+            ...prev,
+            resumeName: data.fileName,
+            resumeUrl: data.resumeUrl, // S3 URL
+            resumeScore: 92, // Can be calculated from backend later
+            yearsOfExperience: data.yearsOfExperience || '0',
+          }));
+
+          setSuccess('Resume uploaded successfully to cloud storage!');
+          setTimeout(() => setSuccess(null), 3000);
+
+          console.log('✅ Resume uploaded to S3:', data.resumeUrl);
+        } else {
+          throw new Error(data.error || 'Resume upload failed');
+        }
+      } catch (error: any) {
+        console.error('❌ Resume upload error:', error);
+        setError(error.message || 'Failed to upload resume');
+        setTimeout(() => setError(null), 5000);
+        setUploadProgress(0);
+      } finally {
         setAnalyzing(false);
+      }
+    }
+  };
+
+  // Handle resume removal
+  const handleRemoveResume = async () => {
+    if (!confirm('Are you sure you want to remove your resume? This will delete it from cloud storage and cannot be undone.')) {
+      return;
+    }
+
+    try {
+      setAnalyzing(true);
+
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('Authentication required. Please login again.');
+      }
+
+      // Delete resume via API (deletes from S3 and database)
+      const response = await fetch(`${API_BASE_URL}/job-settings/resume`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to remove resume');
+      }
+
+      const data = await response.json();
+
+      if (data.success) {
+        // Clear resume from form
         setConfigForm(prev => ({
           ...prev,
-          resumeName: file.name,
-          resumeScore: 92, // Mock result
-          keywords: 'React, Redux, Node.js'
+          resumeName: '',
+          resumeUrl: '',
+          resumeScore: 0,
+          yearsOfExperience: 0,
         }));
-      }, 2000);
+
+        setSuccess('Resume removed successfully from cloud storage!');
+        setTimeout(() => setSuccess(null), 3000);
+
+        console.log('✅ Resume removed successfully');
+      } else {
+        throw new Error(data.error || 'Failed to remove resume');
+      }
+
+    } catch (error: any) {
+      console.error('❌ Resume removal error:', error);
+      setError(error.message || 'Failed to remove resume');
+      setTimeout(() => setError(null), 5000);
+    } finally {
+      setAnalyzing(false);
     }
   };
 
@@ -599,6 +720,7 @@ const Dashboard: React.FC = () => {
           noticePeriod: result.noticePeriod || 'Immediate',
           availability: result.availability || 'Flexible',
           resumeName: result.resumeFileName || '',
+          resumeUrl: result.resumeUrl || '', // S3 URL
           resumeScore: result.resumeScore || 0,
           maxPages: result.maxPages || 5,
           yearsOfExperience: result.yearsOfExperience ?? 0,
@@ -1422,13 +1544,24 @@ const Dashboard: React.FC = () => {
                       </label>
                     </div>
                   ) : (
-                    <div className="space-y-2">
+                    <div className="space-y-3">
                       <div className="flex items-center justify-between bg-dark-800 p-3 rounded border border-white/10">
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-3 flex-1">
                           <FileText className="text-neon-purple w-5 h-5" />
-                          <div>
+                          <div className="flex-1">
                             <div className="text-white font-medium text-sm">{configForm.resumeName || "Parsing Resume..."}</div>
-                            {analyzing && <div className="text-[10px] text-gray-400">Updating Analysis...</div>}
+                            {analyzing && <div className="text-[10px] text-gray-400">Uploading to cloud storage...</div>}
+                            {!analyzing && configForm.resumeUrl && (
+                              <a
+                                href={configForm.resumeUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-[10px] text-neon-blue hover:underline flex items-center gap-1 mt-1"
+                              >
+                                <ExternalLink className="w-3 h-3" />
+                                View Resume (S3)
+                              </a>
+                            )}
                           </div>
                         </div>
                         {analyzing ? (
@@ -1437,6 +1570,34 @@ const Dashboard: React.FC = () => {
                           <CheckCircle className="text-green-500 w-4 h-4" />
                         )}
                       </div>
+
+                      {/* Re-upload and Delete Buttons */}
+                      {!analyzing && (
+                        <div className="flex items-center justify-center gap-3">
+                          <input
+                            type="file"
+                            id="resume-reupload-dash"
+                            className="hidden"
+                            accept=".pdf,.doc,.docx"
+                            onChange={handleFileUpload}
+                          />
+                          <label
+                            htmlFor="resume-reupload-dash"
+                            className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 bg-dark-800 hover:bg-dark-700 border border-gray-600 hover:border-neon-blue rounded-lg transition-all text-sm"
+                          >
+                            <RotateCw className="w-4 h-4 text-neon-blue" />
+                            <span className="text-white">Change Resume</span>
+                          </label>
+
+                          <button
+                            onClick={handleRemoveResume}
+                            className="inline-flex items-center gap-2 px-4 py-2 bg-dark-800 hover:bg-red-900/30 border border-gray-600 hover:border-red-500 rounded-lg transition-all text-sm"
+                          >
+                            <Trash2 className="w-4 h-4 text-red-400" />
+                            <span className="text-red-400">Remove</span>
+                          </button>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>

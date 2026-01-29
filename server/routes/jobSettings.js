@@ -11,6 +11,7 @@ import pdfParse from 'pdf-parse/lib/pdf-parse.js';
 import JobSettings from '../models/JobSettings.js';
 import Skill from '../models/Skill.js';
 import { authenticateToken } from '../middleware/auth.js';
+import { uploadToS3, deleteFromS3 } from '../utils/s3Upload.js';
 
 const router = express.Router();
 
@@ -87,7 +88,7 @@ const extractExperience = (resumeText) => {
 
 /**
  * POST /api/job-settings/resume
- * Upload and process resume
+ * Upload and process resume - Uploads to S3 and stores URL
  */
 router.post('/resume', authenticateToken, upload.single('resume'), async (req, res) => {
     try {
@@ -95,31 +96,138 @@ router.post('/resume', authenticateToken, upload.single('resume'), async (req, r
             return res.status(400).json({ error: 'No resume file provided' });
         }
 
+        console.log('📄 Resume upload started for user:', req.userId);
+        console.log('📄 File:', req.file.originalname, 'Size:', req.file.size, 'bytes');
+
+        // Extract text from resume
         const resumeText = await extractResumeText(req.file.path, req.file.mimetype);
         const yearsOfExperience = extractExperience(resumeText);
 
-        // Update job settings with resume data
+        console.log('📝 Resume text extracted, Years of experience:', yearsOfExperience);
+
+        // Upload to S3
+        let resumeUrl = null;
+        try {
+            resumeUrl = await uploadToS3(
+                req.file.path,
+                req.file.filename,
+                req.file.mimetype
+            );
+            console.log('☁️ Resume uploaded to S3:', resumeUrl);
+        } catch (s3Error) {
+            console.error('❌ S3 Upload failed:', s3Error);
+            // Continue without S3 URL if upload fails
+            // Delete local file manually since S3 upload failed
+            try {
+                fs.unlinkSync(req.file.path);
+            } catch (unlinkError) {
+                console.warn('⚠️ Could not delete local file after S3 failure');
+            }
+        }
+
+        // Find or create job settings
         const [jobSettings] = await JobSettings.findOrCreate({
             where: { userId: req.userId },
             defaults: { userId: req.userId },
         });
 
+        // Delete old resume from S3 if exists
+        if (jobSettings.resumeUrl && resumeUrl) {
+            console.log('🗑️ Deleting old resume from S3...');
+            await deleteFromS3(jobSettings.resumeUrl);
+        }
+
+        // Update job settings with resume data and S3 URL
         await jobSettings.update({
             resumeFileName: req.file.originalname,
+            resumeUrl: resumeUrl, // S3 URL
             resumeText,
             yearsOfExperience,
             resumeScore: 85, // Mock score
         });
 
+        console.log('✅ Resume upload completed successfully');
+
         res.json({
+            success: true,
             message: 'Resume uploaded successfully',
+            resumeUrl: resumeUrl, // Return S3 URL to frontend
             resumeText,
             yearsOfExperience,
             fileName: req.file.originalname,
         });
     } catch (error) {
-        console.error('Resume upload error:', error);
-        res.status(500).json({ error: error.message || 'Resume upload failed' });
+        console.error('❌ Resume upload error:', error);
+
+        // Cleanup: Delete local file if it exists
+        if (req.file && req.file.path) {
+            try {
+                fs.unlinkSync(req.file.path);
+            } catch (unlinkError) {
+                console.warn('⚠️ Could not delete local file on error');
+            }
+        }
+
+        res.status(500).json({
+            success: false,
+            error: error.message || 'Resume upload failed'
+        });
+    }
+});
+
+/**
+ * DELETE /api/job-settings/resume
+ * Delete resume from S3 and database
+ */
+router.delete('/resume', authenticateToken, async (req, res) => {
+    try {
+        console.log('📄 Resume deletion started for user:', req.userId);
+
+        // Find job settings
+        const jobSettings = await JobSettings.findOne({
+            where: { userId: req.userId },
+        });
+
+        if (!jobSettings) {
+            return res.status(404).json({
+                success: false,
+                error: 'Job settings not found'
+            });
+        }
+
+        // Delete from S3 if URL exists
+        if (jobSettings.resumeUrl) {
+            console.log('🗑️ Deleting resume from S3:', jobSettings.resumeUrl);
+            try {
+                await deleteFromS3(jobSettings.resumeUrl);
+                console.log('✅ Resume deleted from S3');
+            } catch (s3Error) {
+                console.error('⚠️ S3 deletion failed (continuing anyway):', s3Error.message);
+                // Continue with database update even if S3 deletion fails
+            }
+        }
+
+        // Clear resume data from database
+        await jobSettings.update({
+            resumeFileName: null,
+            resumeUrl: null,
+            resumeText: null,
+            resumeScore: 0,
+        });
+
+        console.log('✅ Resume data cleared from database');
+
+        res.json({
+            success: true,
+            message: 'Resume deleted successfully',
+        });
+
+    } catch (error) {
+        console.error('❌ Resume deletion error:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message || 'Resume deletion failed'
+        });
     }
 });
 

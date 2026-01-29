@@ -461,6 +461,10 @@ router.post('/complete-onboarding', authenticateToken, async (req, res) => {
  * SECURITY: Only performs login check - no data scraping or job actions
  */
 router.post('/verify-naukri-credentials', authenticateToken, async (req, res) => {
+    // Increase timeout for this endpoint to allow Puppeteer to complete (can take 10-15 seconds)
+    req.setTimeout(120000); // 2 minutes
+    res.setTimeout(120000); // 2 minutes
+
     try {
         const { naukriUsername, naukriPassword } = req.body;
 

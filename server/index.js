@@ -162,7 +162,7 @@ const startServer = async () => {
         // Initialize Scheduler
         await initScheduler();
 
-        app.listen(PORT, () => {
+        const server = app.listen(PORT, () => {
             console.log(`\n🚀 Server running on http://localhost:${PORT}`);
             console.log(`📊 Database: MySQL @ localhost:3306/jobautomate`);
             console.log(`\n📝 API Documentation:`);
@@ -193,6 +193,10 @@ const startServer = async () => {
             console.log(`   GET    /api/job-results/stats        - Get job statistics (auth)`);
             console.log(`   DELETE /api/job-results              - Delete all job results (auth)\n`);
         });
+
+        // Set server timeout to 2 minutes for long-running operations (like Puppeteer verification)
+        server.setTimeout(120000);
+
     } catch (error) {
         console.error('Failed to start server:', error);
         process.exit(1);
