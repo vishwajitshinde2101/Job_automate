@@ -262,6 +262,9 @@ router.get('/', authenticateToken, async (req, res) => {
             }
         }
 
+        // Log what we're returning
+        console.log(`[GET] Naukri Email: ${jobSettings.naukriEmail || 'NULL'}, Has Password: ${!!jobSettings.naukriPassword}, Verified: ${jobSettings.credentialsVerified}`);
+
         res.json(jobSettings);
     } catch (error) {
         console.error('Fetch job settings error:', error.message);

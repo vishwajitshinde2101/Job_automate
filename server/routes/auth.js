@@ -485,9 +485,18 @@ router.post('/verify-naukri-credentials', authenticateToken, async (req, res) =>
         if (result.success) {
             const jobSettings = await JobSettings.findOne({ where: { userId: req.userId } });
             if (jobSettings) {
+                console.log(`[API] 📝 Saving credentials - Email: ${naukriUsername}, Password length: ${naukriPassword?.length || 0}`);
+
+                // Save credentials along with verification status
+                jobSettings.naukriEmail = naukriUsername;
+                jobSettings.naukriPassword = naukriPassword;
                 jobSettings.credentialsVerified = true;
                 jobSettings.lastVerified = new Date();
                 await jobSettings.save();
+
+                // Verify saved data
+                const savedSettings = await JobSettings.findOne({ where: { userId: req.userId } });
+                console.log(`[API] ✅ Saved! Email in DB: ${savedSettings.naukriEmail}, Password in DB: ${savedSettings.naukriPassword ? '***' : 'NULL'}, Verified: ${savedSettings.credentialsVerified}`);
                 console.log(`[API] ✓ Credentials verified and saved for user ${req.userId}`);
             }
         }
