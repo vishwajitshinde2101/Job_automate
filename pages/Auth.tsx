@@ -114,38 +114,53 @@ const Auth: React.FC<AuthProps> = ({ type }) => {
 
         setLoading(true);
 
-        // Call Login API with trimmed values
-        const response = await fetch(`${API_BASE_URL}/auth/login`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            email: trimmedEmail,
-            password: trimmedPassword,
-          }),
-        });
+        // Create abort controller with 60 second timeout
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 seconds
 
-        const data = await response.json();
+        try {
+          // Call Login API with trimmed values
+          const response = await fetch(`${API_BASE_URL}/auth/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              email: trimmedEmail,
+              password: trimmedPassword,
+            }),
+            signal: controller.signal,
+          });
 
-        if (!response.ok) {
-          throw new Error(data.error || 'Login failed');
+          clearTimeout(timeoutId);
+
+          const data = await response.json();
+
+          if (!response.ok) {
+            throw new Error(data.error || 'Login failed');
+          }
+
+          // Store token in localStorage
+          localStorage.setItem('token', data.token);
+          localStorage.setItem('user', JSON.stringify(data.user));
+
+          // Update context with onboarding status
+          login(data.user.firstName || 'User', formData.email, data.user.onboardingCompleted);
+          setLoading(false);
+
+          // Show welcome popup
+          setWelcomeName(data.user.firstName || 'User');
+          setShowWelcome(true);
+
+          // Navigate to dashboard after showing welcome
+          setTimeout(() => {
+            navigate('/dashboard');
+          }, 2000);
+        } catch (fetchError: any) {
+          clearTimeout(timeoutId);
+          if (fetchError.name === 'AbortError') {
+            throw new Error('Login: Request timeout. Please check your internet connection.');
+          }
+          throw fetchError;
         }
-
-        // Store token in localStorage
-        localStorage.setItem('token', data.token);
-        localStorage.setItem('user', JSON.stringify(data.user));
-
-        // Update context with onboarding status
-        login(data.user.firstName || 'User', formData.email, data.user.onboardingCompleted);
-        setLoading(false);
-
-        // Show welcome popup
-        setWelcomeName(data.user.firstName || 'User');
-        setShowWelcome(true);
-
-        // Navigate to dashboard after showing welcome
-        setTimeout(() => {
-          navigate('/dashboard');
-        }, 2000);
       }
     } catch (err: any) {
       setError(err.message || 'An error occurred. Please try again.');
