@@ -11,6 +11,7 @@ const Navbar: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const isLandingPage = location.pathname === '/';
+  const isDownloadPage = location.pathname === '/download';
 
   useEffect(() => {
     const handleScroll = () => {
@@ -48,7 +49,7 @@ const Navbar: React.FC = () => {
             <div className="ml-10 flex items-center space-x-8">
               {!user.isLoggedIn ? (
                 <>
-                  {!isLandingPage && (
+                  {!isLandingPage && !isDownloadPage && (
                     <>
                       <a href="/#features" className="text-gray-700 dark:text-gray-300 hover:text-neon-blue transition-colors px-3 py-2 rounded-md text-sm font-medium">Features</a>
                       <a href="/#pricing" className="text-gray-700 dark:text-gray-300 hover:text-neon-blue transition-colors px-3 py-2 rounded-md text-sm font-medium">Pricing</a>
@@ -109,12 +110,12 @@ const Navbar: React.FC = () => {
           <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
             {!user.isLoggedIn ? (
               <>
-                {!isLandingPage ? (
+                {!isLandingPage && !isDownloadPage ? (
                   <>
                     <Link to="/login" className="block px-3 py-2 rounded-md text-base font-medium text-gray-900 dark:text-white bg-gray-100 dark:bg-dark-800 hover:bg-gray-200 dark:hover:bg-dark-700" onClick={() => setIsOpen(false)}>Login</Link>
                     <Link to="/signup" className="block px-3 py-2 rounded-md text-base font-medium text-black bg-neon-blue hover:bg-neon-blue/90" onClick={() => setIsOpen(false)}>Sign Up</Link>
                   </>
-                ) : (
+                ) : isLandingPage ? (
                   <Link
                     to="/download"
                     className="group flex items-center gap-3 px-4 py-4 rounded-xl text-base font-bold text-white bg-gradient-to-r from-neon-blue to-neon-purple hover:shadow-[0_0_20px_rgba(0,243,255,0.6)] transition-all duration-300 relative overflow-hidden"
@@ -126,11 +127,11 @@ const Navbar: React.FC = () => {
                     </div>
                     <div className="flex-1 relative z-10">
                       <div>Download the Application</div>
-                      <div className="text-xs text-white/70 font-normal">Mac & Windows</div>
+                      <div className="text-xs text-white/70 font-normal">Windows</div>
                     </div>
                     <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                   </Link>
-                )}
+                ) : null}
               </>
             ) : (
               <Link to="/dashboard" className="block px-3 py-2 rounded-md text-base font-medium text-gray-900 dark:text-white bg-gray-100 dark:bg-dark-800 hover:bg-gray-200 dark:hover:bg-dark-700" onClick={() => setIsOpen(false)}>Dashboard</Link>
