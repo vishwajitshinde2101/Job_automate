@@ -55,8 +55,21 @@ fi
 echo -e "${GREEN}✅ Frontend dependencies installed${NC}"
 echo ""
 
-# Step 5: Restart PM2
-echo "4️⃣  Restarting PM2 backend..."
+# Step 5: Build frontend
+echo "4️⃣  Building frontend (Vite + Tailwind)..."
+echo ""
+npm run build
+
+if [ $? -ne 0 ]; then
+    echo -e "${RED}❌ Frontend build failed!${NC}"
+    exit 1
+fi
+
+echo -e "${GREEN}✅ Frontend built successfully${NC}"
+echo ""
+
+# Step 6: Restart PM2
+echo "5️⃣  Restarting PM2 backend..."
 echo ""
 pm2 restart job-automate-api
 
@@ -74,12 +87,12 @@ sleep 5
 echo ""
 
 # Step 7: Check PM2 status
-echo "5️⃣  Checking PM2 status..."
+echo "6️⃣  Checking PM2 status..."
 echo ""
 pm2 list
 
 echo ""
-echo "6️⃣  Checking recent logs..."
+echo "7️⃣  Checking recent logs..."
 echo ""
 pm2 logs job-automate-api --lines 30 --nostream
 

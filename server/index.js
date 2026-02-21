@@ -132,6 +132,18 @@ app.use('/api/ai', aiRoutes);
 app.use('/api/gmail', gmailRoutes);
 app.use('/api/interview', interviewRoutes);
 
+// ============= SERVE FRONTEND (SPA) =============
+
+const distPath = path.join(__dirname, '../dist');
+if (fs.existsSync(distPath)) {
+    app.use(express.static(distPath));
+    // Catch-all: serve index.html for all non-API routes (SPA routing)
+    app.get('*', (req, res, next) => {
+        if (req.path.startsWith('/api/')) return next();
+        res.sendFile(path.join(distPath, 'index.html'));
+    });
+}
+
 // ============= ERROR HANDLING =============
 
 app.use((err, req, res, next) => {
