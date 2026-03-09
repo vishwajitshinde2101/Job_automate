@@ -58,6 +58,11 @@ const InstituteStudent = sequelize.define('InstituteStudent', {
         type: DataTypes.ENUM('active', 'inactive', 'graduated', 'suspended'),
         defaultValue: 'active',
     },
+    branchId: {
+        type: DataTypes.BIGINT.UNSIGNED,
+        allowNull: true,
+        field: 'branch_id',
+    },
 }, {
     tableName: 'institute_students',
     timestamps: true,

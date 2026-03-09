@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Building2, Mail, Phone, MapPin, Globe, User as UserIcon, Lock, ArrowRight, Loader2, AlertCircle, CheckCircle } from 'lucide-react';
+import { Building2, Mail, Phone, MapPin, Globe, User as UserIcon, Lock, ArrowRight, Loader2, AlertCircle, CheckCircle, Eye, EyeOff } from 'lucide-react';
 
 interface InstituteSignupData {
   instituteName: string;
@@ -20,14 +20,17 @@ const InstituteSignup: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   // Get prefilled data from navigation state
-  const locationState = location.state as { prefillData?: {
-    adminFirstName: string;
-    adminLastName: string;
-    adminEmail: string;
-    adminPassword: string;
-  } } | null;
+  const locationState = location.state as {
+    prefillData?: {
+      adminFirstName: string;
+      adminLastName: string;
+      adminEmail: string;
+      adminPassword: string;
+    }
+  } | null;
 
   const [formData, setFormData] = useState<InstituteSignupData>({
     instituteName: '',
@@ -51,8 +54,8 @@ const InstituteSignup: React.FC = () => {
 
       // Validate all fields
       if (!formData.instituteName.trim() || !formData.instituteEmail.trim() ||
-          !formData.adminFirstName.trim() || !formData.adminLastName.trim() ||
-          !formData.adminEmail.trim() || !formData.adminPassword.trim()) {
+        !formData.adminFirstName.trim() || !formData.adminLastName.trim() ||
+        !formData.adminEmail.trim() || !formData.adminPassword.trim()) {
         throw new Error('Please fill in all required fields');
       }
 
@@ -272,13 +275,16 @@ const InstituteSignup: React.FC = () => {
                 <div className="relative mt-2">
                   <Lock className="absolute left-3 top-3 w-5 h-5 text-gray-500" />
                   <input
-                    type="password"
+                    type={showPassword ? 'text' : 'password'}
                     required
-                    className="w-full bg-dark-900 border border-gray-700 rounded-lg py-3 pl-10 pr-4 text-white focus:border-neon-blue focus:ring-1 focus:ring-neon-blue outline-none transition-all"
+                    className="w-full bg-dark-900 border border-gray-700 rounded-lg py-3 pl-10 pr-10 text-white focus:border-neon-blue focus:ring-1 focus:ring-neon-blue outline-none transition-all"
                     placeholder="••••••••"
                     value={formData.adminPassword}
                     onChange={e => setFormData({ ...formData, adminPassword: e.target.value })}
                   />
+                  <button type="button" onClick={() => setShowPassword(v => !v)} className="absolute right-3 top-3 text-gray-500 hover:text-gray-300">
+                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </button>
                 </div>
               </div>
             </div>

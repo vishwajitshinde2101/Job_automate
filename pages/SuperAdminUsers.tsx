@@ -486,11 +486,10 @@ const SuperAdminUsers: React.FC = () => {
                     </td>
                     <td className="px-6 py-4">
                       <span
-                        className={`inline-block px-3 py-1 rounded-full text-xs border ${
-                          user.instituteId
+                        className={`inline-block px-3 py-1 rounded-full text-xs border ${user.instituteId
                             ? 'bg-purple-500/10 text-purple-400 border-purple-500/30'
                             : 'bg-blue-500/10 text-blue-400 border-blue-500/30'
-                        }`}
+                          }`}
                       >
                         {user.instituteId ? 'Institute' : 'Individual'}
                       </span>
@@ -572,11 +571,10 @@ const SuperAdminUsers: React.FC = () => {
                           )}
                           <button
                             onClick={() => paginate(page)}
-                            className={`px-3 py-2 rounded-lg transition-colors ${
-                              currentPage === page
+                            className={`px-3 py-2 rounded-lg transition-colors ${currentPage === page
                                 ? 'bg-neon-blue text-white'
                                 : 'bg-dark-800 border border-white/10 text-gray-400 hover:text-white'
-                            }`}
+                              }`}
                           >
                             {page}
                           </button>
@@ -661,11 +659,10 @@ const SuperAdminUsers: React.FC = () => {
                           <div>
                             <p className="text-gray-500 text-xs mb-1">User Type</p>
                             <span
-                              className={`inline-block px-3 py-1 rounded-full text-xs border ${
-                                user.instituteId
+                              className={`inline-block px-3 py-1 rounded-full text-xs border ${user.instituteId
                                   ? 'bg-purple-500/10 text-purple-400 border-purple-500/30'
                                   : 'bg-blue-500/10 text-blue-400 border-blue-500/30'
-                              }`}
+                                }`}
                             >
                               {user.instituteId ? 'Institute' : 'Individual'}
                             </span>
@@ -712,11 +709,10 @@ const SuperAdminUsers: React.FC = () => {
                           <div>
                             <p className="text-gray-500 text-xs mb-1">Account Status</p>
                             <span
-                              className={`inline-block px-3 py-1 rounded-full text-xs border ${
-                                user.isActive
+                              className={`inline-block px-3 py-1 rounded-full text-xs border ${user.isActive
                                   ? 'bg-green-500/10 text-green-400 border-green-500/30'
                                   : 'bg-red-500/10 text-red-400 border-red-500/30'
-                              }`}
+                                }`}
                             >
                               {user.isActive ? 'Active' : 'Deactivated'}
                             </span>
@@ -729,11 +725,10 @@ const SuperAdminUsers: React.FC = () => {
                             <button
                               onClick={() => toggleUserStatus(user.id, user.isActive)}
                               disabled={togglingUserId === user.id}
-                              className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all ${
-                                user.isActive
+                              className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all ${user.isActive
                                   ? 'bg-red-500/10 text-red-400 border border-red-500/30 hover:bg-red-500/20'
                                   : 'bg-green-500/10 text-green-400 border border-green-500/30 hover:bg-green-500/20'
-                              } disabled:opacity-50 disabled:cursor-not-allowed`}
+                                } disabled:opacity-50 disabled:cursor-not-allowed`}
                             >
                               {togglingUserId === user.id ? (
                                 <>

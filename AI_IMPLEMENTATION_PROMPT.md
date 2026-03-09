@@ -717,12 +717,12 @@ AWS_S3_BUCKET_NAME=autojobzy-resumes
 
 ## IMPLEMENTATION 5: URL Updates (Global Replace)
 
-Replace all instances of `http://localhost:5000` with `https://api.autojobzy.com` across the entire project.
+Replace all instances of `https://api.autojobzy.com` with `https://api.autojobzy.com` across the entire project.
 
 Use pattern:
 ```typescript
 // Old:
-const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = 'https://api.autojobzy.com';
 
 // New:
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.autojobzy.com/api';
@@ -734,7 +734,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.autojobzy
 
 ### 1. Test Resume Upload
 ```bash
-curl -X POST 'http://localhost:5000/api/job-settings/resume' \
+curl -X POST 'https://api.autojobzy.com/job-settings/resume' \
   -H 'Authorization: Bearer YOUR_TOKEN' \
   -F 'resume=@test_resume.pdf'
 ```
@@ -751,7 +751,7 @@ Expected response:
 
 ### 2. Test Resume Delete
 ```bash
-curl -X DELETE 'http://localhost:5000/api/job-settings/resume' \
+curl -X DELETE 'https://api.autojobzy.com/job-settings/resume' \
   -H 'Authorization: Bearer YOUR_TOKEN'
 ```
 
@@ -765,7 +765,7 @@ Expected response:
 
 ### 3. Test Naukri Verification
 ```bash
-curl -X POST 'http://localhost:5000/api/auth/verify-naukri-credentials' \
+curl -X POST 'https://api.autojobzy.com/auth/verify-naukri-credentials' \
   -H 'Authorization: Bearer YOUR_TOKEN' \
   -H 'Content-Type: application/json' \
   -d '{"naukriUsername":"email@example.com","naukriPassword":"password"}'
@@ -802,7 +802,7 @@ Add to nginx config:
 
 ```nginx
 location /api/ {
-    proxy_pass http://localhost:5000;
+    proxy_pass https://api.autojobzy.com;
     proxy_read_timeout 120s;
     proxy_connect_timeout 120s;
     proxy_send_timeout 120s;

@@ -589,9 +589,8 @@ const ApplicationHistory: React.FC = () => {
                     <h3 className="text-lg font-semibold text-white mb-3">Match Breakdown</h3>
                     <div className="grid grid-cols-2 gap-3">
                       <div
-                        className={`flex items-center gap-3 p-3 rounded-lg ${
-                          selectedApp.earlyApplicant ? 'bg-green-500/10 border border-green-500/30' : 'bg-dark-900'
-                        }`}
+                        className={`flex items-center gap-3 p-3 rounded-lg ${selectedApp.earlyApplicant ? 'bg-green-500/10 border border-green-500/30' : 'bg-dark-900'
+                          }`}
                       >
                         {selectedApp.earlyApplicant ? (
                           <CheckCircle className="w-5 h-5 text-green-400" />
@@ -601,9 +600,8 @@ const ApplicationHistory: React.FC = () => {
                         <span className="text-sm text-gray-300">Early Applicant</span>
                       </div>
                       <div
-                        className={`flex items-center gap-3 p-3 rounded-lg ${
-                          selectedApp.keySkillsMatch ? 'bg-green-500/10 border border-green-500/30' : 'bg-dark-900'
-                        }`}
+                        className={`flex items-center gap-3 p-3 rounded-lg ${selectedApp.keySkillsMatch ? 'bg-green-500/10 border border-green-500/30' : 'bg-dark-900'
+                          }`}
                       >
                         {selectedApp.keySkillsMatch ? (
                           <CheckCircle className="w-5 h-5 text-green-400" />
@@ -613,9 +611,8 @@ const ApplicationHistory: React.FC = () => {
                         <span className="text-sm text-gray-300">Skills Match</span>
                       </div>
                       <div
-                        className={`flex items-center gap-3 p-3 rounded-lg ${
-                          selectedApp.locationMatch ? 'bg-green-500/10 border border-green-500/30' : 'bg-dark-900'
-                        }`}
+                        className={`flex items-center gap-3 p-3 rounded-lg ${selectedApp.locationMatch ? 'bg-green-500/10 border border-green-500/30' : 'bg-dark-900'
+                          }`}
                       >
                         {selectedApp.locationMatch ? (
                           <CheckCircle className="w-5 h-5 text-green-400" />
@@ -625,9 +622,8 @@ const ApplicationHistory: React.FC = () => {
                         <span className="text-sm text-gray-300">Location Match</span>
                       </div>
                       <div
-                        className={`flex items-center gap-3 p-3 rounded-lg ${
-                          selectedApp.experienceMatch ? 'bg-green-500/10 border border-green-500/30' : 'bg-dark-900'
-                        }`}
+                        className={`flex items-center gap-3 p-3 rounded-lg ${selectedApp.experienceMatch ? 'bg-green-500/10 border border-green-500/30' : 'bg-dark-900'
+                          }`}
                       >
                         {selectedApp.experienceMatch ? (
                           <CheckCircle className="w-5 h-5 text-green-400" />

@@ -24,7 +24,7 @@ echo ""
 START_TIME=$(date +%s)
 
 DIRECT_RESPONSE=$(curl -s -w "\n%{http_code}\n%{time_total}" \
-  -X POST 'http://localhost:5000/api/auth/login' \
+  -X POST 'https://api.autojobzy.com/auth/login' \
   -H 'Content-Type: application/json' \
   -d "{\"email\":\"$EMAIL\",\"password\":\"$PASSWORD\"}" \
   --max-time 10 2>&1)
@@ -164,7 +164,7 @@ elif [ "$DIRECT_SUCCESS" = true ] && [ "$NGINX_SUCCESS" = false ]; then
     echo "2. Add/verify these settings in nginx config:"
     echo ""
     echo "   location /api/ {"
-    echo "       proxy_pass http://localhost:5000;"
+    echo "       proxy_pass https://api.autojobzy.com;"
     echo "       proxy_read_timeout 120s;"
     echo "       proxy_connect_timeout 120s;"
     echo "       proxy_send_timeout 120s;        # IMPORTANT!"

@@ -306,7 +306,7 @@ Add this configuration:
 ```nginx
 # For specific endpoint
 location /api/auth/verify-naukri-credentials {
-    proxy_pass http://localhost:5000;
+    proxy_pass https://api.autojobzy.com;
     proxy_read_timeout 120s;
     proxy_connect_timeout 120s;
     proxy_send_timeout 120s;
@@ -314,7 +314,7 @@ location /api/auth/verify-naukri-credentials {
 
 # OR for all API endpoints
 location /api/ {
-    proxy_pass http://localhost:5000;
+    proxy_pass https://api.autojobzy.com;
     proxy_read_timeout 120s;
     proxy_connect_timeout 120s;
     proxy_send_timeout 120s;
@@ -353,7 +353,7 @@ sudo systemctl reload nginx
 
 3. **Test backend directly (bypass nginx)**:
    ```bash
-   curl -X POST 'http://localhost:5000/api/auth/verify-naukri-credentials' \
+   curl -X POST 'https://api.autojobzy.com/auth/verify-naukri-credentials' \
      -H 'Content-Type: application/json' \
      -H "Authorization: Bearer $TOKEN" \
      -d '{"naukriUsername":"EMAIL","naukriPassword":"PASSWORD"}'

@@ -14,6 +14,8 @@ import User from './User.js';
 import InstituteRole from './InstituteRole.js';
 import InstitutePermission from './InstitutePermission.js';
 import InstituteRolePermission from './InstituteRolePermission.js';
+import InstituteBranch from './InstituteBranch.js';
+import BranchManager from './BranchManager.js';
 
 // Institute -> InstituteSubscription (one-to-many)
 Institute.hasMany(InstituteSubscription, {
@@ -183,6 +185,80 @@ InstituteRole.hasMany(InstituteStudent, {
     as: 'students',
 });
 
+// InstituteStudent -> InstituteBranch (many-to-one)
+InstituteStudent.belongsTo(InstituteBranch, {
+    foreignKey: 'branchId',
+    as: 'branch',
+});
+InstituteBranch.hasMany(InstituteStudent, {
+    foreignKey: 'branchId',
+    as: 'branchStudents',
+});
+
+// InstituteStaff -> InstituteBranch (many-to-one)
+InstituteStaff.belongsTo(InstituteBranch, {
+    foreignKey: 'branchId',
+    as: 'branch',
+});
+InstituteBranch.hasMany(InstituteStaff, {
+    foreignKey: 'branchId',
+    as: 'branchStaff',
+});
+
+// ============================================================================
+// BRANCH ASSOCIATIONS
+// ============================================================================
+
+// Institute -> InstituteBranch (one-to-many)
+Institute.hasMany(InstituteBranch, {
+    foreignKey: 'instituteId',
+    as: 'branches',
+});
+InstituteBranch.belongsTo(Institute, {
+    foreignKey: 'instituteId',
+    as: 'institute',
+});
+
+// InstituteBranch -> BranchManager (one-to-one/one-to-many)
+InstituteBranch.hasMany(BranchManager, {
+    foreignKey: 'branchId',
+    as: 'managers',
+});
+BranchManager.belongsTo(InstituteBranch, {
+    foreignKey: 'branchId',
+    as: 'branch',
+});
+
+// User -> BranchManager
+User.hasMany(BranchManager, {
+    foreignKey: 'userId',
+    as: 'branchManagerRoles',
+});
+BranchManager.belongsTo(User, {
+    foreignKey: 'userId',
+    as: 'user',
+});
+
+// User (addedBy) -> BranchManager
+User.hasMany(BranchManager, {
+    foreignKey: 'addedBy',
+    as: 'addedBranchManagers',
+});
+BranchManager.belongsTo(User, {
+    foreignKey: 'addedBy',
+    as: 'addedByAdmin',
+});
+
+// Institute -> BranchManager
+Institute.hasMany(BranchManager, {
+    foreignKey: 'instituteId',
+    as: 'branchManagers',
+});
+BranchManager.belongsTo(Institute, {
+    foreignKey: 'instituteId',
+    as: 'institute',
+});
+
 console.log('✅ Model associations defined');
 
 export default {
@@ -196,4 +272,6 @@ export default {
     InstituteRole,
     InstitutePermission,
     InstituteRolePermission,
+    InstituteBranch,
+    BranchManager,
 };

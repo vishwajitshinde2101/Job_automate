@@ -53,6 +53,8 @@ import './models/InstituteStudent.js';
 import './models/InstituteRole.js';
 import './models/InstitutePermission.js';
 import './models/InstituteRolePermission.js';
+import './models/InstituteBranch.js';
+import './models/BranchManager.js';
 import './models/associations.js'; // Define model associations
 
 dotenv.config();

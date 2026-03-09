@@ -208,7 +208,7 @@ const EmailManagement: React.FC = () => {
     if (filter === 'unread' && email.read) return false;
     if (filter === 'starred' && !email.starred) return false;
     if (searchQuery && !email.subject.toLowerCase().includes(searchQuery.toLowerCase()) &&
-        !email.from.toLowerCase().includes(searchQuery.toLowerCase())) return false;
+      !email.from.toLowerCase().includes(searchQuery.toLowerCase())) return false;
     return true;
   });
 
@@ -311,31 +311,28 @@ const EmailManagement: React.FC = () => {
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setFilter('all')}
-                  className={`px-3 py-1 text-xs rounded-lg transition-colors ${
-                    filter === 'all'
+                  className={`px-3 py-1 text-xs rounded-lg transition-colors ${filter === 'all'
                       ? 'bg-neon-blue text-black'
                       : 'bg-dark-900 text-gray-400 hover:text-white'
-                  }`}
+                    }`}
                 >
                   All
                 </button>
                 <button
                   onClick={() => setFilter('unread')}
-                  className={`px-3 py-1 text-xs rounded-lg transition-colors ${
-                    filter === 'unread'
+                  className={`px-3 py-1 text-xs rounded-lg transition-colors ${filter === 'unread'
                       ? 'bg-neon-blue text-black'
                       : 'bg-dark-900 text-gray-400 hover:text-white'
-                  }`}
+                    }`}
                 >
                   Unread
                 </button>
                 <button
                   onClick={() => setFilter('starred')}
-                  className={`px-3 py-1 text-xs rounded-lg transition-colors ${
-                    filter === 'starred'
+                  className={`px-3 py-1 text-xs rounded-lg transition-colors ${filter === 'starred'
                       ? 'bg-neon-blue text-black'
                       : 'bg-dark-900 text-gray-400 hover:text-white'
-                  }`}
+                    }`}
                 >
                   Starred
                 </button>
@@ -358,23 +355,20 @@ const EmailManagement: React.FC = () => {
                   <button
                     key={email.id}
                     onClick={() => viewEmail(email.id)}
-                    className={`w-full text-left p-3 rounded-lg transition-all ${
-                      selectedEmail?.id === email.id
+                    className={`w-full text-left p-3 rounded-lg transition-all ${selectedEmail?.id === email.id
                         ? 'bg-neon-blue/10 border border-neon-blue/20'
                         : 'bg-dark-900 border border-white/5 hover:border-white/10'
-                    } ${!email.read ? 'border-l-2 border-l-neon-blue' : ''}`}
+                      } ${!email.read ? 'border-l-2 border-l-neon-blue' : ''}`}
                   >
                     <div className="flex items-start justify-between gap-2 mb-1">
-                      <span className={`text-sm truncate flex-1 ${
-                        !email.read ? 'font-semibold text-white' : 'text-gray-400'
-                      }`}>
+                      <span className={`text-sm truncate flex-1 ${!email.read ? 'font-semibold text-white' : 'text-gray-400'
+                        }`}>
                         {email.from}
                       </span>
                       {email.starred && <Star className="w-3 h-3 text-yellow-500 fill-yellow-500 flex-shrink-0" />}
                     </div>
-                    <p className={`text-sm truncate mb-1 ${
-                      !email.read ? 'font-semibold text-white' : 'text-gray-300'
-                    }`}>
+                    <p className={`text-sm truncate mb-1 ${!email.read ? 'font-semibold text-white' : 'text-gray-300'
+                      }`}>
                       {email.subject || '(No subject)'}
                     </p>
                     <p className="text-xs text-gray-500 truncate">{email.snippet}</p>

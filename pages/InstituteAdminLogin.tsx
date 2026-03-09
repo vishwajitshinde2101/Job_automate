@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Building2, Mail, Lock, Loader2, AlertCircle, ArrowLeft } from 'lucide-react';
+import { Building2, Mail, Lock, Loader2, AlertCircle, ArrowLeft, Eye, EyeOff } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useApp } from '../context/AppContext';
 
@@ -8,6 +8,7 @@ const InstituteAdminLogin: React.FC = () => {
   const navigate = useNavigate();
   const { login } = useApp();
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -38,16 +39,16 @@ const InstituteAdminLogin: React.FC = () => {
 
       const data = await response.json();
 
-      // Verify user is institute_admin or staff
-      if (data.user.role !== 'institute_admin' && data.user.role !== 'staff') {
-        throw new Error('Access denied. This login is only for Institute Admins and Staff.');
+      // Verify user is institute_admin, staff, or branch_manager
+      if (data.user.role !== 'institute_admin' && data.user.role !== 'staff' && data.user.role !== 'branch_manager') {
+        throw new Error('Access denied. This login is only for Institute Admins, Staff, and Branch Managers.');
       }
 
       // Store token and user data with institute-admin specific keys
       localStorage.setItem('instituteAdminToken', data.token);
       localStorage.setItem('instituteAdminUser', JSON.stringify(data.user));
 
-      const roleLabel = data.user.role === 'institute_admin' ? 'Admin' : 'Staff';
+      const roleLabel = data.user.role === 'institute_admin' ? 'Admin' : data.user.role === 'branch_manager' ? 'Branch Manager' : 'Staff';
       toast.success(`Welcome ${roleLabel}, ${data.user.firstName}!`);
 
       // Redirect directly to institute admin dashboard
@@ -115,13 +116,16 @@ const InstituteAdminLogin: React.FC = () => {
               <div className="relative">
                 <Lock className="absolute left-3 top-3 w-5 h-5 text-gray-500" />
                 <input
-                  type="password"
+                  type={showPassword ? 'text' : 'password'}
                   required
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  className="w-full bg-dark-900 border border-gray-700 rounded-lg py-3 pl-10 pr-4 text-white focus:border-neon-purple focus:ring-1 focus:ring-neon-purple outline-none transition-all"
+                  className="w-full bg-dark-900 border border-gray-700 rounded-lg py-3 pl-10 pr-10 text-white focus:border-neon-purple focus:ring-1 focus:ring-neon-purple outline-none transition-all"
                   placeholder="••••••••"
                 />
+                <button type="button" onClick={() => setShowPassword(v => !v)} className="absolute right-3 top-3 text-gray-500 hover:text-gray-300">
+                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
               </div>
             </div>
 

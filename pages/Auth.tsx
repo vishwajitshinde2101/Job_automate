@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { useNavigate, Link } from 'react-router-dom';
-import { Mail, Lock, User as UserIcon, ArrowRight, Loader2, AlertCircle, CheckCircle, Sparkles, Building2 } from 'lucide-react';
+import { Mail, Lock, User as UserIcon, ArrowRight, Loader2, AlertCircle, CheckCircle, Sparkles, Building2, Eye, EyeOff } from 'lucide-react';
 
 interface AuthProps {
   type: 'login' | 'signup';
@@ -15,6 +15,7 @@ const Auth: React.FC<AuthProps> = ({ type }) => {
   const [showWelcome, setShowWelcome] = useState(false);
   const [welcomeName, setWelcomeName] = useState('');
   const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [userType, setUserType] = useState<'individual' | 'institute'>('individual');
 
   const [formData, setFormData] = useState({
@@ -243,11 +244,10 @@ const Auth: React.FC<AuthProps> = ({ type }) => {
                 <button
                   type="button"
                   onClick={() => setUserType('individual')}
-                  className={`p-4 rounded-lg border-2 transition-all ${
-                    userType === 'individual'
+                  className={`p-4 rounded-lg border-2 transition-all ${userType === 'individual'
                       ? 'border-neon-blue bg-neon-blue/10 text-white'
                       : 'border-gray-700 bg-dark-900 text-gray-400 hover:border-gray-600'
-                  }`}
+                    }`}
                 >
                   <UserIcon className="w-6 h-6 mx-auto mb-2" />
                   <p className="font-medium text-sm">Individual</p>
@@ -263,11 +263,10 @@ const Auth: React.FC<AuthProps> = ({ type }) => {
                       setUserType('institute');
                     }
                   }}
-                  className={`p-4 rounded-lg border-2 transition-all ${
-                    userType === 'institute'
+                  className={`p-4 rounded-lg border-2 transition-all ${userType === 'institute'
                       ? 'border-neon-purple bg-neon-purple/10 text-white'
                       : 'border-gray-700 bg-dark-900 text-gray-400 hover:border-gray-600'
-                  }`}
+                    }`}
                 >
                   <Building2 className="w-6 h-6 mx-auto mb-2" />
                   <p className="font-medium text-sm">Institute Admin</p>
@@ -331,13 +330,16 @@ const Auth: React.FC<AuthProps> = ({ type }) => {
             <div className="relative">
               <Lock className="absolute left-3 top-3 w-5 h-5 text-gray-500" />
               <input
-                type="password"
+                type={showPassword ? 'text' : 'password'}
                 required
-                className="w-full bg-dark-900 border border-gray-700 rounded-lg py-3 pl-10 pr-4 text-white focus:border-neon-blue focus:ring-1 focus:ring-neon-blue outline-none transition-all"
+                className="w-full bg-dark-900 border border-gray-700 rounded-lg py-3 pl-10 pr-10 text-white focus:border-neon-blue focus:ring-1 focus:ring-neon-blue outline-none transition-all"
                 placeholder="••••••••"
                 value={formData.password}
                 onChange={e => setFormData({ ...formData, password: e.target.value })}
               />
+              <button type="button" onClick={() => setShowPassword(v => !v)} className="absolute right-3 top-3 text-gray-500 hover:text-gray-300">
+                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+              </button>
             </div>
           </div>
 

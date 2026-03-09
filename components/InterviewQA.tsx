@@ -177,21 +177,19 @@ const InterviewQA: React.FC = () => {
             <div className="grid grid-cols-2 gap-3">
               <button
                 onClick={() => setSetup({ ...setup, interviewType: 'technical' })}
-                className={`p-3 rounded-lg border transition-all text-sm ${
-                  setup.interviewType === 'technical'
+                className={`p-3 rounded-lg border transition-all text-sm ${setup.interviewType === 'technical'
                     ? 'bg-neon-purple/10 border-neon-purple text-neon-purple'
                     : 'bg-dark-900 border-white/10 text-gray-400 hover:border-white/20'
-                }`}
+                  }`}
               >
                 Technical
               </button>
               <button
                 onClick={() => setSetup({ ...setup, interviewType: 'hr' })}
-                className={`p-3 rounded-lg border transition-all text-sm ${
-                  setup.interviewType === 'hr'
+                className={`p-3 rounded-lg border transition-all text-sm ${setup.interviewType === 'hr'
                     ? 'bg-neon-purple/10 border-neon-purple text-neon-purple'
                     : 'bg-dark-900 border-white/10 text-gray-400 hover:border-white/20'
-                }`}
+                  }`}
               >
                 HR
               </button>
@@ -208,11 +206,10 @@ const InterviewQA: React.FC = () => {
                 <button
                   key={level}
                   onClick={() => setSetup({ ...setup, experienceLevel: level as any })}
-                  className={`p-2 rounded-lg border transition-all text-xs ${
-                    setup.experienceLevel === level
+                  className={`p-2 rounded-lg border transition-all text-xs ${setup.experienceLevel === level
                       ? 'bg-neon-blue/10 border-neon-blue text-neon-blue'
                       : 'bg-dark-900 border-white/10 text-gray-400 hover:border-white/20'
-                  }`}
+                    }`}
                 >
                   {level === 'fresher' ? 'Fresher' : `${level} yrs`}
                 </button>
@@ -230,11 +227,10 @@ const InterviewQA: React.FC = () => {
                 <button
                   key={level}
                   onClick={() => setSetup({ ...setup, difficulty: level as any })}
-                  className={`p-2 rounded-lg border transition-all text-xs capitalize ${
-                    setup.difficulty === level
+                  className={`p-2 rounded-lg border transition-all text-xs capitalize ${setup.difficulty === level
                       ? 'bg-neon-purple/10 border-neon-purple text-neon-purple'
                       : 'bg-dark-900 border-white/10 text-gray-400 hover:border-white/20'
-                  }`}
+                    }`}
                 >
                   {level}
                 </button>

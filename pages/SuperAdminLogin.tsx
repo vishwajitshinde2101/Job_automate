@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Crown, Lock, Mail, AlertCircle } from 'lucide-react';
+import { Crown, Lock, Mail, AlertCircle, Eye, EyeOff } from 'lucide-react';
 
 const SuperAdminLogin: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -117,13 +118,16 @@ const SuperAdminLogin: React.FC = () => {
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-500" />
                 <input
-                  type="password"
+                  type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-11 pr-4 py-3 bg-dark-900 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 transition-colors"
+                  className="w-full pl-11 pr-10 py-3 bg-dark-900 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 transition-colors"
                   placeholder="••••••••"
                   required
                 />
+                <button type="button" onClick={() => setShowPassword(v => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300">
+                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
               </div>
             </div>
 
@@ -139,11 +143,10 @@ const SuperAdminLogin: React.FC = () => {
             <button
               type="submit"
               disabled={loading || !email.trim() || !password.trim()}
-              className={`w-full py-3 rounded-lg font-bold text-white transition-all ${
-                loading || !email.trim() || !password.trim()
+              className={`w-full py-3 rounded-lg font-bold text-white transition-all ${loading || !email.trim() || !password.trim()
                   ? 'bg-gray-600 cursor-not-allowed'
                   : 'bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 shadow-lg hover:shadow-xl'
-              }`}
+                }`}
             >
               {loading ? (
                 <span className="flex items-center justify-center gap-2">

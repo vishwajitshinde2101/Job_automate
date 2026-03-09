@@ -4,7 +4,7 @@ TOKEN="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJkMDBlMDIzZS1jY2M3LTRk
 
 echo "🧪 Testing Naukri Verification via HTTP..."
 echo ""
-echo "📍 Endpoint: http://localhost:5000/api/auth/verify-naukri-credentials"
+echo "📍 Endpoint: https://api.autojobzy.com/auth/verify-naukri-credentials"
 echo "📧 Testing with: rohankadam474@gmail.com"
 echo ""
 echo "⏱️  This will take ~12 seconds..."
@@ -12,7 +12,7 @@ echo ""
 
 START_TIME=$(date +%s)
 
-RESPONSE=$(curl -s -w "\n%{http_code}" http://localhost:5000/api/auth/verify-naukri-credentials \
+RESPONSE=$(curl -s -w "\n%{http_code}" https://api.autojobzy.com/auth/verify-naukri-credentials \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $TOKEN" \
   -d "{\"naukriUsername\":\"rohankadam474@gmail.com\",\"naukriPassword\":\"Rohan@123\"}")

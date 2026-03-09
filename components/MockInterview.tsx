@@ -280,21 +280,19 @@ const MockInterview: React.FC = () => {
                 <div className="flex gap-3">
                   <button
                     onClick={() => setSetup({ ...setup, mode: 'telephonic' })}
-                    className={`flex-1 p-4 rounded-lg border transition-all ${
-                      setup.mode === 'telephonic'
+                    className={`flex-1 p-4 rounded-lg border transition-all ${setup.mode === 'telephonic'
                         ? 'bg-neon-blue/10 border-neon-blue text-neon-blue'
                         : 'bg-dark-900 border-white/10 text-gray-400 hover:border-white/20'
-                    }`}
+                      }`}
                   >
                     Telephonic
                   </button>
                   <button
                     onClick={() => setSetup({ ...setup, mode: 'direct' })}
-                    className={`flex-1 p-4 rounded-lg border transition-all ${
-                      setup.mode === 'direct'
+                    className={`flex-1 p-4 rounded-lg border transition-all ${setup.mode === 'direct'
                         ? 'bg-neon-blue/10 border-neon-blue text-neon-blue'
                         : 'bg-dark-900 border-white/10 text-gray-400 hover:border-white/20'
-                    }`}
+                      }`}
                   >
                     Direct/Onsite
                   </button>
@@ -309,21 +307,19 @@ const MockInterview: React.FC = () => {
                 <div className="flex gap-3">
                   <button
                     onClick={() => setSetup({ ...setup, type: 'hr' })}
-                    className={`flex-1 p-4 rounded-lg border transition-all ${
-                      setup.type === 'hr'
+                    className={`flex-1 p-4 rounded-lg border transition-all ${setup.type === 'hr'
                         ? 'bg-neon-purple/10 border-neon-purple text-neon-purple'
                         : 'bg-dark-900 border-white/10 text-gray-400 hover:border-white/20'
-                    }`}
+                      }`}
                   >
                     HR
                   </button>
                   <button
                     onClick={() => setSetup({ ...setup, type: 'technical' })}
-                    className={`flex-1 p-4 rounded-lg border transition-all ${
-                      setup.type === 'technical'
+                    className={`flex-1 p-4 rounded-lg border transition-all ${setup.type === 'technical'
                         ? 'bg-neon-purple/10 border-neon-purple text-neon-purple'
                         : 'bg-dark-900 border-white/10 text-gray-400 hover:border-white/20'
-                    }`}
+                      }`}
                   >
                     Technical
                   </button>
@@ -355,11 +351,10 @@ const MockInterview: React.FC = () => {
                   <button
                     key={level}
                     onClick={() => setSetup({ ...setup, experienceLevel: level as any })}
-                    className={`p-3 rounded-lg border transition-all text-sm ${
-                      setup.experienceLevel === level
+                    className={`p-3 rounded-lg border transition-all text-sm ${setup.experienceLevel === level
                         ? 'bg-neon-blue/10 border-neon-blue text-neon-blue'
                         : 'bg-dark-900 border-white/10 text-gray-400 hover:border-white/20'
-                    }`}
+                      }`}
                   >
                     {level === 'fresher' ? 'Fresher' : `${level} yrs`}
                   </button>
@@ -431,11 +426,10 @@ const MockInterview: React.FC = () => {
                   className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
                 >
                   <div
-                    className={`max-w-[80%] p-4 rounded-lg ${
-                      msg.role === 'user'
+                    className={`max-w-[80%] p-4 rounded-lg ${msg.role === 'user'
                         ? 'bg-neon-blue text-black'
                         : 'bg-dark-900 text-white border border-white/10'
-                    }`}
+                      }`}
                   >
                     <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
                     <span className="text-xs opacity-60 mt-2 block">

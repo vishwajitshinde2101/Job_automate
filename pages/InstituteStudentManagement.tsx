@@ -17,6 +17,14 @@ import {
   Lock,
   GraduationCap,
   Power,
+  Eye,
+  EyeOff,
+  Briefcase,
+  TrendingUp,
+  SkipForward,
+  Target,
+  Zap,
+  ExternalLink,
 } from 'lucide-react';
 
 interface Student {
@@ -54,6 +62,12 @@ const InstituteStudentManagement: React.FC = () => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [showAddPassword, setShowAddPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [showStatsModal, setShowStatsModal] = useState(false);
+  const [studentStats, setStudentStats] = useState<any>(null);
+  const [statsLoading, setStatsLoading] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -350,6 +364,27 @@ const InstituteStudentManagement: React.FC = () => {
     setShowEditModal(true);
   };
 
+  const openStatsModal = async (student: Student) => {
+    setSelectedStudent(student);
+    setStudentStats(null);
+    setShowStatsModal(true);
+    setStatsLoading(true);
+    try {
+      const token = localStorage.getItem('instituteAdminToken');
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.autojobzy.com/api';
+      const res = await fetch(`${API_BASE_URL}/institute-admin/students/${student.userId}/stats`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (res.ok) setStudentStats(data.stats);
+      else setError(data.error || 'Failed to load stats');
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setStatsLoading(false);
+    }
+  };
+
   const openPasswordModal = (student: Student) => {
     setSelectedStudent(student);
     setPasswordData({ password: '', confirmPassword: '' });
@@ -461,12 +496,6 @@ const InstituteStudentManagement: React.FC = () => {
                     Email
                   </th>
                   <th className="text-left px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">
-                    Enrollment No
-                  </th>
-                  <th className="text-left px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">
-                    Batch
-                  </th>
-                  <th className="text-left px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">
                     Status
                   </th>
                   <th className="text-left px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">
@@ -477,7 +506,7 @@ const InstituteStudentManagement: React.FC = () => {
               <tbody className="divide-y divide-white/10">
                 {filteredStudents.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="px-6 py-12 text-center">
+                    <td colSpan={4} className="px-6 py-12 text-center">
                       <Users className="w-12 h-12 text-gray-600 mx-auto mb-3" />
                       <p className="text-gray-400">
                         {searchTerm ? 'No students found matching your search' : 'No students yet'}
@@ -505,23 +534,25 @@ const InstituteStudentManagement: React.FC = () => {
                         </div>
                       </td>
                       <td className="px-6 py-4 text-gray-400">{student.user.email}</td>
-                      <td className="px-6 py-4 text-gray-400">
-                        {student.enrollmentNumber || '-'}
-                      </td>
-                      <td className="px-6 py-4 text-gray-400">{student.batch || '-'}</td>
                       <td className="px-6 py-4">
                         <span
-                          className={`px-3 py-1 rounded-full text-xs font-bold ${
-                            student.user.isActive
+                          className={`px-3 py-1 rounded-full text-xs font-bold ${student.user.isActive
                               ? 'bg-green-500/10 text-green-500'
                               : 'bg-gray-500/10 text-gray-500'
-                          }`}
+                            }`}
                         >
                           {student.user.isActive ? 'Active' : 'Inactive'}
                         </span>
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => openStatsModal(student)}
+                            className="p-2 hover:bg-neon-blue/10 rounded-lg transition-all text-neon-blue"
+                            title="View Stats"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </button>
                           <button
                             onClick={() => openEditModal(student)}
                             className="p-2 hover:bg-neon-blue/10 rounded-lg transition-all text-neon-blue"
@@ -538,11 +569,10 @@ const InstituteStudentManagement: React.FC = () => {
                           </button>
                           <button
                             onClick={() => handleToggleActive(student)}
-                            className={`p-2 rounded-lg transition-all ${
-                              student.user.isActive
+                            className={`p-2 rounded-lg transition-all ${student.user.isActive
                                 ? 'hover:bg-yellow-500/10 text-yellow-500'
                                 : 'hover:bg-green-500/10 text-green-500'
-                            }`}
+                              }`}
                             title={student.user.isActive ? 'Deactivate Student' : 'Activate Student'}
                           >
                             <Power className="w-4 h-4" />
@@ -638,12 +668,15 @@ const InstituteStudentManagement: React.FC = () => {
                     <div className="relative mt-2">
                       <Lock className="absolute left-3 top-3 w-5 h-5 text-gray-500" />
                       <input
-                        type="password"
+                        type={showAddPassword ? 'text' : 'password'}
                         required
-                        className="w-full bg-dark-900 border border-gray-700 rounded-lg py-3 pl-10 pr-4 text-white focus:border-neon-blue focus:ring-1 focus:ring-neon-blue outline-none transition-all"
+                        className="w-full bg-dark-900 border border-gray-700 rounded-lg py-3 pl-10 pr-10 text-white focus:border-neon-blue focus:ring-1 focus:ring-neon-blue outline-none transition-all"
                         value={formData.password}
                         onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                       />
+                      <button type="button" onClick={() => setShowAddPassword(v => !v)} className="absolute right-3 top-3 text-gray-500 hover:text-gray-300">
+                        {showAddPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                      </button>
                     </div>
                   </div>
 
@@ -845,12 +878,15 @@ const InstituteStudentManagement: React.FC = () => {
                   <div className="relative mt-2">
                     <Lock className="absolute left-3 top-3 w-5 h-5 text-gray-500" />
                     <input
-                      type="password"
+                      type={showNewPassword ? 'text' : 'password'}
                       required
-                      className="w-full bg-dark-900 border border-gray-700 rounded-lg py-3 pl-10 pr-4 text-white focus:border-neon-purple focus:ring-1 focus:ring-neon-purple outline-none transition-all"
+                      className="w-full bg-dark-900 border border-gray-700 rounded-lg py-3 pl-10 pr-10 text-white focus:border-neon-purple focus:ring-1 focus:ring-neon-purple outline-none transition-all"
                       value={passwordData.password}
                       onChange={(e) => setPasswordData({ ...passwordData, password: e.target.value })}
                     />
+                    <button type="button" onClick={() => setShowNewPassword(v => !v)} className="absolute right-3 top-3 text-gray-500 hover:text-gray-300">
+                      {showNewPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    </button>
                   </div>
                 </div>
 
@@ -861,14 +897,17 @@ const InstituteStudentManagement: React.FC = () => {
                   <div className="relative mt-2">
                     <Lock className="absolute left-3 top-3 w-5 h-5 text-gray-500" />
                     <input
-                      type="password"
+                      type={showConfirmPassword ? 'text' : 'password'}
                       required
-                      className="w-full bg-dark-900 border border-gray-700 rounded-lg py-3 pl-10 pr-4 text-white focus:border-neon-purple focus:ring-1 focus:ring-neon-purple outline-none transition-all"
+                      className="w-full bg-dark-900 border border-gray-700 rounded-lg py-3 pl-10 pr-10 text-white focus:border-neon-purple focus:ring-1 focus:ring-neon-purple outline-none transition-all"
                       value={passwordData.confirmPassword}
                       onChange={(e) =>
                         setPasswordData({ ...passwordData, confirmPassword: e.target.value })
                       }
                     />
+                    <button type="button" onClick={() => setShowConfirmPassword(v => !v)} className="absolute right-3 top-3 text-gray-500 hover:text-gray-300">
+                      {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    </button>
                   </div>
                 </div>
 
@@ -891,6 +930,134 @@ const InstituteStudentManagement: React.FC = () => {
             </div>
           </div>
         )}
+      {/* Student Stats Modal */}
+      {showStatsModal && selectedStudent && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-dark-800 border border-white/10 rounded-2xl p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 bg-gradient-to-br from-neon-blue to-neon-purple rounded-full flex items-center justify-center">
+                  <span className="text-white font-bold">
+                    {selectedStudent.user.firstName[0]}{selectedStudent.user.lastName[0]}
+                  </span>
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-white">
+                    {selectedStudent.user.firstName} {selectedStudent.user.lastName}
+                  </h2>
+                  <p className="text-gray-500 text-sm">{selectedStudent.user.email}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => { setShowStatsModal(false); setStudentStats(null); }}
+                className="p-2 hover:bg-dark-900 rounded-lg transition-all"
+              >
+                <X className="w-5 h-5 text-gray-400" />
+              </button>
+            </div>
+
+            {statsLoading ? (
+              <div className="flex items-center justify-center py-16">
+                <Loader2 className="w-10 h-10 animate-spin text-neon-blue" />
+              </div>
+            ) : studentStats ? (
+              <div className="space-y-6">
+                {/* Overview Cards */}
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                  <div className="bg-dark-900 border border-white/10 rounded-xl p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Briefcase className="w-4 h-4 text-neon-blue" />
+                      <span className="text-xs text-gray-500 uppercase font-bold">Total Jobs</span>
+                    </div>
+                    <p className="text-3xl font-bold text-white">{studentStats.totalJobs}</p>
+                    <p className="text-xs text-gray-500 mt-1">Today: {studentStats.todayApplications}</p>
+                  </div>
+
+                  <div className="bg-dark-900 border border-white/10 rounded-xl p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Zap className="w-4 h-4 text-green-400" />
+                      <span className="text-xs text-gray-500 uppercase font-bold">Applied</span>
+                    </div>
+                    <p className="text-3xl font-bold text-green-400">{studentStats.applied}</p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Direct: {studentStats.directApply} | External: {studentStats.externalApply}
+                    </p>
+                  </div>
+
+                  <div className="bg-dark-900 border border-white/10 rounded-xl p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <SkipForward className="w-4 h-4 text-yellow-400" />
+                      <span className="text-xs text-gray-500 uppercase font-bold">Skipped</span>
+                    </div>
+                    <p className="text-3xl font-bold text-yellow-400">{studentStats.skipped}</p>
+                  </div>
+
+                  <div className="bg-dark-900 border border-white/10 rounded-xl p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Target className="w-4 h-4 text-neon-purple" />
+                      <span className="text-xs text-gray-500 uppercase font-bold">Good Matches</span>
+                    </div>
+                    <p className="text-3xl font-bold text-neon-purple">{studentStats.goodMatches}</p>
+                    <p className="text-xs text-gray-500 mt-1">Poor: {studentStats.poorMatches}</p>
+                  </div>
+
+                  <div className="bg-dark-900 border border-white/10 rounded-xl p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <TrendingUp className="w-4 h-4 text-neon-blue" />
+                      <span className="text-xs text-gray-500 uppercase font-bold">Success Rate</span>
+                    </div>
+                    <p className="text-3xl font-bold text-neon-blue">{studentStats.successRate}%</p>
+                    <p className="text-xs text-gray-500 mt-1">Avg Score: {studentStats.avgMatchScore}/5</p>
+                  </div>
+
+                  <div className="bg-dark-900 border border-white/10 rounded-xl p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <ExternalLink className="w-4 h-4 text-gray-400" />
+                      <span className="text-xs text-gray-500 uppercase font-bold">External Apply</span>
+                    </div>
+                    <p className="text-3xl font-bold text-gray-300">{studentStats.externalApply}</p>
+                  </div>
+                </div>
+
+                {/* Daily Trend (Last 7 Days) */}
+                <div className="bg-dark-900 border border-white/10 rounded-xl p-4">
+                  <h3 className="text-sm font-bold text-gray-400 uppercase mb-4">Last 7 Days</h3>
+                  <div className="space-y-2">
+                    {studentStats.dailyTrend.map((day: any) => (
+                      <div key={day.date} className="flex items-center gap-3">
+                        <span className="text-xs text-gray-500 w-24 flex-shrink-0">
+                          {new Date(day.date).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' })}
+                        </span>
+                        <div className="flex-1 flex items-center gap-2">
+                          <div
+                            className="h-2 bg-green-400 rounded-full"
+                            style={{ width: `${studentStats.totalJobs > 0 ? (day.applied / Math.max(...studentStats.dailyTrend.map((d: any) => d.applied + d.skipped), 1)) * 100 : 0}%`, minWidth: day.applied > 0 ? '4px' : '0' }}
+                          />
+                          <span className="text-xs text-green-400">{day.applied}</span>
+                          {day.skipped > 0 && (
+                            <>
+                              <div
+                                className="h-2 bg-yellow-400 rounded-full"
+                                style={{ width: `${(day.skipped / Math.max(...studentStats.dailyTrend.map((d: any) => d.applied + d.skipped), 1)) * 100}%`, minWidth: '4px' }}
+                              />
+                              <span className="text-xs text-yellow-400">{day.skipped} skipped</span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-16">
+                <Briefcase className="w-12 h-12 text-gray-600 mx-auto mb-3" />
+                <p className="text-gray-400">No application data found for this student.</p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
       </div>
     </div>
   );

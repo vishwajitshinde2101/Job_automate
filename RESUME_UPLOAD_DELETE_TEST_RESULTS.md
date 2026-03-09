@@ -298,14 +298,14 @@ PORT=5000 node server/index.js
 
 ### Upload Resume:
 ```bash
-curl -X POST 'http://localhost:5000/api/job-settings/resume' \
+curl -X POST 'https://api.autojobzy.com/job-settings/resume' \
   -H 'Authorization: Bearer YOUR_TOKEN' \
   -F 'resume=@/path/to/resume.pdf'
 ```
 
 ### Delete Resume:
 ```bash
-curl -X DELETE 'http://localhost:5000/api/job-settings/resume' \
+curl -X DELETE 'https://api.autojobzy.com/job-settings/resume' \
   -H 'Authorization: Bearer YOUR_TOKEN'
 ```
 

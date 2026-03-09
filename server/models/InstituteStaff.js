@@ -45,6 +45,11 @@ const InstituteStaff = sequelize.define('InstituteStaff', {
         type: DataTypes.STRING(100),
         allowNull: true,
     },
+    branchId: {
+        type: DataTypes.BIGINT.UNSIGNED,
+        allowNull: true,
+        field: 'branch_id',
+    },
 }, {
     tableName: 'institute_staff',
     timestamps: true,

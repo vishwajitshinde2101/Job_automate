@@ -11,9 +11,11 @@ import Package from '../models/Package.js';
 import InstituteStudent from '../models/InstituteStudent.js';
 import InstituteStaff from '../models/InstituteStaff.js';
 import InstituteAdmin from '../models/InstituteAdmin.js';
+import InstituteBranch from '../models/InstituteBranch.js';
+import BranchManager from '../models/BranchManager.js';
 import User from '../models/User.js';
+import JobApplicationResult from '../models/JobApplicationResult.js';
 import { v4 as uuidv4 } from 'uuid';
-import bcrypt from 'bcrypt';
 import { Op } from 'sequelize';
 
 const router = express.Router();
@@ -21,8 +23,8 @@ const router = express.Router();
 // Middleware to check if user is institute admin or staff
 const isInstituteAdminOrStaff = async (req, res, next) => {
     try {
-        if (req.userRole !== 'institute_admin' && req.userRole !== 'staff') {
-            return res.status(403).json({ error: 'Access denied. Institute admin or staff only.' });
+        if (req.userRole !== 'institute_admin' && req.userRole !== 'staff' && req.userRole !== 'branch_manager') {
+            return res.status(403).json({ error: 'Access denied. Institute admin, staff, or branch manager only.' });
         }
 
         // Get institute ID based on role
@@ -53,6 +55,19 @@ const isInstituteAdminOrStaff = async (req, res, next) => {
 
             instituteId = staff.instituteId;
             institute = staff.institute;
+        } else if (req.userRole === 'branch_manager') {
+            const branchManager = await BranchManager.findOne({
+                where: { userId: req.userId },
+                include: [{ model: Institute, as: 'institute' }],
+            });
+
+            if (!branchManager) {
+                return res.status(404).json({ error: 'Branch manager not found' });
+            }
+
+            instituteId = branchManager.instituteId;
+            institute = branchManager.institute;
+            req.branchId = branchManager.branchId;
         }
 
         req.instituteId = instituteId;
@@ -132,15 +147,9 @@ router.get('/dashboard', authenticateToken, isInstituteAdminOrStaff, async (req,
             order: [['createdAt', 'DESC']],
         });
 
-        // Get student count
-        const studentCount = await InstituteStudent.count({
-            where: { instituteId: req.instituteId },
-        });
-
-        // Get staff count
-        const staffCount = await InstituteStaff.count({
-            where: { instituteId: req.instituteId },
-        });
+        // Always institute-wide counts (subscription limit is shared across all roles)
+        const studentCount = await InstituteStudent.count({ where: { instituteId: req.instituteId } });
+        const staffCount = await InstituteStaff.count({ where: { instituteId: req.instituteId } });
 
         // Get admin count
         const adminCount = await InstituteAdmin.count({
@@ -168,6 +177,7 @@ router.get('/dashboard', authenticateToken, isInstituteAdminOrStaff, async (req,
             stats: {
                 studentCount,
                 studentLimit,
+                staffCount,
                 remainingSlots: subscription ? studentLimit - studentCount : 0,
                 hasActiveSubscription: !!subscription,
             },
@@ -203,8 +213,22 @@ router.get('/students', authenticateToken, isInstituteAdminOrStaff, async (req, 
             where.addedBy = req.userId;
         }
 
+        // If branch manager, only show students in their branch
+        if (req.userRole === 'branch_manager') {
+            where.branchId = req.branchId;
+        }
+
         if (status) {
             where.status = status;
+        }
+
+        // Branch filter from query param
+        if (req.query.branchId) {
+            where.branchId = req.query.branchId === 'null' ? null : req.query.branchId;
+        }
+        // Staff filter from query param
+        if (req.query.addedBy) {
+            where.addedBy = req.query.addedBy;
         }
 
         const students = await InstituteStudent.findAndCountAll({
@@ -228,6 +252,13 @@ router.get('/students', authenticateToken, isInstituteAdminOrStaff, async (req, 
                     model: User,
                     as: 'admin',
                     attributes: ['id', 'firstName', 'lastName', 'email'],
+                    required: false,
+                },
+                {
+                    model: InstituteBranch,
+                    as: 'branch',
+                    attributes: ['id', 'name', 'location'],
+                    required: false,
                 },
             ],
             limit: parseInt(limit),
@@ -263,6 +294,7 @@ router.post('/students', authenticateToken, isInstituteAdminOrStaff, async (req,
             enrollmentNumber,
             batch,
             course,
+            branchId: bodyBranchId,
         } = req.body;
 
         // Validate required fields
@@ -323,6 +355,7 @@ router.post('/students', authenticateToken, isInstituteAdminOrStaff, async (req,
             batch,
             course,
             status: 'active',
+            branchId: req.branchId || bodyBranchId || null,
         });
 
         console.log(`✅ Student created: ${email} by institute admin ${req.userId}`);
@@ -463,9 +496,8 @@ router.put('/students/:userId/password', authenticateToken, isInstituteAdminOrSt
             return res.status(404).json({ error: 'Student not found or does not belong to your institute' });
         }
 
-        // Hash and update password
-        const hashedPassword = await bcrypt.hash(password, 10);
-        await student.update({ password: hashedPassword });
+        // Update password (User model's beforeUpdate hook handles hashing)
+        await student.update({ password });
 
         console.log(`✅ Student password changed: ${student.email} by ${req.userRole} ${req.userId}`);
 
@@ -782,8 +814,15 @@ router.post('/verify-payment', authenticateToken, isInstituteAdminOnly, async (r
  */
 router.get('/staff', authenticateToken, isInstituteAdminOrStaff, async (req, res) => {
     try {
+        const staffWhere = { instituteId: req.instituteId };
+
+        // Branch manager only sees staff in their branch
+        if (req.userRole === 'branch_manager') {
+            staffWhere.branchId = req.branchId;
+        }
+
         const staff = await InstituteStaff.findAll({
-            where: { instituteId: req.instituteId },
+            where: staffWhere,
             include: [
                 {
                     model: User,
@@ -810,9 +849,9 @@ router.get('/staff', authenticateToken, isInstituteAdminOrStaff, async (req, res
  * POST /api/institute-admin/staff
  * Add new staff member (Admin only)
  */
-router.post('/staff', authenticateToken, isInstituteAdminOnly, async (req, res) => {
+router.post('/staff', authenticateToken, isInstituteAdminOrStaff, async (req, res) => {
     try {
-        const { firstName, lastName, email, password, role } = req.body;
+        const { firstName, lastName, email, password, role, branchId: bodyBranchId } = req.body;
 
         // Check if email already exists
         const existingUser = await User.findOne({ where: { email } });
@@ -838,6 +877,7 @@ router.post('/staff', authenticateToken, isInstituteAdminOnly, async (req, res) 
             userId: user.id,
             addedBy: req.userId,
             role,
+            branchId: req.branchId || bodyBranchId || null,
         });
 
         res.status(201).json({
@@ -886,6 +926,464 @@ router.delete('/staff/:id', authenticateToken, isInstituteAdminOnly, async (req,
 });
 
 // ============================================================================
+// STAFF ENHANCED ROUTES
+// ============================================================================
+
+/**
+ * PUT /api/institute-admin/staff/:id
+ * Update staff member details (Admin only)
+ */
+router.put('/staff/:id', authenticateToken, isInstituteAdminOnly, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { firstName, lastName, email, role } = req.body;
+
+        const staff = await InstituteStaff.findOne({
+            where: { id, instituteId: req.instituteId },
+            include: [{ model: User, as: 'user' }],
+        });
+
+        if (!staff) {
+            return res.status(404).json({ error: 'Staff not found' });
+        }
+
+        // Update user details
+        await staff.user.update({
+            firstName: firstName?.trim() || staff.user.firstName,
+            lastName: lastName?.trim() || staff.user.lastName,
+            email: email?.trim() || staff.user.email,
+        });
+
+        // Update staff role if provided
+        if (role) {
+            await staff.update({ role });
+        }
+
+        res.json({ message: 'Staff updated successfully' });
+    } catch (error) {
+        console.error('Error updating staff:', error);
+        res.status(500).json({ error: 'Failed to update staff' });
+    }
+});
+
+/**
+ * PUT /api/institute-admin/staff/:userId/password
+ * Change staff member password (Admin only)
+ */
+router.put('/staff/:userId/password', authenticateToken, isInstituteAdminOnly, async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const { password } = req.body;
+
+        if (!password || password.length < 6) {
+            return res.status(400).json({ error: 'Password must be at least 6 characters long' });
+        }
+
+        const staffRecord = await InstituteStaff.findOne({
+            where: { userId, instituteId: req.instituteId },
+        });
+
+        if (!staffRecord) {
+            return res.status(404).json({ error: 'Staff not found or does not belong to your institute' });
+        }
+
+        const user = await User.findByPk(userId);
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        await user.update({ password });
+
+        console.log(`Staff password changed: ${user.email} by admin ${req.userId}`);
+        res.json({ message: 'Staff password updated successfully' });
+    } catch (error) {
+        console.error('Error updating staff password:', error);
+        res.status(500).json({ error: 'Failed to update staff password' });
+    }
+});
+
+/**
+ * PUT /api/institute-admin/staff/:userId/toggle-active
+ * Toggle staff active/inactive status (Admin only)
+ */
+router.put('/staff/:userId/toggle-active', authenticateToken, isInstituteAdminOnly, async (req, res) => {
+    try {
+        const { userId } = req.params;
+
+        const staffRecord = await InstituteStaff.findOne({
+            where: { userId, instituteId: req.instituteId },
+        });
+
+        if (!staffRecord) {
+            return res.status(404).json({ error: 'Staff not found or does not belong to your institute' });
+        }
+
+        const user = await User.findByPk(userId);
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        await user.update({ isActive: !user.isActive });
+
+        res.json({
+            message: `Staff member ${user.isActive ? 'activated' : 'deactivated'} successfully`,
+            isActive: user.isActive,
+        });
+    } catch (error) {
+        console.error('Error toggling staff status:', error);
+        res.status(500).json({ error: 'Failed to toggle staff status' });
+    }
+});
+
+/**
+ * GET /api/institute-admin/staff/:userId/students
+ * Get all students under a specific staff member (Admin only)
+ */
+router.get('/staff/:userId/students', authenticateToken, isInstituteAdminOnly, async (req, res) => {
+    try {
+        const { userId } = req.params;
+
+        // Verify staff belongs to this institute
+        const staffRecord = await InstituteStaff.findOne({
+            where: { userId, instituteId: req.instituteId },
+        });
+
+        if (!staffRecord) {
+            return res.status(404).json({ error: 'Staff not found or does not belong to your institute' });
+        }
+
+        const students = await InstituteStudent.findAll({
+            where: { instituteId: req.instituteId, addedBy: userId },
+            include: [
+                {
+                    model: User,
+                    as: 'user',
+                    attributes: ['id', 'firstName', 'lastName', 'email', 'createdAt', 'isActive'],
+                },
+            ],
+            order: [['createdAt', 'DESC']],
+        });
+
+        res.json({
+            staffUserId: userId,
+            totalStudents: students.length,
+            students,
+        });
+    } catch (error) {
+        console.error('Error fetching staff students:', error);
+        res.status(500).json({ error: 'Failed to fetch staff students' });
+    }
+});
+
+// ============================================================================
+// BRANCH MANAGEMENT
+// ============================================================================
+
+/**
+ * GET /api/institute-admin/branches
+ * Get all branches in the institute (Admin only)
+ */
+router.get('/branches', authenticateToken, isInstituteAdminOnly, async (req, res) => {
+    try {
+        const branches = await InstituteBranch.findAll({
+            where: { instituteId: req.instituteId },
+            include: [
+                {
+                    model: BranchManager,
+                    as: 'managers',
+                    include: [
+                        {
+                            model: User,
+                            as: 'user',
+                            attributes: ['id', 'firstName', 'lastName', 'email', 'isActive'],
+                        },
+                    ],
+                },
+            ],
+            order: [['createdAt', 'DESC']],
+        });
+
+        res.json(branches);
+    } catch (error) {
+        console.error('Error fetching branches:', error);
+        res.status(500).json({ error: 'Failed to fetch branches' });
+    }
+});
+
+/**
+ * POST /api/institute-admin/branches
+ * Create a new branch with a branch manager (Admin only)
+ */
+router.post('/branches', authenticateToken, isInstituteAdminOnly, async (req, res) => {
+    try {
+        const { name, location, managerFirstName, managerLastName, managerEmail, managerPassword } = req.body;
+
+        if (!name || !managerFirstName || !managerLastName || !managerEmail || !managerPassword) {
+            return res.status(400).json({ error: 'Branch name, manager details, and password are required' });
+        }
+
+        if (managerPassword.length < 6) {
+            return res.status(400).json({ error: 'Password must be at least 6 characters' });
+        }
+
+        // Check if manager email already exists
+        const existingUser = await User.findOne({ where: { email: managerEmail } });
+        if (existingUser) {
+            return res.status(400).json({ error: 'Email already exists' });
+        }
+
+        // Create branch
+        const branch = await InstituteBranch.create({
+            id: uuidv4(),
+            instituteId: req.instituteId,
+            name: name.trim(),
+            location: location?.trim() || null,
+            status: 'active',
+        });
+
+        // Create branch manager user
+        const managerUser = await User.create({
+            id: uuidv4(),
+            firstName: managerFirstName.trim(),
+            lastName: managerLastName.trim(),
+            email: managerEmail.trim(),
+            password: managerPassword,
+            role: 'branch_manager',
+            instituteId: req.instituteId,
+            isActive: true,
+        });
+
+        // Create branch manager record
+        const branchManager = await BranchManager.create({
+            branchId: branch.id,
+            instituteId: req.instituteId,
+            userId: managerUser.id,
+            addedBy: req.userId,
+        });
+
+        console.log(`Branch created: ${name} with manager: ${managerEmail} by admin ${req.userId}`);
+
+        res.status(201).json({
+            message: 'Branch and branch manager created successfully',
+            branch: {
+                ...branch.toJSON(),
+                managers: [{
+                    ...branchManager.toJSON(),
+                    user: {
+                        id: managerUser.id,
+                        firstName: managerUser.firstName,
+                        lastName: managerUser.lastName,
+                        email: managerUser.email,
+                        isActive: managerUser.isActive,
+                    },
+                }],
+            },
+        });
+    } catch (error) {
+        console.error('Error creating branch:', error);
+        res.status(500).json({ error: 'Failed to create branch', details: error.message });
+    }
+});
+
+/**
+ * PUT /api/institute-admin/branches/:id
+ * Update branch details (Admin only)
+ */
+router.put('/branches/:id', authenticateToken, isInstituteAdminOnly, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { name, location, status } = req.body;
+
+        const branch = await InstituteBranch.findOne({
+            where: { id, instituteId: req.instituteId },
+        });
+
+        if (!branch) {
+            return res.status(404).json({ error: 'Branch not found' });
+        }
+
+        await branch.update({
+            name: name?.trim() || branch.name,
+            location: location?.trim() !== undefined ? location.trim() : branch.location,
+            status: status || branch.status,
+        });
+
+        res.json({ message: 'Branch updated successfully', branch });
+    } catch (error) {
+        console.error('Error updating branch:', error);
+        res.status(500).json({ error: 'Failed to update branch' });
+    }
+});
+
+/**
+ * DELETE /api/institute-admin/branches/:id
+ * Delete a branch (Admin only)
+ */
+router.delete('/branches/:id', authenticateToken, isInstituteAdminOnly, async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const branch = await InstituteBranch.findOne({
+            where: { id, instituteId: req.instituteId },
+        });
+
+        if (!branch) {
+            return res.status(404).json({ error: 'Branch not found' });
+        }
+
+        // Delete branch managers first
+        await BranchManager.destroy({ where: { branchId: id } });
+
+        await branch.destroy();
+        res.json({ message: 'Branch deleted successfully' });
+    } catch (error) {
+        console.error('Error deleting branch:', error);
+        res.status(500).json({ error: 'Failed to delete branch' });
+    }
+});
+
+/**
+ * POST /api/institute-admin/branches/:branchId/managers
+ * Add a new manager to an existing branch (Admin only)
+ */
+router.post('/branches/:branchId/managers', authenticateToken, isInstituteAdminOnly, async (req, res) => {
+    try {
+        const { branchId } = req.params;
+        const { firstName, lastName, email, password } = req.body;
+
+        if (!firstName || !lastName || !email || !password) {
+            return res.status(400).json({ error: 'All fields are required' });
+        }
+        if (password.length < 6) {
+            return res.status(400).json({ error: 'Password must be at least 6 characters' });
+        }
+
+        const branch = await InstituteBranch.findOne({ where: { id: branchId, instituteId: req.instituteId } });
+        if (!branch) {
+            return res.status(404).json({ error: 'Branch not found' });
+        }
+
+        const existingUser = await User.findOne({ where: { email } });
+        if (existingUser) {
+            return res.status(400).json({ error: 'Email already exists' });
+        }
+
+        const managerUser = await User.create({
+            id: uuidv4(),
+            firstName: firstName.trim(),
+            lastName: lastName.trim(),
+            email: email.trim(),
+            password,
+            role: 'branch_manager',
+            instituteId: req.instituteId,
+            isActive: true,
+        });
+
+        const branchManager = await BranchManager.create({
+            branchId: branch.id,
+            instituteId: req.instituteId,
+            userId: managerUser.id,
+            addedBy: req.userId,
+        });
+
+        res.status(201).json({
+            message: 'Branch manager added successfully',
+            manager: {
+                ...branchManager.toJSON(),
+                user: { id: managerUser.id, firstName: managerUser.firstName, lastName: managerUser.lastName, email: managerUser.email, isActive: managerUser.isActive },
+            },
+        });
+    } catch (error) {
+        console.error('Error adding branch manager:', error);
+        res.status(500).json({ error: 'Failed to add branch manager', details: error.message });
+    }
+});
+
+/**
+ * PUT /api/institute-admin/branches/:branchId/managers/:managerId/password
+ * Change specific branch manager password (Admin only)
+ */
+router.put('/branches/:branchId/managers/:managerId/password', authenticateToken, isInstituteAdminOnly, async (req, res) => {
+    try {
+        const { branchId, managerId } = req.params;
+        const { password } = req.body;
+
+        if (!password || password.length < 6) {
+            return res.status(400).json({ error: 'Password must be at least 6 characters long' });
+        }
+
+        const managerRecord = await BranchManager.findOne({ where: { id: managerId, branchId, instituteId: req.instituteId } });
+        if (!managerRecord) {
+            return res.status(404).json({ error: 'Branch manager not found' });
+        }
+
+        const user = await User.findByPk(managerRecord.userId);
+        if (!user) {
+            return res.status(404).json({ error: 'Branch manager user not found' });
+        }
+
+        await user.update({ password });
+
+        res.json({ message: 'Branch manager password updated successfully' });
+    } catch (error) {
+        console.error('Error updating branch manager password:', error);
+        res.status(500).json({ error: 'Failed to update branch manager password' });
+    }
+});
+
+/**
+ * PUT /api/institute-admin/branches/:branchId/managers/:managerId/toggle-active
+ * Toggle specific branch manager active/inactive (Admin only)
+ */
+router.put('/branches/:branchId/managers/:managerId/toggle-active', authenticateToken, isInstituteAdminOnly, async (req, res) => {
+    try {
+        const { branchId, managerId } = req.params;
+
+        const managerRecord = await BranchManager.findOne({ where: { id: managerId, branchId, instituteId: req.instituteId } });
+        if (!managerRecord) {
+            return res.status(404).json({ error: 'Branch manager not found' });
+        }
+
+        const user = await User.findByPk(managerRecord.userId);
+        if (!user) {
+            return res.status(404).json({ error: 'Branch manager user not found' });
+        }
+
+        await user.update({ isActive: !user.isActive });
+
+        res.json({
+            message: `Branch manager ${user.isActive ? 'activated' : 'deactivated'} successfully`,
+            isActive: user.isActive,
+        });
+    } catch (error) {
+        console.error('Error toggling branch manager status:', error);
+        res.status(500).json({ error: 'Failed to toggle branch manager status' });
+    }
+});
+
+/**
+ * DELETE /api/institute-admin/branches/:branchId/managers/:managerId
+ * Delete specific branch manager (Admin only)
+ */
+router.delete('/branches/:branchId/managers/:managerId', authenticateToken, isInstituteAdminOnly, async (req, res) => {
+    try {
+        const { branchId, managerId } = req.params;
+
+        const managerRecord = await BranchManager.findOne({ where: { id: managerId, branchId, instituteId: req.instituteId } });
+        if (!managerRecord) {
+            return res.status(404).json({ error: 'Branch manager not found' });
+        }
+
+        await managerRecord.destroy();
+
+        res.json({ message: 'Branch manager removed successfully' });
+    } catch (error) {
+        console.error('Error deleting branch manager:', error);
+        res.status(500).json({ error: 'Failed to delete branch manager' });
+    }
+});
+
+// ============================================================================
 // INSTITUTE SETTINGS
 // ============================================================================
 
@@ -925,6 +1423,151 @@ router.put('/institute/settings', authenticateToken, isInstituteAdminOnly, async
     } catch (error) {
         console.error('Error updating institute:', error);
         res.status(500).json({ error: 'Failed to update institute details' });
+    }
+});
+
+// ============================================================================
+// STUDENT STATS
+// ============================================================================
+
+/**
+ * GET /api/institute-admin/students/:userId/stats
+ * Get job application stats for a specific student (Admin/Staff)
+ */
+router.get('/students/:userId/stats', authenticateToken, isInstituteAdminOrStaff, async (req, res) => {
+    try {
+        const { userId } = req.params;
+
+        // Verify student belongs to this institute
+        const student = await InstituteStudent.findOne({
+            where: { userId, instituteId: req.instituteId },
+            include: [{ model: User, as: 'user', attributes: ['firstName', 'lastName', 'email'] }],
+        });
+
+        if (!student) {
+            return res.status(404).json({ error: 'Student not found in your institute' });
+        }
+
+        const results = await JobApplicationResult.findAll({ where: { userId } });
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const todayResults = results.filter(r => {
+            const d = new Date(r.datetime);
+            d.setHours(0, 0, 0, 0);
+            return d.getTime() === today.getTime();
+        });
+
+        const applied = results.filter(r => r.applicationStatus === 'Applied').length;
+        const skipped = results.filter(r => r.applicationStatus === 'Skipped').length;
+        const goodMatches = results.filter(r => r.matchStatus === 'Good Match').length;
+        const poorMatches = results.filter(r => r.matchStatus === 'Poor Match').length;
+        const successRate = results.length > 0 ? Math.round((goodMatches / results.length) * 100) : 0;
+
+        const appliedResults = results.filter(r => r.applicationStatus === 'Applied');
+
+        // Daily trend last 7 days
+        const dailyTrend = [];
+        for (let i = 6; i >= 0; i--) {
+            const date = new Date();
+            date.setDate(date.getDate() - i);
+            date.setHours(0, 0, 0, 0);
+            const nextDate = new Date(date);
+            nextDate.setDate(nextDate.getDate() + 1);
+            const dayResults = results.filter(r => {
+                const rDate = new Date(r.datetime);
+                return rDate >= date && rDate < nextDate;
+            });
+            dailyTrend.push({
+                date: date.toISOString().split('T')[0],
+                applied: dayResults.filter(r => r.applicationStatus === 'Applied').length,
+                skipped: dayResults.filter(r => r.applicationStatus === 'Skipped').length,
+            });
+        }
+
+        res.json({
+            student: {
+                id: student.id,
+                userId: student.userId,
+                name: `${student.user.firstName} ${student.user.lastName}`,
+                email: student.user.email,
+            },
+            stats: {
+                totalJobs: results.length,
+                todayApplications: todayResults.length,
+                applied,
+                skipped,
+                goodMatches,
+                poorMatches,
+                successRate,
+                directApply: appliedResults.filter(r => r.applyType === 'Direct Apply').length,
+                externalApply: appliedResults.filter(r => r.applyType === 'External Apply').length,
+                avgMatchScore: results.length > 0
+                    ? (results.reduce((sum, r) => sum + r.matchScore, 0) / results.length).toFixed(1)
+                    : 0,
+                dailyTrend,
+            },
+        });
+    } catch (error) {
+        console.error('Error fetching student stats:', error);
+        res.status(500).json({ error: 'Failed to fetch student stats' });
+    }
+});
+
+/**
+ * GET /api/institute-admin/my-profile
+ * Get own profile info (branch_manager, staff)
+ */
+router.get('/my-profile', authenticateToken, isInstituteAdminOrStaff, async (req, res) => {
+    try {
+        const user = await User.findByPk(req.userId, {
+            attributes: ['id', 'firstName', 'lastName', 'email', 'phone', 'role', 'isActive', 'createdAt'],
+        });
+        if (!user) return res.status(404).json({ error: 'User not found' });
+
+        let branch = null;
+        if (req.userRole === 'branch_manager') {
+            const managerRecord = await BranchManager.findOne({
+                where: { userId: req.userId },
+                include: [{ model: InstituteBranch, as: 'branch' }],
+            });
+            if (managerRecord?.branch) {
+                const b = managerRecord.branch;
+                branch = {
+                    id: b.id,
+                    name: b.name,
+                    location: b.location,
+                    phone: b.phone,
+                    email: b.email,
+                    status: b.status,
+                };
+            }
+        }
+
+        res.json({ user, branch });
+    } catch (error) {
+        console.error('Error fetching profile:', error);
+        res.status(500).json({ error: 'Failed to fetch profile' });
+    }
+});
+
+/**
+ * PUT /api/institute-admin/my-profile
+ * Update own basic info (branch_manager, staff)
+ */
+router.put('/my-profile', authenticateToken, isInstituteAdminOrStaff, async (req, res) => {
+    try {
+        const { firstName, lastName, phone } = req.body;
+        if (!firstName || !lastName) {
+            return res.status(400).json({ error: 'First name and last name are required' });
+        }
+        const user = await User.findByPk(req.userId);
+        if (!user) return res.status(404).json({ error: 'User not found' });
+        await user.update({ firstName, lastName, phone: phone || null });
+        res.json({ message: 'Profile updated successfully', user: { firstName, lastName, phone } });
+    } catch (error) {
+        console.error('Error updating profile:', error);
+        res.status(500).json({ error: 'Failed to update profile' });
     }
 });
 

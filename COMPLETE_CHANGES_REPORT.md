@@ -141,7 +141,7 @@ const token = localStorage.getItem('instituteAdminToken') || localStorage.getIte
 ## 🔧 CHANGE 2: URL Update - localhost → Production API
 
 ### Problem:
-All API calls were using `http://localhost:5000` instead of production URL.
+All API calls were using `https://api.autojobzy.com` instead of production URL.
 
 ### Files Changed:
 
@@ -152,14 +152,14 @@ All API calls were using `http://localhost:5000` instead of production URL.
 # Command used:
 find . -type f \( -name "*.ts" -o -name "*.tsx" -o -name "*.js" -o -name "*.jsx" \) \
   -not -path "*/node_modules/*" -not -path "*/.git/*" \
-  -exec sed -i '' 's|http://localhost:5000|https://api.autojobzy.com|g' {} \;
+  -exec sed -i '' 's|https://api.autojobzy.com|https://api.autojobzy.com|g' {} \;
 ```
 
 **Manual Update Pattern in Code:**
 
 ```typescript
 // OLD:
-const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = 'https://api.autojobzy.com';
 
 // NEW:
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.autojobzy.com/api';
@@ -887,7 +887,7 @@ server.setTimeout(120000);
 
 ```nginx
 location /api/ {
-    proxy_pass http://localhost:5000;
+    proxy_pass https://api.autojobzy.com;
     proxy_read_timeout 120s;
     proxy_connect_timeout 120s;
     proxy_send_timeout 120s;
@@ -905,7 +905,7 @@ location /api/ {
 
 ```nginx
 location /api/auth/verify-naukri-credentials {
-    proxy_pass http://localhost:5000;
+    proxy_pass https://api.autojobzy.com;
     proxy_read_timeout 120s;
     proxy_connect_timeout 120s;
     proxy_send_timeout 120s;
@@ -997,18 +997,18 @@ AWS_S3_BUCKET_NAME=autojobzy-resumes
 PORT=5000 node server/index.js
 
 # Test Naukri verification
-curl -X POST 'http://localhost:5000/api/auth/verify-naukri-credentials' \
+curl -X POST 'https://api.autojobzy.com/auth/verify-naukri-credentials' \
   -H 'Authorization: Bearer YOUR_TOKEN' \
   -H 'Content-Type: application/json' \
   -d '{"naukriUsername":"email@example.com","naukriPassword":"password"}'
 
 # Test resume upload
-curl -X POST 'http://localhost:5000/api/job-settings/resume' \
+curl -X POST 'https://api.autojobzy.com/job-settings/resume' \
   -H 'Authorization: Bearer YOUR_TOKEN' \
   -F 'resume=@test_resume.pdf'
 
 # Test resume delete
-curl -X DELETE 'http://localhost:5000/api/job-settings/resume' \
+curl -X DELETE 'https://api.autojobzy.com/job-settings/resume' \
   -H 'Authorization: Bearer YOUR_TOKEN'
 ```
 

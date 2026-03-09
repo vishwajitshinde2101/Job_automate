@@ -140,7 +140,7 @@ If you still get 504 errors after deploying these changes, it means your **rever
 #### For Nginx:
 ```nginx
 location /api/auth/verify-naukri-credentials {
-    proxy_pass http://localhost:5000;
+    proxy_pass https://api.autojobzy.com;
     proxy_read_timeout 120s;
     proxy_connect_timeout 120s;
     proxy_send_timeout 120s;

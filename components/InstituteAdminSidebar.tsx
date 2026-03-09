@@ -10,6 +10,8 @@ import {
   Settings,
   LogOut,
   User,
+  GitBranch,
+  UserCog,
 } from 'lucide-react';
 
 interface InstituteAdminSidebarProps {
@@ -56,6 +58,12 @@ const InstituteAdminSidebar: React.FC<InstituteAdminSidebarProps> = ({
       adminOnly: false,
     },
     {
+      id: 'branches',
+      label: 'Branch Management',
+      icon: GitBranch,
+      adminOnly: true, // Only institute_admin can access
+    },
+    {
       id: 'roles',
       label: 'Roles & Permissions',
       icon: Shield,
@@ -73,15 +81,20 @@ const InstituteAdminSidebar: React.FC<InstituteAdminSidebarProps> = ({
       icon: Settings,
       adminOnly: true, // Only institute_admin can access
     },
+    {
+      id: 'profile',
+      label: 'My Profile',
+      icon: UserCog,
+      adminOnly: false,
+      nonAdminOnly: true, // Only shown to non-admin roles
+    },
   ];
 
   // Filter menu items based on role
   const menuItems = allMenuItems.filter(item => {
-    // If user is admin, show all items
     if (userRole === 'institute_admin') {
-      return true;
+      return !item.nonAdminOnly;
     }
-    // If user is staff, hide admin-only items
     return !item.adminOnly;
   });
 
@@ -96,7 +109,7 @@ const InstituteAdminSidebar: React.FC<InstituteAdminSidebarProps> = ({
           <div className="flex-1 min-w-0">
             <h2 className="text-sm font-bold text-white truncate">{instituteName}</h2>
             <p className="text-xs text-gray-400">
-              {userRole === 'institute_admin' ? 'Institute Admin' : 'Institute Staff'}
+              {userRole === 'institute_admin' ? 'Institute Admin' : userRole === 'branch_manager' ? 'Branch Manager' : 'Institute Staff'}
             </p>
           </div>
         </div>
@@ -134,7 +147,7 @@ const InstituteAdminSidebar: React.FC<InstituteAdminSidebarProps> = ({
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-white truncate">
-                {userRole === 'institute_admin' ? 'Admin' : 'Staff'}
+                {userRole === 'institute_admin' ? 'Admin' : userRole === 'branch_manager' ? 'Branch Manager' : 'Staff'}
               </p>
               {adminEmail && (
                 <p className="text-xs text-gray-400 truncate">{adminEmail}</p>

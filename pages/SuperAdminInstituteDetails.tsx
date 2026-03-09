@@ -600,11 +600,10 @@ const SuperAdminInstituteDetails: React.FC = () => {
                     <button
                       key={pkg.id}
                       onClick={() => setSelectedPackageId(pkg.id)}
-                      className={`p-4 rounded-lg border-2 transition-all text-left ${
-                        selectedPackageId === pkg.id
+                      className={`p-4 rounded-lg border-2 transition-all text-left ${selectedPackageId === pkg.id
                           ? 'border-neon-purple bg-neon-purple/10'
                           : 'border-gray-700 bg-dark-900 hover:border-gray-600'
-                      }`}
+                        }`}
                     >
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
@@ -640,11 +639,10 @@ const SuperAdminInstituteDetails: React.FC = () => {
                     <button
                       key={months}
                       onClick={() => setDurationMonths(months)}
-                      className={`p-3 rounded-lg border-2 transition-all ${
-                        durationMonths === months
+                      className={`p-3 rounded-lg border-2 transition-all ${durationMonths === months
                           ? 'border-neon-blue bg-neon-blue/10 text-white'
                           : 'border-gray-700 bg-dark-900 text-gray-400 hover:border-gray-600'
-                      }`}
+                        }`}
                     >
                       <div className="font-bold">{months} Months</div>
                       <div className="text-xs mt-1">

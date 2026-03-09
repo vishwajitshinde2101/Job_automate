@@ -18,8 +18,8 @@ export const getApiUrl = (endpoint: string): string => {
 // Helper function to make authenticated API calls
 export const fetchWithAuth = async (endpoint: string, options: RequestInit = {}) => {
   const token = localStorage.getItem('token') ||
-                localStorage.getItem('superAdminToken') ||
-                localStorage.getItem('instituteAdminToken');
+    localStorage.getItem('superAdminToken') ||
+    localStorage.getItem('instituteAdminToken');
 
   const headers = {
     'Content-Type': 'application/json',

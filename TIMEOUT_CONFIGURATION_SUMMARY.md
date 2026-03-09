@@ -122,7 +122,7 @@ router.post('/verify-naukri-credentials', authenticateToken, async (req, res) =>
 ### Nginx (Production)
 ```nginx
 location /api/ {
-    proxy_pass http://localhost:5000;
+    proxy_pass https://api.autojobzy.com;
     proxy_read_timeout 120s;
     proxy_connect_timeout 120s;
     proxy_send_timeout 120s;
