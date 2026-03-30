@@ -79,12 +79,13 @@ const Downloads: React.FC = () => {
 
                 <div className="bg-white/5 rounded-lg p-4 mb-6">
                   <code className="text-cyan-400 text-sm font-mono break-all">
-                    AutoJobzy-1.0.0+.exe
+                    AutoJobzy-1.2.0+.exe
                   </code>
                 </div>
 
                 <a
-                  href="https://autojobzy-desktop-downloads.s3.eu-north-1.amazonaws.com/windows/AutoJobzy-1.0.0+.exe"
+                  // href="https://autojobzy-desktop-downloads.s3.eu-north-1.amazonaws.com/windows/AutoJobzy-1.0.0+.exe"
+                  href="https://autojobzy-desktop-downloads.s3.eu-north-1.amazonaws.com/windows/mac/AutoJobzy-1.2.0.exe"
                   className="group/btn flex items-center justify-center gap-2 w-full bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-bold py-4 rounded-xl hover:shadow-[0_0_30px_rgba(6,182,212,0.6)] transition-all duration-300 relative overflow-hidden"
                   download
                 >
@@ -112,7 +113,7 @@ const Downloads: React.FC = () => {
               <ol className="space-y-3 text-gray-300 text-sm">
                 <li className="flex gap-3">
                   <span className="flex-shrink-0 w-6 h-6 rounded-full bg-cyan-500/20 text-cyan-400 flex items-center justify-center font-bold">1</span>
-                  <span>Download <code className="text-cyan-400">AutoJobzy-1.0.0+.exe</code></span>
+                  <span>Download <code className="text-cyan-400">AutoJobzy-1.2.0+.exe</code></span>
                 </li>
                 <li className="flex gap-3">
                   <span className="flex-shrink-0 w-6 h-6 rounded-full bg-cyan-500/20 text-cyan-400 flex items-center justify-center font-bold">2</span>
