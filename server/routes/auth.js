@@ -10,6 +10,26 @@ import { generateToken, authenticateToken } from '../middleware/auth.js';
 import { verifyNaukriCredentials } from '../verifyNaukriCredentials.js';
 import * as razorpayService from '../services/razorpayService.js';
 import * as subscriptionService from '../services/subscriptionService.js';
+import jwt from 'jsonwebtoken';
+import nodemailer from 'nodemailer';
+import bcrypt from 'bcryptjs';
+
+const JWT_SECRET = process.env.JWT_SECRET || 'your_super_secret_jwt_key_change_in_production';
+const RESET_TOKEN_SECRET = process.env.RESET_TOKEN_SECRET || JWT_SECRET + '_reset';
+const FRONTEND_URL = process.env.FRONTEND_URL || 'https://autojobzy.com';
+
+// Create nodemailer transporter from environment variables
+function createEmailTransporter() {
+    return nodemailer.createTransporter({
+        host: process.env.SMTP_HOST || 'smtp.gmail.com',
+        port: parseInt(process.env.SMTP_PORT || '587'),
+        secure: process.env.SMTP_SECURE === 'true',
+        auth: {
+            user: process.env.SMTP_USER,
+            pass: process.env.SMTP_PASS,
+        },
+    });
+}
 
 const router = express.Router();
 
@@ -605,6 +625,160 @@ router.post('/institute-signup', async (req, res) => {
             error: 'Registration failed. Please try again later.',
             details: error.message
         });
+    }
+});
+
+/**
+ * POST /api/auth/change-password
+ * Change password for logged-in user (requires current password)
+ */
+router.post('/change-password', authenticateToken, async (req, res) => {
+    try {
+        const { currentPassword, newPassword } = req.body;
+
+        if (!currentPassword || !newPassword) {
+            return res.status(400).json({ error: 'Current password and new password are required' });
+        }
+
+        if (newPassword.length < 6) {
+            return res.status(400).json({ error: 'New password must be at least 6 characters long' });
+        }
+
+        const user = await User.findByPk(req.userId);
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        const isCurrentPasswordValid = await user.comparePassword(currentPassword);
+        if (!isCurrentPasswordValid) {
+            return res.status(401).json({ error: 'Current password is incorrect' });
+        }
+
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(newPassword, salt);
+        await User.update({ password: hashedPassword }, { where: { id: req.userId }, individualHooks: false });
+
+        res.json({ success: true, message: 'Password changed successfully' });
+    } catch (error) {
+        console.error('Change password error:', error);
+        res.status(500).json({ error: 'Failed to change password' });
+    }
+});
+
+/**
+ * POST /api/auth/forgot-password
+ * Send password reset link to user's email
+ */
+router.post('/forgot-password', async (req, res) => {
+    try {
+        let { email } = req.body;
+
+        if (!email) {
+            return res.status(400).json({ error: 'Email is required' });
+        }
+
+        email = email.trim().toLowerCase();
+
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            return res.status(400).json({ error: 'Invalid email format' });
+        }
+
+        const user = await User.findOne({ where: { email } });
+
+        // Always respond with success to prevent email enumeration
+        if (!user) {
+            return res.json({ success: true, message: 'If this email exists, a reset link has been sent.' });
+        }
+
+        // Generate a short-lived JWT reset token (15 minutes)
+        const resetToken = jwt.sign(
+            { userId: user.id, email: user.email, purpose: 'password-reset' },
+            RESET_TOKEN_SECRET,
+            { expiresIn: '15m' }
+        );
+
+        const resetLink = `${FRONTEND_URL}/reset-password?token=${resetToken}`;
+
+        // Send email
+        const transporter = createEmailTransporter();
+        await transporter.sendMail({
+            from: `"AutoJobzy" <${process.env.SMTP_USER}>`,
+            to: user.email,
+            subject: 'Reset Your Password - AutoJobzy',
+            html: `
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #0f172a; color: #e2e8f0; border-radius: 12px;">
+                    <h2 style="color: #00f3ff; margin-bottom: 8px;">Reset Your Password</h2>
+                    <p style="color: #94a3b8;">Hi ${user.firstName || 'User'},</p>
+                    <p style="color: #94a3b8;">We received a request to reset your password. Click the button below to set a new password. This link expires in <strong style="color: #fff;">15 minutes</strong>.</p>
+                    <div style="text-align: center; margin: 32px 0;">
+                        <a href="${resetLink}" style="background-color: #00f3ff; color: #000; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 16px; display: inline-block;">
+                            Reset Password
+                        </a>
+                    </div>
+                    <p style="color: #64748b; font-size: 13px;">If you didn't request a password reset, you can safely ignore this email.</p>
+                    <p style="color: #64748b; font-size: 12px; margin-top: 24px;">Or copy this link: <a href="${resetLink}" style="color: #00f3ff;">${resetLink}</a></p>
+                </div>
+            `,
+        });
+
+        console.log(`[FORGOT PASSWORD] Reset link sent to: ${email}`);
+        res.json({ success: true, message: 'If this email exists, a reset link has been sent.' });
+    } catch (error) {
+        console.error('Forgot password error:', error);
+        res.status(500).json({ error: 'Failed to send reset email. Please try again later.' });
+    }
+});
+
+/**
+ * POST /api/auth/reset-password
+ * Reset password using token from email link
+ */
+router.post('/reset-password', async (req, res) => {
+    try {
+        const { token, newPassword } = req.body;
+
+        if (!token || !newPassword) {
+            return res.status(400).json({ error: 'Token and new password are required' });
+        }
+
+        if (newPassword.length < 6) {
+            return res.status(400).json({ error: 'New password must be at least 6 characters long' });
+        }
+
+        // Verify the reset token
+        let decoded;
+        try {
+            decoded = jwt.verify(token, RESET_TOKEN_SECRET);
+        } catch (err) {
+            if (err.name === 'TokenExpiredError') {
+                return res.status(400).json({ error: 'Reset link has expired. Please request a new one.' });
+            }
+            return res.status(400).json({ error: 'Invalid reset token. Please request a new link.' });
+        }
+
+        if (decoded.purpose !== 'password-reset') {
+            return res.status(400).json({ error: 'Invalid reset token' });
+        }
+
+        const user = await User.findByPk(decoded.userId);
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        if (user.email !== decoded.email) {
+            return res.status(400).json({ error: 'Invalid reset token' });
+        }
+
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(newPassword, salt);
+        await User.update({ password: hashedPassword }, { where: { id: user.id }, individualHooks: false });
+
+        console.log(`[RESET PASSWORD] Password reset successful for: ${user.email}`);
+        res.json({ success: true, message: 'Password reset successfully. You can now login with your new password.' });
+    } catch (error) {
+        console.error('Reset password error:', error);
+        res.status(500).json({ error: 'Failed to reset password' });
     }
 });
 

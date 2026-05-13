@@ -17,6 +17,11 @@ import AboutUs from './pages/AboutUs';
 import WhyWeBuilt from './pages/WhyWeBuilt';
 import ApplicationHistory from './pages/ApplicationHistory';
 import Downloads from './pages/Downloads';
+import Blogs from './pages/Blogs';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
+import WriteBlog from './pages/WriteBlog';
+import SuperAdminBlogManagement from './pages/SuperAdminBlogManagement';
 import AdminLogin from './pages/AdminLogin';
 import AdminDashboard from './pages/AdminDashboard';
 import AdminProtectedRoute from './components/AdminProtectedRoute';
@@ -65,7 +70,7 @@ const AppContent: React.FC = () => {
 
   // Define protected and public routes
   const protectedRoutes = ['/dashboard', '/plans', '/setup', '/history', '/institute-admin'];
-  const publicRoutes = ['/', '/login', '/signup', '/pricing', '/privacy-policy', '/terms', '/refund-policy', '/contact', '/about', '/why-we-built', '/download', '/api-tester'];
+  const publicRoutes = ['/', '/login', '/signup', '/pricing', '/privacy-policy', '/terms', '/refund-policy', '/contact', '/about', '/why-we-built', '/download', '/api-tester', '/blogs'];
 
   // Monitor navigation and automatically logout when leaving Dashboard to public routes
   useEffect(() => {
@@ -132,6 +137,10 @@ const AppContent: React.FC = () => {
           <Route path="/about" element={<AboutUs />} />
           <Route path="/why-we-built" element={<WhyWeBuilt />} />
           <Route path="/download" element={<Downloads />} />
+          <Route path="/blogs" element={<Blogs />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/write-blog" element={<ProtectedRoute><WriteBlog /></ProtectedRoute>} />
 
           {/* Institute Routes */}
           <Route path="/institute-signup" element={<InstituteSignup />} />
@@ -154,6 +163,7 @@ const AppContent: React.FC = () => {
           <Route path="/superadmin/packages" element={<SuperAdminProtectedRoute><SuperAdminPackages /></SuperAdminProtectedRoute>} />
           <Route path="/superadmin/individual-users" element={<SuperAdminProtectedRoute><SuperAdminIndividualUsers /></SuperAdminProtectedRoute>} />
           <Route path="/superadmin/users" element={<SuperAdminProtectedRoute><SuperAdminUsers /></SuperAdminProtectedRoute>} />
+          <Route path="/superadmin/blogs" element={<SuperAdminProtectedRoute><SuperAdminBlogManagement /></SuperAdminProtectedRoute>} />
         </Routes>
       </main>
       {!user.isLoggedIn && !isAdminRoute && <Footer />}

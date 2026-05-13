@@ -1,0 +1,1951 @@
+import React, { useState } from 'react';
+import {
+  FileUser,
+  Download,
+  CheckCircle,
+  Plus,
+  Trash2,
+  Loader2,
+  ChevronDown,
+  ChevronUp,
+  ArrowLeft,
+  FileText,
+  Sparkles,
+  User,
+  BookOpen,
+  Award,
+  Briefcase,
+  Code,
+  Coffee,
+  Monitor,
+  Layers,
+  Cloud,
+  Globe,
+  Star,
+  Users,
+} from 'lucide-react';
+import jsPDF from 'jspdf';
+
+// ─────────────────── Types ───────────────────
+
+interface Experience {
+  company: string;
+  role: string;
+  duration: string;
+  responsibilities: string;
+}
+
+interface Project {
+  name: string;
+  description: string;
+  technologies: string;
+}
+
+interface Education {
+  degree: string;
+  institute: string;
+  year: string;
+  gpa?: string;
+}
+
+interface ResumeData {
+  fullName: string;
+  email: string;
+  phone: string;
+  location: string;
+  linkedin: string;
+  github: string;
+  portfolio: string;
+  professionalSummary: string;
+  technicalSkills: string;
+  softSkills: string;
+  experiences: Experience[];
+  projects: Project[];
+  educations: Education[];
+  certifications: string;
+  jobDescription: string;
+}
+
+interface ATSScore {
+  total: number;
+  keywordsMatch: number;
+  skillsAlignment: number;
+  experienceAlignment: number;
+  formatting: number;
+}
+
+interface TemplateCard {
+  id: string;
+  name: string;
+  description: string;
+  experienceLevel: 'Fresher' | 'Junior' | 'Mid-Level' | 'Senior' | 'Lead/Architect';
+  icon: React.FC<{ className?: string }>;
+  data: ResumeData;
+}
+
+type Step = 'position-select' | 'template-select' | 'editor';
+type Position = 'java-developer' | 'dotnet-developer';
+
+// ─────────────────── Java Developer Templates ───────────────────
+
+const JAVA_TEMPLATES: TemplateCard[] = [
+  {
+    id: 'java-fresher',
+    name: 'Java Fresher',
+    description: 'Ideal for fresh graduates starting their Java career with strong academic projects.',
+    experienceLevel: 'Fresher',
+    icon: Star,
+    data: {
+      fullName: 'Arjun Mehta',
+      email: 'arjun.mehta@email.com',
+      phone: '+91 98765 10001',
+      location: 'Pune, Maharashtra',
+      linkedin: 'linkedin.com/in/arjunmehta',
+      github: 'github.com/arjunmehta',
+      portfolio: '',
+      professionalSummary:
+        'Enthusiastic Java Developer with strong fundamentals in Core Java and OOP concepts. Completed B.Tech in Computer Science with hands-on experience in Spring Boot through internship and academic projects. Eager to contribute to a dynamic team and grow as a Java professional.',
+      technicalSkills: 'Core Java, Spring Boot, MySQL, HTML/CSS, JavaScript, Git, Maven, Hibernate, REST APIs, JUnit',
+      softSkills: 'Quick Learner, Team Player, Communication, Problem Solving, Adaptability',
+      experiences: [
+        {
+          company: 'TechSoft Solutions',
+          role: 'Java Developer Intern',
+          duration: 'Jun 2024 – Aug 2024',
+          responsibilities:
+            'Developed RESTful APIs using Spring Boot for a customer management module\nWrote unit tests using JUnit achieving 80% code coverage\nCollaborated with senior developers to fix bugs and improve code quality\nDocumented APIs using Swagger',
+        },
+      ],
+      projects: [
+        {
+          name: 'Library Management System',
+          description:
+            'Full-featured library system with book cataloging, member management, and fine calculation.',
+          technologies: 'Java, Spring Boot, MySQL, Thymeleaf, Bootstrap',
+        },
+        {
+          name: 'Online Quiz Application',
+          description: 'Web-based quiz app with timer, multiple-choice questions, and score tracking.',
+          technologies: 'Java, Spring Boot, MySQL, REST APIs, HTML/CSS, JavaScript',
+        },
+      ],
+      educations: [
+        {
+          degree: 'B.Tech in Computer Science Engineering',
+          institute: 'Savitribai Phule Pune University',
+          year: '2024',
+          gpa: '8.2/10',
+        },
+      ],
+      certifications: 'Java SE 11 Programmer I (OCA), Udemy Spring Boot Complete Course',
+      jobDescription: '',
+    },
+  },
+  {
+    id: 'java-junior',
+    name: 'Junior Java Developer',
+    description: 'For developers with 1–2 years of professional Java experience.',
+    experienceLevel: 'Junior',
+    icon: Code,
+    data: {
+      fullName: 'Vikram Singh',
+      email: 'vikram.singh@email.com',
+      phone: '+91 98765 10002',
+      location: 'Hyderabad, Telangana',
+      linkedin: 'linkedin.com/in/vikramsingh',
+      github: 'github.com/vikramsingh',
+      portfolio: '',
+      professionalSummary:
+        'Junior Java Developer with 1.5 years of experience building RESTful APIs and web applications using Spring Boot. Proficient in MySQL, Git workflows, and writing clean, maintainable code. Passionate about backend development and continuous learning.',
+      technicalSkills:
+        'Java 8, Spring Boot, Spring MVC, Hibernate, JPA, MySQL, REST APIs, Git, Maven, Postman, JUnit, Log4j',
+      softSkills: 'Problem Solving, Teamwork, Communication, Time Management, Attention to Detail',
+      experiences: [
+        {
+          company: 'Nexus InfoTech',
+          role: 'Junior Java Developer',
+          duration: 'Jan 2023 – Present',
+          responsibilities:
+            'Built and maintained REST APIs for an e-commerce platform handling 10K daily requests\nImplemented authentication using Spring Security and JWT\nOptimized MySQL queries reducing API response time by 30%\nParticipated in code reviews and adopted best practices',
+        },
+      ],
+      projects: [
+        {
+          name: 'Employee Leave Management System',
+          description: 'Developed leave management module with approval workflows and email notifications.',
+          technologies: 'Java, Spring Boot, MySQL, Spring Mail, REST APIs',
+        },
+      ],
+      educations: [
+        {
+          degree: 'B.Tech in Information Technology',
+          institute: 'Osmania University, Hyderabad',
+          year: '2022',
+          gpa: '7.9/10',
+        },
+      ],
+      certifications: 'Java SE 8 Programmer (OCA), Spring Framework Certification – Udemy',
+      jobDescription: '',
+    },
+  },
+  {
+    id: 'java-spring-boot',
+    name: 'Spring Boot Developer',
+    description: 'Specialized in Spring Boot REST API development with 2–4 years of experience.',
+    experienceLevel: 'Mid-Level',
+    icon: Coffee,
+    data: {
+      fullName: 'Rajesh Kumar',
+      email: 'rajesh.kumar@email.com',
+      phone: '+91 98765 10003',
+      location: 'Bengaluru, Karnataka',
+      linkedin: 'linkedin.com/in/rajeshkumar',
+      github: 'github.com/rajeshkumar',
+      portfolio: '',
+      professionalSummary:
+        'Spring Boot Developer with 3 years of experience designing and implementing scalable RESTful services. Skilled in Spring Security, JPA/Hibernate, and CI/CD pipelines. Strong understanding of SOLID principles and clean code practices.',
+      technicalSkills:
+        'Java 11, Spring Boot, Spring Security, Spring Data JPA, Hibernate, MySQL, PostgreSQL, REST APIs, Swagger/OpenAPI, Maven, Git, Jenkins, Docker basics, JUnit 5, Mockito',
+      softSkills: 'Analytical Thinking, Communication, Collaboration, Attention to Detail, Agile/Scrum',
+      experiences: [
+        {
+          company: 'InfoSys Digital',
+          role: 'Spring Boot Developer',
+          duration: 'Mar 2022 – Present',
+          responsibilities:
+            'Designed and developed 20+ REST APIs for banking customer portal serving 50K users\nIntegrated Spring Security with OAuth 2.0 for secure API access\nWrote comprehensive JUnit and Mockito test suites achieving 85% coverage\nCollaborated with frontend team to define API contracts using OpenAPI spec',
+        },
+        {
+          company: 'Softech Innovations',
+          role: 'Java Developer',
+          duration: 'Jul 2021 – Feb 2022',
+          responsibilities:
+            'Built CRUD modules using Spring MVC and Hibernate for HR management system\nMigrated legacy JSP application to Spring Boot REST backend\nOptimized SQL queries improving data retrieval speed by 40%',
+        },
+      ],
+      projects: [
+        {
+          name: 'Banking Transaction API',
+          description:
+            'Developed secure RESTful APIs for fund transfers, account statements, and notifications with audit logging.',
+          technologies: 'Java 11, Spring Boot, Spring Security, MySQL, Redis, Docker',
+        },
+      ],
+      educations: [
+        {
+          degree: 'B.E. in Computer Science',
+          institute: 'Visvesvaraya Technological University, Bengaluru',
+          year: '2021',
+          gpa: '8.4/10',
+        },
+      ],
+      certifications: 'Spring Professional Certification, AWS Cloud Practitioner',
+      jobDescription: '',
+    },
+  },
+  {
+    id: 'java-backend',
+    name: 'Java Backend Developer',
+    description: 'Backend-focused Java developer with 3–5 years in APIs, databases, and caching.',
+    experienceLevel: 'Mid-Level',
+    icon: Briefcase,
+    data: {
+      fullName: 'Suresh Nair',
+      email: 'suresh.nair@email.com',
+      phone: '+91 98765 10004',
+      location: 'Chennai, Tamil Nadu',
+      linkedin: 'linkedin.com/in/sureshnair',
+      github: 'github.com/sureshnair',
+      portfolio: '',
+      professionalSummary:
+        'Java Backend Developer with 4 years of experience building high-performance APIs and services. Expertise in Spring Boot, Redis caching, and database optimization. Proven ability to deliver scalable solutions with strong testing practices.',
+      technicalSkills:
+        'Java 11/17, Spring Boot, Spring Security, Spring Data JPA, MySQL, PostgreSQL, Redis, Docker, Kafka basics, Maven, Git, JUnit, Mockito, Swagger, Jenkins',
+      softSkills: 'Problem Solving, Ownership, Team Collaboration, Communication, Agile',
+      experiences: [
+        {
+          company: 'MindTree Ltd',
+          role: 'Java Backend Developer',
+          duration: 'Apr 2021 – Present',
+          responsibilities:
+            'Developed high-availability REST APIs processing 1M+ daily transactions for payment platform\nImplemented Redis caching reducing database load by 60%\nDesigned and enforced API security with Spring Security and JWT\nLed migration from monolith to service-oriented architecture',
+        },
+        {
+          company: 'Cognizant',
+          role: 'Java Developer',
+          duration: 'Aug 2019 – Mar 2021',
+          responsibilities:
+            'Built backend services for insurance claim processing system\nOptimized Hibernate queries and connection pooling for performance improvement\nWrote integration tests and participated in sprint ceremonies',
+        },
+      ],
+      projects: [
+        {
+          name: 'Payment Gateway Integration Service',
+          description:
+            'Microservice handling multi-gateway payment routing with retry logic, idempotency, and real-time webhook processing.',
+          technologies: 'Java 17, Spring Boot, Redis, MySQL, Docker, Jenkins',
+        },
+      ],
+      educations: [
+        {
+          degree: 'B.Tech in Computer Science',
+          institute: 'Anna University, Chennai',
+          year: '2019',
+          gpa: '8.6/10',
+        },
+      ],
+      certifications: 'Java SE 11 Developer (OCP), Oracle Database SQL Certified Associate',
+      jobDescription: '',
+    },
+  },
+  {
+    id: 'java-fullstack',
+    name: 'Java Full Stack Developer',
+    description: 'Full stack expertise with Java backend and Angular/React frontend.',
+    experienceLevel: 'Mid-Level',
+    icon: Layers,
+    data: {
+      fullName: 'Deepak Gupta',
+      email: 'deepak.gupta@email.com',
+      phone: '+91 98765 10005',
+      location: 'Delhi NCR, India',
+      linkedin: 'linkedin.com/in/deepakgupta',
+      github: 'github.com/deepakgupta',
+      portfolio: 'deepakgupta.dev',
+      professionalSummary:
+        'Java Full Stack Developer with 5 years of experience developing end-to-end web applications. Proficient in Spring Boot microservices and Angular/React frontends. Strong communicator bridging backend and frontend teams to deliver cohesive user experiences.',
+      technicalSkills:
+        'Java 11, Spring Boot, Spring Security, Angular 14, TypeScript, React, MySQL, MongoDB, REST APIs, Docker, Git, Maven, HTML5, CSS3, Bootstrap, Jenkins',
+      softSkills: 'Collaboration, Leadership, Communication, Agile/Scrum, Problem Solving, Mentoring',
+      experiences: [
+        {
+          company: 'HCL Technologies',
+          role: 'Full Stack Java Developer',
+          duration: 'May 2020 – Present',
+          responsibilities:
+            'Developed Angular-based dashboards consuming Spring Boot REST APIs for logistics management platform\nArchitected role-based access control system shared across frontend and backend\nOptimized frontend bundle size by 35% using lazy loading and tree shaking\nMentored 2 junior developers and conducted code reviews',
+        },
+        {
+          company: 'Wipro Limited',
+          role: 'Java Developer',
+          duration: 'Jul 2019 – Apr 2020',
+          responsibilities:
+            'Contributed to backend development of retail inventory management system\nIntegrated third-party shipping APIs and implemented webhooks',
+        },
+      ],
+      projects: [
+        {
+          name: 'Supply Chain Management Portal',
+          description:
+            'End-to-end supply chain portal with real-time shipment tracking, vendor management, and analytics dashboard.',
+          technologies: 'Java, Spring Boot, Angular, MySQL, Docker, AWS S3',
+        },
+      ],
+      educations: [
+        {
+          degree: 'B.Tech in Computer Science',
+          institute: 'Delhi Technological University',
+          year: '2019',
+          gpa: '8.1/10',
+        },
+      ],
+      certifications: 'Java SE 11 Developer, Angular Certified Developer, AWS Cloud Practitioner',
+      jobDescription: '',
+    },
+  },
+  {
+    id: 'java-microservices',
+    name: 'Java Microservices Developer',
+    description: 'Microservices architect with Docker, Kubernetes, and event-driven patterns.',
+    experienceLevel: 'Senior',
+    icon: Globe,
+    data: {
+      fullName: 'Ankit Sharma',
+      email: 'ankit.sharma@email.com',
+      phone: '+91 98765 10006',
+      location: 'Bengaluru, Karnataka',
+      linkedin: 'linkedin.com/in/ankitsharma',
+      github: 'github.com/ankitsharma',
+      portfolio: '',
+      professionalSummary:
+        'Java Microservices Developer with 6 years of experience designing and deploying event-driven distributed systems. Deep expertise in Spring Cloud, Kafka, Docker, and Kubernetes. Passionate about building resilient, scalable architectures with observability and zero-downtime deployments.',
+      technicalSkills:
+        'Java 17, Spring Boot, Spring Cloud, Kafka, Docker, Kubernetes, Istio, Prometheus, Grafana, Redis, MySQL, PostgreSQL, AWS, CI/CD, Git, Helm, Terraform basics',
+      softSkills: 'System Thinking, Leadership, Communication, Problem Solving, Agile/Scrum',
+      experiences: [
+        {
+          company: 'Amazon India',
+          role: 'Java Microservices Developer',
+          duration: 'Jan 2021 – Present',
+          responsibilities:
+            'Designed and deployed 8 microservices for order management using Spring Cloud and Kafka\nImplemented circuit breaker patterns with Resilience4j ensuring 99.9% uptime\nSet up Kubernetes cluster with Helm charts and automated deployments via Jenkins\nIntegrated distributed tracing with Jaeger and monitoring with Prometheus/Grafana',
+        },
+        {
+          company: 'Infosys',
+          role: 'Senior Java Developer',
+          duration: 'Jun 2018 – Dec 2020',
+          responsibilities:
+            'Led migration of monolithic application to microservices reducing release cycle from 3 months to 2 weeks\nImplemented Kafka-based event sourcing for audit trail system\nMentored team of 4 developers on Spring Cloud and containerization',
+        },
+      ],
+      projects: [
+        {
+          name: 'Real-time Order Processing System',
+          description:
+            'Event-driven microservices system handling 500K orders/day with guaranteed delivery, dead-letter queues, and auto-scaling.',
+          technologies: 'Java 17, Spring Cloud, Kafka, Kubernetes, Redis, MySQL, Prometheus',
+        },
+      ],
+      educations: [
+        {
+          degree: 'B.Tech in Computer Science',
+          institute: 'IIT Roorkee',
+          year: '2018',
+          gpa: '8.9/10',
+        },
+      ],
+      certifications: 'CKA (Certified Kubernetes Administrator), AWS Solutions Architect Associate, Java SE 17 Developer',
+      jobDescription: '',
+    },
+  },
+  {
+    id: 'java-cloud',
+    name: 'Java Cloud Developer',
+    description: 'Cloud-native Java development on AWS/GCP with serverless and container expertise.',
+    experienceLevel: 'Senior',
+    icon: Cloud,
+    data: {
+      fullName: 'Pradeep Verma',
+      email: 'pradeep.verma@email.com',
+      phone: '+91 98765 10007',
+      location: 'Bengaluru, Karnataka',
+      linkedin: 'linkedin.com/in/pradeepverma',
+      github: 'github.com/pradeepverma',
+      portfolio: '',
+      professionalSummary:
+        'Java Cloud Developer with 5 years of expertise in building cloud-native applications on AWS. Skilled in serverless architecture, containerization, and infrastructure-as-code. Experienced in designing cost-optimized, highly available systems using managed cloud services.',
+      technicalSkills:
+        'Java 11/17, Spring Boot, AWS (EC2, Lambda, S3, RDS, SQS, SNS, API Gateway, ECS), Docker, Kubernetes, Terraform, Jenkins, GitHub Actions, MySQL, DynamoDB, Redis, CI/CD',
+      softSkills: 'Problem Solving, Cloud-native Thinking, Communication, Agile, Cost Optimization Mindset',
+      experiences: [
+        {
+          company: 'Accenture',
+          role: 'Java Cloud Developer',
+          duration: 'Feb 2021 – Present',
+          responsibilities:
+            'Built serverless data-processing pipeline using AWS Lambda + SQS handling 200K events/day\nContainerized 12 Spring Boot services on AWS ECS with Fargate reducing infra cost by 40%\nImplemented blue-green deployments via AWS CodeDeploy achieving zero-downtime releases\nDesigned Terraform modules for reproducible multi-region infrastructure',
+        },
+        {
+          company: 'Tech Mahindra',
+          role: 'Java Developer',
+          duration: 'Aug 2019 – Jan 2021',
+          responsibilities:
+            'Developed backend services deployed on AWS EC2 with Auto Scaling groups\nIntegrated AWS S3 for document storage and SNS for notification delivery\nOptimized RDS instance configuration reducing monthly cloud spend by 25%',
+        },
+      ],
+      projects: [
+        {
+          name: 'Serverless Document Processing Pipeline',
+          description:
+            'AWS-native pipeline for automated document ingestion, OCR, classification, and storage with real-time status tracking.',
+          technologies: 'Java 17, AWS Lambda, S3, SQS, DynamoDB, API Gateway, Terraform',
+        },
+      ],
+      educations: [
+        {
+          degree: 'B.E. in Electronics and Computer Engineering',
+          institute: 'BITS Pilani',
+          year: '2019',
+          gpa: '8.3/10',
+        },
+      ],
+      certifications: 'AWS Certified Developer – Associate, AWS Solutions Architect Associate, Terraform Associate',
+      jobDescription: '',
+    },
+  },
+  {
+    id: 'java-senior',
+    name: 'Senior Java Developer',
+    description: 'Experienced senior developer with 6–8 years, system design, and mentoring skills.',
+    experienceLevel: 'Senior',
+    icon: Award,
+    data: {
+      fullName: 'Manoj Patel',
+      email: 'manoj.patel@email.com',
+      phone: '+91 98765 10008',
+      location: 'Mumbai, Maharashtra',
+      linkedin: 'linkedin.com/in/manojpatel',
+      github: 'github.com/manojpatel',
+      portfolio: '',
+      professionalSummary:
+        'Senior Java Developer with 7 years of experience delivering enterprise-grade applications. Expert in Spring Boot, microservices, and distributed systems. Strong advocate for clean architecture, test-driven development, and engineering excellence. Experienced in technical design, code reviews, and mentoring junior engineers.',
+      technicalSkills:
+        'Java 17, Spring Boot, Spring Cloud, Kafka, Redis, MySQL, PostgreSQL, MongoDB, Docker, Kubernetes, AWS, Design Patterns, SOLID, JUnit 5, Mockito, SonarQube, Git, CI/CD',
+      softSkills:
+        'Leadership, Mentoring, System Design, Communication, Stakeholder Management, Agile/Scrum, Decision Making',
+      experiences: [
+        {
+          company: 'Flipkart',
+          role: 'Senior Java Developer',
+          duration: 'Mar 2020 – Present',
+          responsibilities:
+            'Architected catalog search microservice using Elasticsearch handling 5M+ queries/day\nReduced P99 API latency from 800ms to 120ms through caching and async processing\nLed technical design sessions and wrote architecture decision records (ADRs)\nMentored team of 5 developers improving code quality scores by 30%\nDrove adoption of TDD resulting in 90% test coverage across owned services',
+        },
+        {
+          company: 'Persistent Systems',
+          role: 'Java Developer',
+          duration: 'Jun 2017 – Feb 2020',
+          responsibilities:
+            'Developed core banking modules in Spring Boot serving 2M+ customers\nImplemented batch processing jobs using Spring Batch for nightly reconciliation\nImproved deployment frequency from monthly to weekly using CI/CD pipelines',
+        },
+      ],
+      projects: [
+        {
+          name: 'Real-time Inventory Intelligence Platform',
+          description:
+            'Event-driven platform providing real-time inventory visibility, demand forecasting alerts, and automated replenishment triggers.',
+          technologies: 'Java 17, Spring Cloud, Kafka, Redis, Elasticsearch, Kubernetes, Grafana',
+        },
+      ],
+      educations: [
+        {
+          degree: 'M.Tech in Software Systems',
+          institute: 'BITS Pilani',
+          year: '2017',
+          gpa: '8.7/10',
+        },
+        {
+          degree: 'B.E. in Computer Science',
+          institute: 'Mumbai University',
+          year: '2015',
+          gpa: '8.2/10',
+        },
+      ],
+      certifications: 'Java SE 17 Developer (OCP), AWS Solutions Architect Associate, CKA',
+      jobDescription: '',
+    },
+  },
+  {
+    id: 'java-techlead',
+    name: 'Java Tech Lead',
+    description: 'Team-leading Java engineer with 8–10 years, driving architecture and delivery.',
+    experienceLevel: 'Lead/Architect',
+    icon: Users,
+    data: {
+      fullName: 'Ramesh Iyer',
+      email: 'ramesh.iyer@email.com',
+      phone: '+91 98765 10009',
+      location: 'Bengaluru, Karnataka',
+      linkedin: 'linkedin.com/in/rameshiyer',
+      github: 'github.com/rameshiyer',
+      portfolio: '',
+      professionalSummary:
+        'Java Tech Lead with 9 years of experience leading high-performing engineering teams and delivering complex distributed systems. Expert in microservices architecture, cloud platforms, and engineering practices. Proven track record of driving technical roadmaps, improving delivery velocity, and cultivating engineering talent.',
+      technicalSkills:
+        'Java 17, Spring Boot, Spring Cloud, Kafka, Kubernetes, AWS/GCP, Redis, System Design, Microservices Patterns, TDD, BDD, CI/CD, SonarQube, JIRA, Confluence, Code Review, Architecture Documentation',
+      softSkills:
+        'Leadership, Strategic Thinking, Mentoring, Stakeholder Management, Communication, Decision Making, Agile Coaching',
+      experiences: [
+        {
+          company: 'Swiggy',
+          role: 'Java Tech Lead',
+          duration: 'Jan 2021 – Present',
+          responsibilities:
+            'Led team of 8 engineers delivering order management and delivery partner allocation systems\nDefined technical roadmap and architectural standards across 3 product squads\nReduced mean time to recovery (MTTR) by 70% by implementing SRE practices and runbooks\nDrove quarterly OKR planning sessions and collaborated with Product on prioritization\nConducted technical interviews and grew team capability through structured L&D',
+        },
+        {
+          company: 'Ola Electric',
+          role: 'Senior Java Developer',
+          duration: 'Apr 2018 – Dec 2020',
+          responsibilities:
+            'Designed vehicle telemetry data pipeline ingesting 50M events/day using Kafka Streams\nBuilt fraud detection service flagging suspicious ride patterns with 95% accuracy\nMentored 4 junior developers and established coding guidelines and review processes',
+        },
+      ],
+      projects: [
+        {
+          name: 'Dynamic Delivery Partner Allocation Engine',
+          description:
+            'Real-time algorithmic engine assigning 100K+ daily deliveries to partners with geo-routing, SLA optimization, and load balancing.',
+          technologies: 'Java 17, Spring Cloud, Kafka, Redis Geo, Kubernetes, GCP, Prometheus',
+        },
+      ],
+      educations: [
+        {
+          degree: 'M.Tech in Computer Science',
+          institute: 'IIT Bombay',
+          year: '2015',
+          gpa: '9.0/10',
+        },
+      ],
+      certifications: 'AWS Solutions Architect Professional, CKA, Google Cloud Professional Data Engineer',
+      jobDescription: '',
+    },
+  },
+  {
+    id: 'java-architect',
+    name: 'Java Solution Architect',
+    description: 'Enterprise architect with 10+ years shaping large-scale Java platforms.',
+    experienceLevel: 'Lead/Architect',
+    icon: Layers,
+    data: {
+      fullName: 'Santosh Rao',
+      email: 'santosh.rao@email.com',
+      phone: '+91 98765 10010',
+      location: 'Hyderabad, Telangana',
+      linkedin: 'linkedin.com/in/santoshrao',
+      github: 'github.com/santoshrao',
+      portfolio: 'santoshrao.tech',
+      professionalSummary:
+        'Java Solution Architect with 12 years of experience designing enterprise-scale distributed platforms. Deep expertise in cloud-native architecture, event-driven design, and platform engineering. Trusted advisor to CTOs and VPs in translating business objectives into resilient technical architectures. Strong speaker and contributor to the Java open-source community.',
+      technicalSkills:
+        'Java 17/21, Spring Boot, Spring Cloud, Kafka, AWS/Azure, Kubernetes, Terraform, System Design, Enterprise Architecture, Domain-Driven Design (DDD), Event Sourcing, CQRS, API Gateway, Service Mesh (Istio), FinOps, Platform Engineering',
+      softSkills:
+        'Executive Communication, Strategic Planning, Stakeholder Management, Enterprise Negotiation, Team Building, Architecture Governance, Public Speaking',
+      experiences: [
+        {
+          company: 'Tata Consultancy Services',
+          role: 'Principal Java Architect',
+          duration: 'Jun 2019 – Present',
+          responsibilities:
+            'Architected cloud migration of 40+ legacy Java monoliths to AWS microservices saving client $2M/year\nDefined enterprise integration patterns and reference architectures adopted across 5 business units\nLed pre-sales engagements winning $15M in new contracts through technical solution consulting\nEstablished Architecture Review Board and governed 30+ project designs annually\nPublished 3 technical whitepapers on event-driven architecture and platform engineering',
+        },
+        {
+          company: 'Infosys',
+          role: 'Senior Technical Architect',
+          duration: 'Jan 2015 – May 2019',
+          responsibilities:
+            'Designed multi-tenant SaaS platform on AWS serving 500+ enterprise clients\nDrove Java technology standardization across 200-person engineering organization\nMentored 15 senior engineers through architecture apprenticeship program',
+        },
+      ],
+      projects: [
+        {
+          name: 'Enterprise API Platform',
+          description:
+            'Centralized API gateway platform with self-service developer portal, rate limiting, analytics, and multi-tenant security—serving 200+ internal and external consumers.',
+          technologies: 'Java 17, Spring Cloud Gateway, Kafka, Kubernetes, AWS, Kong API Gateway, Terraform',
+        },
+      ],
+      educations: [
+        {
+          degree: 'M.Tech in Software Engineering',
+          institute: 'IIT Madras',
+          year: '2012',
+          gpa: '9.2/10',
+        },
+      ],
+      certifications:
+        'AWS Solutions Architect Professional, Google Cloud Professional Architect, CKA, TOGAF 9.2 Certified, Java SE 17 Expert',
+      jobDescription: '',
+    },
+  },
+];
+
+// ─────────────────── .NET Developer Templates ───────────────────
+
+const DOTNET_TEMPLATES: TemplateCard[] = [
+  {
+    id: 'dotnet-fresher',
+    name: '.NET Fresher',
+    description: 'For fresh .NET graduates with C# fundamentals and strong academic projects.',
+    experienceLevel: 'Fresher',
+    icon: Star,
+    data: {
+      fullName: 'Pooja Sharma',
+      email: 'pooja.sharma@email.com',
+      phone: '+91 98765 20001',
+      location: 'Pune, Maharashtra',
+      linkedin: 'linkedin.com/in/poojasharma',
+      github: 'github.com/poojasharma',
+      portfolio: '',
+      professionalSummary:
+        'Aspiring .NET Developer with strong C# and ASP.NET Core fundamentals from academic training and internship experience. Skilled in building web APIs and connecting them to SQL Server databases. Enthusiastic about clean code, continuous learning, and contributing to a collaborative team.',
+      technicalSkills: 'C#, ASP.NET Core, .NET 6, SQL Server, Entity Framework Core, LINQ, HTML/CSS, Git, Visual Studio',
+      softSkills: 'Eager to Learn, Team Player, Problem Solving, Communication, Adaptability',
+      experiences: [
+        {
+          company: 'Codewave Technologies',
+          role: '.NET Developer Intern',
+          duration: 'Jun 2024 – Aug 2024',
+          responsibilities:
+            'Built CRUD Web APIs using ASP.NET Core for an inventory management system\nWrote unit tests with xUnit achieving 75% code coverage\nFixed bugs and improved existing API error handling\nCreated Swagger documentation for all API endpoints',
+        },
+      ],
+      projects: [
+        {
+          name: 'Student Management System',
+          description:
+            'Web app for managing student enrollment, grades, and attendance with role-based login.',
+          technologies: 'C#, ASP.NET Core, SQL Server, Entity Framework, Bootstrap',
+        },
+        {
+          name: 'Task Tracker API',
+          description:
+            'RESTful API for task tracking with user auth, priority levels, and due-date notifications.',
+          technologies: 'C#, ASP.NET Core Web API, JWT, SQL Server, xUnit',
+        },
+      ],
+      educations: [
+        {
+          degree: 'B.Tech in Computer Engineering',
+          institute: 'Pune University',
+          year: '2024',
+          gpa: '8.0/10',
+        },
+      ],
+      certifications: 'Microsoft Certified: Azure Fundamentals (AZ-900), Udemy ASP.NET Core Bootcamp',
+      jobDescription: '',
+    },
+  },
+  {
+    id: 'dotnet-junior',
+    name: 'Junior .NET Developer',
+    description: '1–2 years of C# and ASP.NET Core experience with REST API fundamentals.',
+    experienceLevel: 'Junior',
+    icon: Code,
+    data: {
+      fullName: 'Rohit Gupta',
+      email: 'rohit.gupta@email.com',
+      phone: '+91 98765 20002',
+      location: 'Noida, Uttar Pradesh',
+      linkedin: 'linkedin.com/in/rohitgupta',
+      github: 'github.com/rohitgupta',
+      portfolio: '',
+      professionalSummary:
+        'Junior .NET Developer with 1.5 years building REST APIs and data-driven web applications with ASP.NET Core. Solid understanding of C#, Entity Framework Core, and SQL Server. Committed to writing clean, testable code and delivering reliable solutions.',
+      technicalSkills:
+        'C#, ASP.NET Core, .NET 6/7, Web API, Entity Framework Core, LINQ, SQL Server, Git, xUnit, Postman, Visual Studio, Swagger',
+      softSkills: 'Detail-Oriented, Team Collaboration, Communication, Problem Solving, Time Management',
+      experiences: [
+        {
+          company: 'Apexion IT Solutions',
+          role: 'Junior .NET Developer',
+          duration: 'Feb 2023 – Present',
+          responsibilities:
+            'Developed and maintained RESTful APIs for a retail POS system\nImplemented JWT authentication and role-based authorization\nOptimized Entity Framework queries reducing page load times by 25%\nParticipated in daily stand-ups and bi-weekly sprint reviews',
+        },
+      ],
+      projects: [
+        {
+          name: 'HR Portal API',
+          description: 'Backend API for HR portal covering employee records, leave management, and payroll.',
+          technologies: 'C#, ASP.NET Core, SQL Server, Entity Framework Core, JWT',
+        },
+      ],
+      educations: [
+        {
+          degree: 'B.Tech in Information Technology',
+          institute: 'Gautam Buddha University, Greater Noida',
+          year: '2022',
+          gpa: '7.8/10',
+        },
+      ],
+      certifications: 'AZ-900 Azure Fundamentals, Udemy C# Advanced Topics',
+      jobDescription: '',
+    },
+  },
+  {
+    id: 'dotnet-aspnet-core',
+    name: 'ASP.NET Core Developer',
+    description: 'API specialist with 2–4 years in ASP.NET Core, EF Core, and SQL Server.',
+    experienceLevel: 'Mid-Level',
+    icon: Monitor,
+    data: {
+      fullName: 'Kavitha Reddy',
+      email: 'kavitha.reddy@email.com',
+      phone: '+91 98765 20003',
+      location: 'Hyderabad, Telangana',
+      linkedin: 'linkedin.com/in/kavithareddy',
+      github: 'github.com/kavithareddy',
+      portfolio: '',
+      professionalSummary:
+        'ASP.NET Core Developer with 3 years of experience designing RESTful APIs and web applications. Proficient in Entity Framework Core, SQL Server stored procedures, and clean architecture patterns. Adept at writing testable code and integrating with external services.',
+      technicalSkills:
+        'C#, ASP.NET Core, .NET 6/7, Web API, Entity Framework Core, LINQ, SQL Server, Redis, Swagger/OpenAPI, AutoMapper, FluentValidation, xUnit, Moq, Git, Azure DevOps, Postman',
+      softSkills: 'Analytical Thinking, Collaboration, Communication, Agile/Scrum, Attention to Detail',
+      experiences: [
+        {
+          company: 'Mphasis Limited',
+          role: 'ASP.NET Core Developer',
+          duration: 'Apr 2022 – Present',
+          responsibilities:
+            'Built 15+ REST APIs for insurance claims portal using clean architecture (Controller → Service → Repository)\nIntegrated Redis caching for frequently accessed policy data improving response by 45%\nAutomated API documentation with Swagger/OpenAPI and maintained Postman collections\nWrote xUnit + Moq tests achieving 82% coverage',
+        },
+        {
+          company: 'Zenith Software',
+          role: '.NET Developer',
+          duration: 'Sep 2021 – Mar 2022',
+          responsibilities:
+            'Developed data-entry web modules using ASP.NET Core MVC and Razor Pages\nCreated stored procedures and optimized slow-running SQL queries\nDeployed application to Azure App Service and configured deployment slots',
+        },
+      ],
+      projects: [
+        {
+          name: 'Claims Processing API',
+          description:
+            'RESTful API for end-to-end insurance claims lifecycle with state machine, document uploads, and adjuster notifications.',
+          technologies: 'C#, ASP.NET Core, Entity Framework Core, SQL Server, Redis, Azure Blob Storage',
+        },
+      ],
+      educations: [
+        {
+          degree: 'B.Tech in Computer Science',
+          institute: 'Jawaharlal Nehru Technological University, Hyderabad',
+          year: '2021',
+          gpa: '8.3/10',
+        },
+      ],
+      certifications: 'AZ-204 Azure Developer Associate, Microsoft Certified: C# Fundamentals',
+      jobDescription: '',
+    },
+  },
+  {
+    id: 'dotnet-backend',
+    name: 'C# Backend Developer',
+    description: 'Strong C# backend developer with CQRS, DDD, and high-performance APIs.',
+    experienceLevel: 'Mid-Level',
+    icon: Briefcase,
+    data: {
+      fullName: 'Nikhil Joshi',
+      email: 'nikhil.joshi@email.com',
+      phone: '+91 98765 20004',
+      location: 'Bengaluru, Karnataka',
+      linkedin: 'linkedin.com/in/nikhiljoshi',
+      github: 'github.com/nikhiljoshi',
+      portfolio: '',
+      professionalSummary:
+        'C# Backend Developer with 4 years of experience building scalable, maintainable systems using CQRS, MediatR, and Domain-Driven Design. Skilled in ASP.NET Core, Entity Framework Core, and Azure services. Strong proponent of clean architecture and engineering best practices.',
+      technicalSkills:
+        'C# 10/11, ASP.NET Core, .NET 6/7, CQRS, MediatR, Entity Framework Core, LINQ, SQL Server, Redis, Azure Service Bus, Docker, Git, xUnit, Moq, FluentValidation, AutoMapper, Azure DevOps',
+      softSkills: 'Problem Solving, Ownership, Team Collaboration, Communication, Agile, Clean Code Mindset',
+      experiences: [
+        {
+          company: 'Capgemini',
+          role: 'C# Backend Developer',
+          duration: 'Mar 2021 – Present',
+          responsibilities:
+            'Implemented CQRS pattern with MediatR for order management service processing 300K orders/month\nDesigned domain models using DDD principles resulting in 60% reduction in bug-surface\nBuilt Azure Service Bus messaging to decouple fulfillment and notification microservices\nAchieved 88% test coverage using xUnit and Moq; enforced via PR gates in Azure DevOps',
+        },
+        {
+          company: 'Hexaware Technologies',
+          role: '.NET Developer',
+          duration: 'Jul 2020 – Feb 2021',
+          responsibilities:
+            'Developed API modules for healthcare appointment booking system\nIntegrated Twilio SMS and SendGrid email notification services\nOptimized Entity Framework Core queries reducing DB round trips by 50%',
+        },
+      ],
+      projects: [
+        {
+          name: 'Order Management Microservice',
+          description:
+            'CQRS-based microservice for order lifecycle management with DDD aggregates, event sourcing, and Azure Service Bus integration.',
+          technologies: 'C# 11, ASP.NET Core, MediatR, Azure Service Bus, SQL Server, Redis, Docker',
+        },
+      ],
+      educations: [
+        {
+          degree: 'B.E. in Computer Engineering',
+          institute: 'Pune Institute of Computer Technology',
+          year: '2020',
+          gpa: '8.5/10',
+        },
+      ],
+      certifications: 'AZ-204 Azure Developer Associate, Microsoft Certified: .NET Developer Path',
+      jobDescription: '',
+    },
+  },
+  {
+    id: 'dotnet-fullstack',
+    name: '.NET Full Stack Developer',
+    description: '.NET backend with Angular/React frontend for complete web application development.',
+    experienceLevel: 'Mid-Level',
+    icon: Layers,
+    data: {
+      fullName: 'Sneha Patil',
+      email: 'sneha.patil@email.com',
+      phone: '+91 98765 20005',
+      location: 'Mumbai, Maharashtra',
+      linkedin: 'linkedin.com/in/snehapatil',
+      github: 'github.com/snehapatil',
+      portfolio: 'snehapatil.dev',
+      professionalSummary:
+        '.NET Full Stack Developer with 5 years of experience delivering modern web applications using ASP.NET Core APIs and Angular frontends. Expert in bridging backend performance with excellent frontend UX. Experienced working in Agile squads delivering bi-weekly production releases.',
+      technicalSkills:
+        'C#, ASP.NET Core, .NET 6/7, Angular 15, TypeScript, RxJS, SQL Server, Entity Framework Core, Azure, Docker, Git, HTML5, CSS3, Bootstrap, SCSS, REST APIs, Swagger, xUnit',
+      softSkills: 'Collaboration, Communication, Problem Solving, Agile/Scrum, Mentoring, Adaptability',
+      experiences: [
+        {
+          company: 'L&T Technology Services',
+          role: '.NET Full Stack Developer',
+          duration: 'Jun 2020 – Present',
+          responsibilities:
+            'Developed Angular 15 dashboard with real-time telemetry charts consuming ASP.NET Core SignalR streams\nBuilt reusable Angular component library reducing frontend development time by 40%\nDesigned and documented REST APIs with OpenAPI 3.0 for 12 product features\nMentored 2 junior developers on Angular reactive forms and RxJS patterns',
+        },
+        {
+          company: 'Zensar Technologies',
+          role: '.NET Developer',
+          duration: 'Aug 2019 – May 2020',
+          responsibilities:
+            'Contributed to backend API development for e-commerce platform\nDeveloped Razor Pages UI for product admin portal',
+        },
+      ],
+      projects: [
+        {
+          name: 'IoT Device Management Portal',
+          description:
+            'Full-stack portal for managing 10K+ IoT devices with real-time status, alerts, OTA updates, and analytics.',
+          technologies: 'C#, ASP.NET Core, Angular 15, SignalR, SQL Server, Azure IoT Hub, Docker',
+        },
+      ],
+      educations: [
+        {
+          degree: 'B.E. in Computer Science',
+          institute: 'Mumbai University',
+          year: '2019',
+          gpa: '8.1/10',
+        },
+      ],
+      certifications: 'AZ-204 Azure Developer, Angular Certified Developer, Microsoft Certified: C# Fundamentals',
+      jobDescription: '',
+    },
+  },
+  {
+    id: 'dotnet-microservices',
+    name: '.NET Microservices Developer',
+    description: 'Microservices expertise with .NET, Docker, Azure Service Bus, and Kubernetes.',
+    experienceLevel: 'Senior',
+    icon: Globe,
+    data: {
+      fullName: 'Amit Tiwari',
+      email: 'amit.tiwari@email.com',
+      phone: '+91 98765 20006',
+      location: 'Bengaluru, Karnataka',
+      linkedin: 'linkedin.com/in/amittiwari',
+      github: 'github.com/amittiwari',
+      portfolio: '',
+      professionalSummary:
+        '.NET Microservices Developer with 6 years of expertise designing and operating cloud-native distributed systems. Deep knowledge of service-to-service communication, event-driven architecture, and observability on Azure. Passionate about building resilient, independently deployable services.',
+      technicalSkills:
+        'C# 11, ASP.NET Core, .NET 7, Microservices, Docker, Kubernetes (AKS), Azure Service Bus, gRPC, DAPR, Redis, SQL Server, MongoDB, Ocelot API Gateway, Polly, Serilog, Seq, Azure DevOps, Helm',
+      softSkills: 'Systems Thinking, Leadership, Problem Solving, Communication, Agile, Resilience Mindset',
+      experiences: [
+        {
+          company: 'Microsoft India',
+          role: '.NET Microservices Developer',
+          duration: 'Feb 2021 – Present',
+          responsibilities:
+            'Designed 6 microservices for B2B SaaS platform using .NET 7 and DAPR service invocation\nImplemented event-driven choreography via Azure Service Bus with outbox pattern for reliable messaging\nBuilt centralized logging/tracing with Serilog + Application Insights cutting MTTR by 65%\nSet up AKS cluster with KEDA-based auto-scaling for demand-driven workloads',
+        },
+        {
+          company: 'Sopra Steria',
+          role: 'Senior .NET Developer',
+          duration: 'May 2018 – Jan 2021',
+          responsibilities:
+            'Migrated on-premise WCF services to ASP.NET Core microservices on Azure\nBuilt gRPC inter-service communication layer reducing latency by 55% vs REST\nMentored 3 developers on microservices patterns and container best practices',
+        },
+      ],
+      projects: [
+        {
+          name: 'B2B SaaS Billing Microservice',
+          description:
+            'Event-driven billing microservice handling subscription lifecycle, usage metering, and invoice generation with audit trail and idempotent processing.',
+          technologies: 'C# 11, ASP.NET Core, DAPR, Azure Service Bus, Kubernetes, MongoDB, Redis',
+        },
+      ],
+      educations: [
+        {
+          degree: 'B.Tech in Computer Science',
+          institute: 'IIT Kanpur',
+          year: '2018',
+          gpa: '8.8/10',
+        },
+      ],
+      certifications: 'AZ-305 Azure Solutions Architect Expert, CKA, Docker Certified Associate',
+      jobDescription: '',
+    },
+  },
+  {
+    id: 'dotnet-azure',
+    name: '.NET Azure Developer',
+    description: 'Azure-native .NET developer with serverless, Azure Functions, and PaaS expertise.',
+    experienceLevel: 'Senior',
+    icon: Cloud,
+    data: {
+      fullName: 'Divya Krishnan',
+      email: 'divya.krishnan@email.com',
+      phone: '+91 98765 20007',
+      location: 'Chennai, Tamil Nadu',
+      linkedin: 'linkedin.com/in/divyakrishnan',
+      github: 'github.com/divyakrishnan',
+      portfolio: '',
+      professionalSummary:
+        '.NET Azure Developer with 5 years of experience building scalable cloud-native applications using Azure PaaS services. Expert in Azure Functions, Logic Apps, and cost-optimized architectures. Skilled in CI/CD automation with Azure DevOps and infrastructure-as-code with Bicep/Terraform.',
+      technicalSkills:
+        'C#, ASP.NET Core, .NET 6/7, Azure Functions, Azure App Service, Azure Logic Apps, Azure Service Bus, Azure Cosmos DB, Azure SQL, Azure Blob Storage, Azure Key Vault, Bicep, Terraform, Azure DevOps, Docker',
+      softSkills: 'Cloud-native Mindset, Problem Solving, Communication, Cost Awareness, Agile, Documentation',
+      experiences: [
+        {
+          company: 'IBM India',
+          role: '.NET Azure Developer',
+          duration: 'Jan 2021 – Present',
+          responsibilities:
+            'Built serverless ETL pipelines using Azure Functions + Blob triggers processing 500K records/day\nDesigned multi-environment Azure infrastructure with Bicep IaC templates reducing provisioning time by 80%\nImplemented Azure API Management gateway with throttling, caching, and developer portal\nAchieved 30% monthly Azure cost reduction through right-sizing and reserved instances',
+        },
+        {
+          company: 'Cognizant',
+          role: '.NET Developer',
+          duration: 'Aug 2019 – Dec 2020',
+          responsibilities:
+            'Developed ASP.NET Core APIs deployed on Azure App Service with staging slot deployments\nIntegrated Azure AD B2C for external user authentication across 3 applications\nSet up monitoring with Application Insights and created alert rules for SLA compliance',
+        },
+      ],
+      projects: [
+        {
+          name: 'Serverless Data Integration Platform',
+          description:
+            'Azure-native integration platform connecting 8 enterprise systems via event-driven Azure Functions, Service Bus, and Logic Apps workflows.',
+          technologies: 'C#, Azure Functions, Azure Service Bus, Logic Apps, Cosmos DB, Bicep, Azure DevOps',
+        },
+      ],
+      educations: [
+        {
+          degree: 'B.E. in Information Technology',
+          institute: 'Anna University, Chennai',
+          year: '2019',
+          gpa: '8.2/10',
+        },
+      ],
+      certifications: 'AZ-204 Azure Developer Associate, AZ-305 Azure Architect Expert, DP-203 Data Engineer Associate',
+      jobDescription: '',
+    },
+  },
+  {
+    id: 'dotnet-senior',
+    name: 'Senior .NET Developer',
+    description: '6–8 years of .NET experience with architecture ownership and mentoring.',
+    experienceLevel: 'Senior',
+    icon: Award,
+    data: {
+      fullName: 'Rajan Mehta',
+      email: 'rajan.mehta@email.com',
+      phone: '+91 98765 20008',
+      location: 'Delhi NCR, India',
+      linkedin: 'linkedin.com/in/rajanmehta',
+      github: 'github.com/rajanmehta',
+      portfolio: '',
+      professionalSummary:
+        'Senior .NET Developer with 7 years of experience leading design and delivery of enterprise-grade distributed systems. Deep expertise in C#, CQRS/Event Sourcing, and Azure microservices. Known for driving engineering quality, mentoring teams, and improving system reliability metrics.',
+      technicalSkills:
+        'C# 11, ASP.NET Core, .NET 7, CQRS, Event Sourcing, MediatR, Kafka, Azure, Docker, Kubernetes, SQL Server, Cosmos DB, Redis, DDD, Polly, xUnit, Moq, SonarQube, Azure DevOps, CI/CD',
+      softSkills: 'Leadership, Mentoring, Architectural Decision Making, Communication, Agile, Code Quality Advocacy',
+      experiences: [
+        {
+          company: 'Paytm',
+          role: 'Senior .NET Developer',
+          duration: 'Apr 2020 – Present',
+          responsibilities:
+            'Architected event-sourced transaction ledger service handling ₹100M+ daily transactions with complete audit history\nReduced API P95 latency from 950ms to 180ms via async processing and Cosmos DB query optimization\nEstablished team-wide TDD practices increasing overall test coverage from 40% to 87%\nMentored team of 6 developers; conducted bi-weekly architecture sessions and code reviews',
+        },
+        {
+          company: 'Wipro',
+          role: '.NET Developer',
+          duration: 'Jul 2017 – Mar 2020',
+          responsibilities:
+            'Developed core accounting modules for financial services platform using C# and SQL Server\nMigrated WCF services to ASP.NET Core REST APIs for 3 legacy systems\nLed adoption of Azure DevOps CI/CD pipelines reducing deployment effort by 70%',
+        },
+      ],
+      projects: [
+        {
+          name: 'Transaction Ledger with Event Sourcing',
+          description:
+            'Immutable, event-sourced transaction ledger with full replay capability, compensating transactions, and real-time aggregation views.',
+          technologies: 'C# 11, ASP.NET Core, EventStoreDB, Kafka, Azure, Cosmos DB, Redis, Docker',
+        },
+      ],
+      educations: [
+        {
+          degree: 'M.Tech in Software Engineering',
+          institute: 'IIIT Delhi',
+          year: '2017',
+          gpa: '8.7/10',
+        },
+      ],
+      certifications: 'AZ-305 Azure Architect Expert, CKA, Microsoft Certified: Expert Developer',
+      jobDescription: '',
+    },
+  },
+  {
+    id: 'dotnet-techlead',
+    name: '.NET Tech Lead',
+    description: '.NET engineering lead with 8–10 years driving delivery and architecture.',
+    experienceLevel: 'Lead/Architect',
+    icon: Users,
+    data: {
+      fullName: 'Preeti Sharma',
+      email: 'preeti.sharma@email.com',
+      phone: '+91 98765 20009',
+      location: 'Bengaluru, Karnataka',
+      linkedin: 'linkedin.com/in/preetisharma',
+      github: 'github.com/preetisharma',
+      portfolio: '',
+      professionalSummary:
+        '.NET Tech Lead with 9 years of experience leading cross-functional engineering teams and delivering high-impact .NET platforms on Azure. Expert in microservices, cloud architecture, and engineering culture. Proven record of improving team velocity, system reliability, and engineering practices at scale.',
+      technicalSkills:
+        'C# 11/12, ASP.NET Core, .NET 7/8, Azure, Microservices, CQRS, Event Sourcing, Kubernetes (AKS), Kafka, System Design, Code Review, Architecture Documentation, Azure DevOps, Agile/SAFe',
+      softSkills: 'Leadership, Coaching, Strategic Communication, Stakeholder Management, Agile Delivery, Decision Making',
+      experiences: [
+        {
+          company: 'Razorpay',
+          role: '.NET Tech Lead',
+          duration: 'Feb 2021 – Present',
+          responsibilities:
+            'Led team of 9 engineers across API infrastructure and risk microservices squads\nDefined technical strategy for migration of 20+ .NET Framework services to .NET 7 on AKS\nDrove 40% improvement in team velocity through dependency removal and platform investments\nChaired Architecture Review Board reviewing 25+ designs annually\nGrew 3 mid-level engineers to senior through structured mentorship and stretch assignments',
+        },
+        {
+          company: 'Nykaa',
+          role: 'Senior .NET Developer',
+          duration: 'Jun 2017 – Jan 2021',
+          responsibilities:
+            'Designed inventory and pricing microservices for fashion e-commerce platform processing 2M+ SKUs\nImplemented distributed tracing and alerting cutting incident response time by 60%\nActed as hiring bar-raiser for .NET engineering roles',
+        },
+      ],
+      projects: [
+        {
+          name: 'Risk and Fraud Detection Platform',
+          description:
+            'Real-time fraud scoring platform processing 500K transactions/day using ML-based rule engine with sub-50ms latency SLA.',
+          technologies: 'C# 11, ASP.NET Core, Kafka, Redis, SQL Server, Azure Machine Learning, Kubernetes',
+        },
+      ],
+      educations: [
+        {
+          degree: 'M.Tech in Computer Science',
+          institute: 'NIT Trichy',
+          year: '2015',
+          gpa: '9.1/10',
+        },
+      ],
+      certifications: 'AZ-305 Azure Solutions Architect Expert, CKA, TOGAF Foundation',
+      jobDescription: '',
+    },
+  },
+  {
+    id: 'dotnet-architect',
+    name: '.NET Solution Architect',
+    description: 'Enterprise .NET architect with 10+ years shaping large-scale Azure platforms.',
+    experienceLevel: 'Lead/Architect',
+    icon: Layers,
+    data: {
+      fullName: 'Vijay Kumar',
+      email: 'vijay.kumar@email.com',
+      phone: '+91 98765 20010',
+      location: 'Mumbai, Maharashtra',
+      linkedin: 'linkedin.com/in/vijaykumar',
+      github: 'github.com/vijaykumar',
+      portfolio: 'vijaykumar.tech',
+      professionalSummary:
+        '.NET Solution Architect with 12 years of experience architecting enterprise-scale SaaS platforms and digital transformation programs on Azure. Deep expertise in cloud-native design, platform engineering, and C#/.NET ecosystem evolution. Trusted technical advisor to C-suite and delivery partner in $10M+ programs.',
+      technicalSkills:
+        'C# 12, .NET 8, ASP.NET Core, Azure Architecture (PaaS/IaaS/Serverless), Microservices, Event-Driven Architecture, DDD, CQRS, Platform Engineering, Service Mesh (Istio), FinOps, API Management (Azure APIM), Terraform, Enterprise Integration Patterns',
+      softSkills: 'Executive Communication, Strategic Vision, Enterprise Governance, Team Building, Negotiation, Public Speaking',
+      experiences: [
+        {
+          company: 'Deloitte Digital',
+          role: 'Principal .NET Architect',
+          duration: 'Jul 2019 – Present',
+          responsibilities:
+            'Architected greenfield Azure SaaS platform for Fortune 500 retailer serving 1M+ users with 99.99% SLA\nLed $8M digital transformation engagement migrating 60 .NET Framework apps to .NET 8 microservices\nEstablished Cloud Center of Excellence practices adopted by 300-person engineering division\nAuthored enterprise reference architectures and spoke at 3 industry conferences on .NET modernization\nWon $20M new business through technical solution consulting and proposal leadership',
+        },
+        {
+          company: 'Accenture',
+          role: 'Senior Technical Architect',
+          duration: 'Jan 2015 – Jun 2019',
+          responsibilities:
+            'Designed multi-tenant Azure SaaS platform for financial services with PCI-DSS compliance\nDefined .NET engineering standards across 400-person center of excellence\nDelivered architecture apprenticeship program training 20 senior engineers',
+        },
+      ],
+      projects: [
+        {
+          name: 'Enterprise Azure Integration Platform',
+          description:
+            'Cloud-native integration backbone connecting 50+ enterprise systems via Azure APIM, Service Bus, and .NET microservices—enabling real-time data flow across business domains.',
+          technologies: 'C# 12, .NET 8, Azure APIM, Azure Service Bus, Event Grid, AKS, Cosmos DB, Terraform',
+        },
+      ],
+      educations: [
+        {
+          degree: 'M.Tech in Computer Science',
+          institute: 'IIT Delhi',
+          year: '2012',
+          gpa: '9.3/10',
+        },
+      ],
+      certifications:
+        'AZ-305 Azure Solutions Architect Expert, TOGAF 9.2 Certified, CKA, Microsoft Certified: Azure Expert, DP-300 Database Administrator',
+      jobDescription: '',
+    },
+  },
+];
+
+// ─────────────────── Helpers ───────────────────
+
+const EXPERIENCE_LEVEL_STYLES: Record<string, string> = {
+  Fresher: 'bg-green-500/20 text-green-400 border-green-500/30',
+  Junior: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
+  'Mid-Level': 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
+  Senior: 'bg-orange-500/20 text-orange-400 border-orange-500/30',
+  'Lead/Architect': 'bg-purple-500/20 text-purple-400 border-purple-500/30',
+};
+
+const EMPTY_RESUME: ResumeData = {
+  fullName: '',
+  email: '',
+  phone: '',
+  location: '',
+  linkedin: '',
+  github: '',
+  portfolio: '',
+  professionalSummary: '',
+  technicalSkills: '',
+  softSkills: '',
+  experiences: [{ company: '', role: '', duration: '', responsibilities: '' }],
+  projects: [{ name: '', description: '', technologies: '' }],
+  educations: [{ degree: '', institute: '', year: '', gpa: '' }],
+  certifications: '',
+  jobDescription: '',
+};
+
+// ─────────────────── Component ───────────────────
+
+const ResumeBuilder: React.FC = () => {
+  const [step, setStep] = useState<Step>('position-select');
+  const [selectedPosition, setSelectedPosition] = useState<Position | null>(null);
+  const [formData, setFormData] = useState<ResumeData>(EMPTY_RESUME);
+  const [activeSection, setActiveSection] = useState<string>('personal');
+  const [atsScore, setAtsScore] = useState<ATSScore | null>(null);
+  const [isCalculating, setIsCalculating] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
+
+  const templates = selectedPosition === 'java-developer' ? JAVA_TEMPLATES : DOTNET_TEMPLATES;
+
+  // ── Handlers ──
+
+  const handleSelectPosition = (pos: Position) => {
+    setSelectedPosition(pos);
+    setStep('template-select');
+  };
+
+  const handleSelectTemplate = (template: TemplateCard) => {
+    setFormData(template.data);
+    setAtsScore(null);
+    setActiveSection('personal');
+    setStep('editor');
+  };
+
+  const handleBackToPositions = () => {
+    setStep('position-select');
+    setSelectedPosition(null);
+  };
+
+  const handleBackToTemplates = () => {
+    setStep('template-select');
+    setAtsScore(null);
+  };
+
+  // Experience
+  const addExperience = () =>
+    setFormData({ ...formData, experiences: [...formData.experiences, { company: '', role: '', duration: '', responsibilities: '' }] });
+
+  const removeExperience = (i: number) =>
+    setFormData({ ...formData, experiences: formData.experiences.filter((_, idx) => idx !== i) });
+
+  const updateExperience = (i: number, field: keyof Experience, val: string) => {
+    const arr = [...formData.experiences];
+    arr[i] = { ...arr[i], [field]: val };
+    setFormData({ ...formData, experiences: arr });
+  };
+
+  // Project
+  const addProject = () =>
+    setFormData({ ...formData, projects: [...formData.projects, { name: '', description: '', technologies: '' }] });
+
+  const removeProject = (i: number) =>
+    setFormData({ ...formData, projects: formData.projects.filter((_, idx) => idx !== i) });
+
+  const updateProject = (i: number, field: keyof Project, val: string) => {
+    const arr = [...formData.projects];
+    arr[i] = { ...arr[i], [field]: val };
+    setFormData({ ...formData, projects: arr });
+  };
+
+  // Education
+  const addEducation = () =>
+    setFormData({ ...formData, educations: [...formData.educations, { degree: '', institute: '', year: '', gpa: '' }] });
+
+  const removeEducation = (i: number) =>
+    setFormData({ ...formData, educations: formData.educations.filter((_, idx) => idx !== i) });
+
+  const updateEducation = (i: number, field: keyof Education, val: string) => {
+    const arr = [...formData.educations];
+    arr[i] = { ...arr[i], [field]: val };
+    setFormData({ ...formData, educations: arr });
+  };
+
+  // ATS Score
+  const calculateATSScore = (): ATSScore => {
+    const jd = formData.jobDescription.toLowerCase();
+    const skills = `${formData.technicalSkills} ${formData.softSkills}`.toLowerCase();
+    const summary = formData.professionalSummary.toLowerCase();
+    const allExp = formData.experiences.map((e) => `${e.role} ${e.responsibilities}`).join(' ').toLowerCase();
+    const allProj = formData.projects.map((p) => `${p.name} ${p.description} ${p.technologies}`).join(' ').toLowerCase();
+    const resumeContent = `${skills} ${summary} ${allExp} ${allProj}`;
+    const stopWords = new Set(['with', 'this', 'that', 'will', 'have', 'been', 'from', 'into', 'should', 'work', 'team', 'must']);
+    const jdWords = [...new Set(jd.split(/\W+/).filter((w) => w.length > 3 && !stopWords.has(w)))];
+    const matchedKw = jdWords.filter((w) => resumeContent.includes(w));
+    const kwScore = jdWords.length > 0 ? Math.round((matchedKw.length / jdWords.length) * 40) : 0;
+    const skillsList = skills.split(',').map((s) => s.trim());
+    const matchedSkills = skillsList.filter((s) => jd.includes(s));
+    const skillScore = skillsList.length > 0 ? Math.round((matchedSkills.length / skillsList.length) * 30) : 0;
+    const expScore = formData.experiences.some((e) => e.company && e.role && e.responsibilities) ? 20 : 0;
+    return { total: kwScore + skillScore + expScore + 10, keywordsMatch: kwScore, skillsAlignment: skillScore, experienceAlignment: expScore, formatting: 10 };
+  };
+
+  const handleCalculateATS = () => {
+    setIsCalculating(true);
+    setTimeout(() => {
+      setAtsScore(calculateATSScore());
+      setIsCalculating(false);
+    }, 800);
+  };
+
+  // PDF Download
+  const downloadPDF = () => {
+    setIsDownloading(true);
+    setTimeout(() => {
+      const doc = new jsPDF();
+      const pw = doc.internal.pageSize.getWidth();
+      const ph = doc.internal.pageSize.getHeight();
+      const m = 20;
+      let y = 20;
+
+      const pageBreak = (space = 20) => { if (y + space > ph - 20) { doc.addPage(); y = 20; } };
+      const addText = (text: string, size = 11, bold = false) => {
+        pageBreak();
+        doc.setFontSize(size);
+        doc.setFont('helvetica', bold ? 'bold' : 'normal');
+        const lines = doc.splitTextToSize(text, pw - 2 * m);
+        doc.text(lines, m, y);
+        y += lines.length * (size * 0.35) + 3;
+      };
+      const addSection = (title: string) => {
+        pageBreak(15);
+        y += 5;
+        doc.setFontSize(13);
+        doc.setFont('helvetica', 'bold');
+        doc.text(title, m, y);
+        y += 2;
+        doc.setLineWidth(0.5);
+        doc.line(m, y, pw - m, y);
+        y += 5;
+      };
+
+      doc.setFontSize(18); doc.setFont('helvetica', 'bold');
+      doc.text(formData.fullName, pw / 2, y, { align: 'center' }); y += 7;
+      doc.setFontSize(10); doc.setFont('helvetica', 'normal');
+      doc.text(`${formData.email} | ${formData.phone} | ${formData.location}`, pw / 2, y, { align: 'center' }); y += 5;
+      const links = [formData.linkedin, formData.github, formData.portfolio].filter(Boolean);
+      if (links.length) { doc.text(links.join(' | '), pw / 2, y, { align: 'center' }); y += 8; } else { y += 3; }
+
+      if (formData.professionalSummary) { addSection('PROFESSIONAL SUMMARY'); addText(formData.professionalSummary); }
+      if (formData.technicalSkills) { addSection('TECHNICAL SKILLS'); addText(formData.technicalSkills); }
+      if (formData.softSkills) { addSection('SOFT SKILLS'); addText(formData.softSkills); }
+      if (formData.experiences.some((e) => e.company)) {
+        addSection('PROFESSIONAL EXPERIENCE');
+        formData.experiences.forEach((exp) => {
+          if (!exp.company) return;
+          pageBreak(25);
+          addText(`${exp.role} at ${exp.company}`, 11, true);
+          if (exp.duration) { doc.setFontSize(10); doc.setFont('helvetica', 'italic'); doc.text(exp.duration, m, y); y += 5; }
+          if (exp.responsibilities) exp.responsibilities.split('\n').filter(Boolean).forEach((b) => addText(`• ${b.trim()}`, 10));
+          y += 3;
+        });
+      }
+      if (formData.projects.some((p) => p.name)) {
+        addSection('PROJECTS');
+        formData.projects.forEach((proj) => {
+          if (!proj.name) return;
+          pageBreak(20);
+          addText(proj.name, 11, true);
+          if (proj.description) addText(proj.description, 10);
+          if (proj.technologies) { doc.setFont('helvetica', 'italic'); addText(`Technologies: ${proj.technologies}`, 9); }
+          y += 2;
+        });
+      }
+      if (formData.educations.some((e) => e.degree)) {
+        addSection('EDUCATION');
+        formData.educations.forEach((edu) => {
+          if (!edu.degree) return;
+          pageBreak(10);
+          addText(`${edu.degree} – ${edu.institute} (${edu.year})`, 11, true);
+          if (edu.gpa) addText(`GPA: ${edu.gpa}`, 10);
+        });
+      }
+      if (formData.certifications) { addSection('CERTIFICATIONS'); addText(formData.certifications); }
+
+      doc.save(`${formData.fullName.replace(/\s+/g, '_') || 'Resume'}_Resume.pdf`);
+      setIsDownloading(false);
+    }, 100);
+  };
+
+  const getScoreColor = (s: number) => (s >= 70 ? 'text-green-500' : s >= 50 ? 'text-yellow-500' : 'text-red-500');
+
+  // ── Section toggle helper ──
+  const toggleSection = (id: string) => setActiveSection(activeSection === id ? '' : id);
+
+  // ─────────────────── STEP 1: Position Select ───────────────────
+  if (step === 'position-select') {
+    return (
+      <div className="space-y-8">
+        <div>
+          <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+            <FileUser className="w-7 h-7 text-neon-blue" />
+            ATS Resume Builder
+          </h2>
+          <p className="text-gray-400 mt-1">Build a professional, ATS-optimised resume in minutes</p>
+        </div>
+
+        <div className="bg-dark-800 border border-white/10 rounded-xl p-8">
+          <h3 className="text-lg font-semibold text-white mb-2 flex items-center gap-2">
+            <Sparkles className="w-5 h-5 text-neon-purple" />
+            Step 1 of 3 — Select Your Job Position
+          </h3>
+          <p className="text-gray-400 text-sm mb-8">
+            Choose your target job position. We'll show you 10 ready-made resume templates tailored for that role.
+          </p>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Java Developer */}
+            <button
+              onClick={() => handleSelectPosition('java-developer')}
+              className="group p-8 bg-dark-900 border-2 border-white/10 rounded-xl hover:border-neon-blue hover:bg-neon-blue/5 transition-all text-left"
+            >
+              <div className="flex items-center gap-4 mb-4">
+                <div className="w-14 h-14 rounded-xl bg-neon-blue/10 border border-neon-blue/20 flex items-center justify-center group-hover:bg-neon-blue/20 transition-colors">
+                  <Coffee className="w-7 h-7 text-neon-blue" />
+                </div>
+                <div>
+                  <h4 className="text-xl font-bold text-white">Java Developer</h4>
+                  <p className="text-neon-blue text-sm font-medium">10 templates available</p>
+                </div>
+              </div>
+              <p className="text-gray-400 text-sm mb-4">
+                Templates for Java, Spring Boot, Microservices, Cloud, and leadership roles — from fresher to architect.
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {['Spring Boot', 'Microservices', 'Cloud', 'Full Stack', 'Tech Lead'].map((tag) => (
+                  <span key={tag} className="px-2 py-1 bg-neon-blue/10 text-neon-blue text-xs rounded-md border border-neon-blue/20">
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            </button>
+
+            {/* .NET Developer */}
+            <button
+              onClick={() => handleSelectPosition('dotnet-developer')}
+              className="group p-8 bg-dark-900 border-2 border-white/10 rounded-xl hover:border-neon-purple hover:bg-neon-purple/5 transition-all text-left"
+            >
+              <div className="flex items-center gap-4 mb-4">
+                <div className="w-14 h-14 rounded-xl bg-neon-purple/10 border border-neon-purple/20 flex items-center justify-center group-hover:bg-neon-purple/20 transition-colors">
+                  <Monitor className="w-7 h-7 text-neon-purple" />
+                </div>
+                <div>
+                  <h4 className="text-xl font-bold text-white">.NET Developer</h4>
+                  <p className="text-neon-purple text-sm font-medium">10 templates available</p>
+                </div>
+              </div>
+              <p className="text-gray-400 text-sm mb-4">
+                Templates for C#, ASP.NET Core, Azure, Microservices, and leadership roles — from fresher to architect.
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {['ASP.NET Core', 'Azure', 'Microservices', 'Full Stack', 'Tech Lead'].map((tag) => (
+                  <span key={tag} className="px-2 py-1 bg-neon-purple/10 text-neon-purple text-xs rounded-md border border-neon-purple/20">
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ─────────────────── STEP 2: Template Select ───────────────────
+  if (step === 'template-select') {
+    const accentColor = selectedPosition === 'java-developer' ? 'neon-blue' : 'neon-purple';
+    const posLabel = selectedPosition === 'java-developer' ? 'Java Developer' : '.NET Developer';
+
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center gap-4">
+          <button
+            onClick={handleBackToPositions}
+            className="flex items-center gap-2 px-3 py-2 bg-dark-800 border border-white/10 rounded-lg text-gray-400 hover:text-white hover:border-white/20 transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back
+          </button>
+          <div>
+            <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+              <FileUser className="w-7 h-7 text-neon-blue" />
+              ATS Resume Builder
+            </h2>
+            <p className="text-gray-400 text-sm mt-0.5">Step 2 of 3 — Choose a template for <span className={`text-${accentColor} font-semibold`}>{posLabel}</span></p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          {templates.map((tmpl, idx) => {
+            const Icon = tmpl.icon;
+            const levelStyle = EXPERIENCE_LEVEL_STYLES[tmpl.experienceLevel] || '';
+            return (
+              <div
+                key={tmpl.id}
+                className="relative bg-dark-800 border border-white/10 rounded-xl p-6 flex flex-col hover:border-white/20 transition-all"
+              >
+                {/* Number badge */}
+                <span className="absolute top-4 right-4 w-7 h-7 flex items-center justify-center bg-white/5 rounded-full text-xs text-gray-400 font-semibold border border-white/10">
+                  {idx + 1}
+                </span>
+
+                <div className="flex items-start gap-3 mb-3">
+                  <div className={`w-11 h-11 rounded-lg bg-${accentColor}/10 border border-${accentColor}/20 flex items-center justify-center flex-shrink-0`}>
+                    <Icon className={`w-5 h-5 text-${accentColor}`} />
+                  </div>
+                  <div>
+                    <h4 className="text-white font-semibold leading-tight">{tmpl.name}</h4>
+                    <span className={`inline-block mt-1 px-2 py-0.5 text-xs rounded-full border ${levelStyle}`}>
+                      {tmpl.experienceLevel}
+                    </span>
+                  </div>
+                </div>
+
+                <p className="text-gray-400 text-sm mb-4 flex-1">{tmpl.description}</p>
+
+                {/* Skills preview */}
+                <div className="flex flex-wrap gap-1 mb-4">
+                  {tmpl.data.technicalSkills
+                    .split(',')
+                    .slice(0, 4)
+                    .map((s) => (
+                      <span key={s.trim()} className="px-2 py-0.5 bg-white/5 text-gray-300 text-xs rounded border border-white/10">
+                        {s.trim()}
+                      </span>
+                    ))}
+                  {tmpl.data.technicalSkills.split(',').length > 4 && (
+                    <span className="px-2 py-0.5 bg-white/5 text-gray-500 text-xs rounded border border-white/10">
+                      +{tmpl.data.technicalSkills.split(',').length - 4} more
+                    </span>
+                  )}
+                </div>
+
+                <button
+                  onClick={() => handleSelectTemplate(tmpl)}
+                  className={`w-full py-2.5 rounded-lg font-semibold text-sm transition-colors bg-${accentColor}/10 text-${accentColor} border border-${accentColor}/20 hover:bg-${accentColor}/20`}
+                >
+                  Use This Template
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
+  // ─────────────────── STEP 3: Editor ───────────────────
+
+  const sections = [
+    { id: 'personal', label: 'Personal Details', icon: User },
+    { id: 'summary', label: 'Professional Summary', icon: FileText },
+    { id: 'skills', label: 'Skills', icon: Code },
+    { id: 'experience', label: 'Experience', icon: Briefcase },
+    { id: 'projects', label: 'Projects', icon: Layers },
+    { id: 'education', label: 'Education', icon: BookOpen },
+    { id: 'certifications', label: 'Certifications', icon: Award },
+    { id: 'ats', label: 'ATS Job Description', icon: Sparkles },
+  ];
+
+  return (
+    <div className="space-y-4">
+      {/* Header */}
+      <div className="flex items-center justify-between gap-4 flex-wrap">
+        <div className="flex items-center gap-4">
+          <button
+            onClick={handleBackToTemplates}
+            className="flex items-center gap-2 px-3 py-2 bg-dark-800 border border-white/10 rounded-lg text-gray-400 hover:text-white hover:border-white/20 transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back
+          </button>
+          <div>
+            <h2 className="text-xl font-bold text-white flex items-center gap-2">
+              <FileUser className="w-6 h-6 text-neon-blue" />
+              Edit Your Resume
+            </h2>
+            <p className="text-gray-400 text-sm">Step 3 of 3 — All changes reflect in real time</p>
+          </div>
+        </div>
+        <button
+          onClick={downloadPDF}
+          disabled={isDownloading || !formData.fullName}
+          className="flex items-center gap-2 px-5 py-2.5 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {isDownloading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+          Download PDF
+        </button>
+      </div>
+
+      {/* Main editor layout */}
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 items-start">
+
+        {/* ── LEFT: Section-wise Editor ── */}
+        <div className="space-y-2">
+          {sections.map(({ id, label, icon: Icon }) => {
+            const isOpen = activeSection === id;
+            return (
+              <div key={id} className="bg-dark-800 border border-white/10 rounded-xl overflow-hidden">
+                <button
+                  onClick={() => toggleSection(id)}
+                  className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-white/5 transition-colors"
+                >
+                  <div className="flex items-center gap-3">
+                    <Icon className="w-4 h-4 text-neon-blue" />
+                    <span className="text-white font-medium text-sm">{label}</span>
+                  </div>
+                  {isOpen ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
+                </button>
+
+                {isOpen && (
+                  <div className="px-5 pb-5 border-t border-white/10 pt-4 space-y-4">
+
+                    {/* Personal Details */}
+                    {id === 'personal' && (
+                      <>
+                        <div>
+                          <label className="block text-xs font-medium text-gray-400 mb-1.5">Full Name *</label>
+                          <input type="text" value={formData.fullName} onChange={(e) => setFormData({ ...formData, fullName: e.target.value })} placeholder="John Doe" className="w-full px-3 py-2 bg-dark-900 border border-white/10 rounded-lg text-white text-sm focus:border-neon-blue focus:outline-none" />
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-xs font-medium text-gray-400 mb-1.5">Email *</label>
+                            <input type="email" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} placeholder="john@email.com" className="w-full px-3 py-2 bg-dark-900 border border-white/10 rounded-lg text-white text-sm focus:border-neon-blue focus:outline-none" />
+                          </div>
+                          <div>
+                            <label className="block text-xs font-medium text-gray-400 mb-1.5">Phone *</label>
+                            <input type="tel" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} placeholder="+91 98765 43210" className="w-full px-3 py-2 bg-dark-900 border border-white/10 rounded-lg text-white text-sm focus:border-neon-blue focus:outline-none" />
+                          </div>
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-gray-400 mb-1.5">Location *</label>
+                          <input type="text" value={formData.location} onChange={(e) => setFormData({ ...formData, location: e.target.value })} placeholder="Mumbai, Maharashtra" className="w-full px-3 py-2 bg-dark-900 border border-white/10 rounded-lg text-white text-sm focus:border-neon-blue focus:outline-none" />
+                        </div>
+                        <div className="grid grid-cols-3 gap-3">
+                          <div>
+                            <label className="block text-xs font-medium text-gray-400 mb-1.5">LinkedIn</label>
+                            <input type="text" value={formData.linkedin} onChange={(e) => setFormData({ ...formData, linkedin: e.target.value })} placeholder="linkedin.com/in/..." className="w-full px-3 py-2 bg-dark-900 border border-white/10 rounded-lg text-white text-sm focus:border-neon-blue focus:outline-none" />
+                          </div>
+                          <div>
+                            <label className="block text-xs font-medium text-gray-400 mb-1.5">GitHub</label>
+                            <input type="text" value={formData.github} onChange={(e) => setFormData({ ...formData, github: e.target.value })} placeholder="github.com/..." className="w-full px-3 py-2 bg-dark-900 border border-white/10 rounded-lg text-white text-sm focus:border-neon-blue focus:outline-none" />
+                          </div>
+                          <div>
+                            <label className="block text-xs font-medium text-gray-400 mb-1.5">Portfolio</label>
+                            <input type="text" value={formData.portfolio} onChange={(e) => setFormData({ ...formData, portfolio: e.target.value })} placeholder="yoursite.com" className="w-full px-3 py-2 bg-dark-900 border border-white/10 rounded-lg text-white text-sm focus:border-neon-blue focus:outline-none" />
+                          </div>
+                        </div>
+                      </>
+                    )}
+
+                    {/* Professional Summary */}
+                    {id === 'summary' && (
+                      <div>
+                        <label className="block text-xs font-medium text-gray-400 mb-1.5">Summary</label>
+                        <textarea value={formData.professionalSummary} onChange={(e) => setFormData({ ...formData, professionalSummary: e.target.value })} placeholder="Brief summary of your professional background..." rows={5} className="w-full px-3 py-2 bg-dark-900 border border-white/10 rounded-lg text-white text-sm focus:border-neon-blue focus:outline-none resize-none" />
+                      </div>
+                    )}
+
+                    {/* Skills */}
+                    {id === 'skills' && (
+                      <>
+                        <div>
+                          <label className="block text-xs font-medium text-gray-400 mb-1.5">Technical Skills (comma separated)</label>
+                          <textarea value={formData.technicalSkills} onChange={(e) => setFormData({ ...formData, technicalSkills: e.target.value })} placeholder="Java, Spring Boot, MySQL, Docker..." rows={3} className="w-full px-3 py-2 bg-dark-900 border border-white/10 rounded-lg text-white text-sm focus:border-neon-blue focus:outline-none resize-none" />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-gray-400 mb-1.5">Soft Skills (comma separated)</label>
+                          <textarea value={formData.softSkills} onChange={(e) => setFormData({ ...formData, softSkills: e.target.value })} placeholder="Leadership, Communication, Problem Solving..." rows={2} className="w-full px-3 py-2 bg-dark-900 border border-white/10 rounded-lg text-white text-sm focus:border-neon-blue focus:outline-none resize-none" />
+                        </div>
+                      </>
+                    )}
+
+                    {/* Experience */}
+                    {id === 'experience' && (
+                      <div className="space-y-4">
+                        {formData.experiences.map((exp, idx) => (
+                          <div key={idx} className="p-4 bg-dark-900 border border-white/10 rounded-lg space-y-3">
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs text-gray-400 font-medium">Experience {idx + 1}</span>
+                              {formData.experiences.length > 1 && (
+                                <button onClick={() => removeExperience(idx)} className="text-red-400 hover:text-red-300">
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              )}
+                            </div>
+                            <input type="text" value={exp.company} onChange={(e) => updateExperience(idx, 'company', e.target.value)} placeholder="Company Name" className="w-full px-3 py-2 bg-dark-800 border border-white/10 rounded-lg text-white text-sm focus:border-neon-blue focus:outline-none" />
+                            <input type="text" value={exp.role} onChange={(e) => updateExperience(idx, 'role', e.target.value)} placeholder="Role / Position" className="w-full px-3 py-2 bg-dark-800 border border-white/10 rounded-lg text-white text-sm focus:border-neon-blue focus:outline-none" />
+                            <input type="text" value={exp.duration} onChange={(e) => updateExperience(idx, 'duration', e.target.value)} placeholder="Jan 2022 – Present" className="w-full px-3 py-2 bg-dark-800 border border-white/10 rounded-lg text-white text-sm focus:border-neon-blue focus:outline-none" />
+                            <textarea value={exp.responsibilities} onChange={(e) => updateExperience(idx, 'responsibilities', e.target.value)} placeholder="Responsibilities (one per line)&#10;Led development of...&#10;Improved performance by 40%" rows={4} className="w-full px-3 py-2 bg-dark-800 border border-white/10 rounded-lg text-white text-sm focus:border-neon-blue focus:outline-none resize-none" />
+                          </div>
+                        ))}
+                        <button onClick={addExperience} className="flex items-center gap-1.5 px-3 py-2 bg-neon-blue/10 text-neon-blue border border-neon-blue/20 rounded-lg hover:bg-neon-blue/20 transition-colors text-sm">
+                          <Plus className="w-3.5 h-3.5" /> Add Experience
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Projects */}
+                    {id === 'projects' && (
+                      <div className="space-y-4">
+                        {formData.projects.map((proj, idx) => (
+                          <div key={idx} className="p-4 bg-dark-900 border border-white/10 rounded-lg space-y-3">
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs text-gray-400 font-medium">Project {idx + 1}</span>
+                              {formData.projects.length > 1 && (
+                                <button onClick={() => removeProject(idx)} className="text-red-400 hover:text-red-300">
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              )}
+                            </div>
+                            <input type="text" value={proj.name} onChange={(e) => updateProject(idx, 'name', e.target.value)} placeholder="Project Name" className="w-full px-3 py-2 bg-dark-800 border border-white/10 rounded-lg text-white text-sm focus:border-neon-blue focus:outline-none" />
+                            <textarea value={proj.description} onChange={(e) => updateProject(idx, 'description', e.target.value)} placeholder="Description and key achievements..." rows={3} className="w-full px-3 py-2 bg-dark-800 border border-white/10 rounded-lg text-white text-sm focus:border-neon-blue focus:outline-none resize-none" />
+                            <input type="text" value={proj.technologies} onChange={(e) => updateProject(idx, 'technologies', e.target.value)} placeholder="Technologies (e.g., Java, Spring Boot, MySQL)" className="w-full px-3 py-2 bg-dark-800 border border-white/10 rounded-lg text-white text-sm focus:border-neon-blue focus:outline-none" />
+                          </div>
+                        ))}
+                        <button onClick={addProject} className="flex items-center gap-1.5 px-3 py-2 bg-neon-blue/10 text-neon-blue border border-neon-blue/20 rounded-lg hover:bg-neon-blue/20 transition-colors text-sm">
+                          <Plus className="w-3.5 h-3.5" /> Add Project
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Education */}
+                    {id === 'education' && (
+                      <div className="space-y-4">
+                        {formData.educations.map((edu, idx) => (
+                          <div key={idx} className="p-4 bg-dark-900 border border-white/10 rounded-lg space-y-3">
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs text-gray-400 font-medium">Education {idx + 1}</span>
+                              {formData.educations.length > 1 && (
+                                <button onClick={() => removeEducation(idx)} className="text-red-400 hover:text-red-300">
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              )}
+                            </div>
+                            <input type="text" value={edu.degree} onChange={(e) => updateEducation(idx, 'degree', e.target.value)} placeholder="B.Tech in Computer Science" className="w-full px-3 py-2 bg-dark-800 border border-white/10 rounded-lg text-white text-sm focus:border-neon-blue focus:outline-none" />
+                            <input type="text" value={edu.institute} onChange={(e) => updateEducation(idx, 'institute', e.target.value)} placeholder="Institute Name" className="w-full px-3 py-2 bg-dark-800 border border-white/10 rounded-lg text-white text-sm focus:border-neon-blue focus:outline-none" />
+                            <div className="grid grid-cols-2 gap-3">
+                              <input type="text" value={edu.year} onChange={(e) => updateEducation(idx, 'year', e.target.value)} placeholder="Year (e.g. 2022)" className="w-full px-3 py-2 bg-dark-800 border border-white/10 rounded-lg text-white text-sm focus:border-neon-blue focus:outline-none" />
+                              <input type="text" value={edu.gpa || ''} onChange={(e) => updateEducation(idx, 'gpa', e.target.value)} placeholder="GPA (optional)" className="w-full px-3 py-2 bg-dark-800 border border-white/10 rounded-lg text-white text-sm focus:border-neon-blue focus:outline-none" />
+                            </div>
+                          </div>
+                        ))}
+                        <button onClick={addEducation} className="flex items-center gap-1.5 px-3 py-2 bg-neon-blue/10 text-neon-blue border border-neon-blue/20 rounded-lg hover:bg-neon-blue/20 transition-colors text-sm">
+                          <Plus className="w-3.5 h-3.5" /> Add Education
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Certifications */}
+                    {id === 'certifications' && (
+                      <div>
+                        <label className="block text-xs font-medium text-gray-400 mb-1.5">Certifications (comma separated)</label>
+                        <textarea value={formData.certifications} onChange={(e) => setFormData({ ...formData, certifications: e.target.value })} placeholder="AWS Certified Developer, CKA, Oracle Java SE 11..." rows={3} className="w-full px-3 py-2 bg-dark-900 border border-white/10 rounded-lg text-white text-sm focus:border-neon-blue focus:outline-none resize-none" />
+                      </div>
+                    )}
+
+                    {/* ATS */}
+                    {id === 'ats' && (
+                      <div className="space-y-4">
+                        <div>
+                          <label className="block text-xs font-medium text-gray-400 mb-1.5">Paste Job Description (optional)</label>
+                          <textarea value={formData.jobDescription} onChange={(e) => { setFormData({ ...formData, jobDescription: e.target.value }); setAtsScore(null); }} placeholder="Paste the target job description here to calculate ATS compatibility..." rows={6} className="w-full px-3 py-2 bg-dark-900 border border-white/10 rounded-lg text-white text-sm focus:border-neon-blue focus:outline-none resize-none" />
+                        </div>
+                        {formData.jobDescription.trim() && (
+                          <button onClick={handleCalculateATS} disabled={isCalculating} className="flex items-center gap-2 px-4 py-2 bg-neon-blue text-black font-semibold rounded-lg hover:bg-neon-blue/90 transition-colors disabled:opacity-60 text-sm">
+                            {isCalculating ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
+                            {isCalculating ? 'Calculating...' : 'Calculate ATS Score'}
+                          </button>
+                        )}
+                        {atsScore && (
+                          <div className="bg-dark-900 border border-white/10 rounded-lg p-4">
+                            <div className="text-center mb-4">
+                              <div className={`text-4xl font-bold ${getScoreColor(atsScore.total)}`}>{atsScore.total}/100</div>
+                              <p className="text-gray-400 text-sm mt-1">
+                                {atsScore.total >= 70 ? 'Excellent! ATS-friendly resume' : atsScore.total >= 50 ? 'Good — some improvements possible' : 'Needs improvement'}
+                              </p>
+                            </div>
+                            <div className="space-y-2 text-sm">
+                              {[
+                                { label: 'Keywords Match', value: atsScore.keywordsMatch, max: 40 },
+                                { label: 'Skills Alignment', value: atsScore.skillsAlignment, max: 30 },
+                                { label: 'Experience Alignment', value: atsScore.experienceAlignment, max: 20 },
+                                { label: 'ATS-Safe Formatting', value: atsScore.formatting, max: 10 },
+                              ].map(({ label, value, max }) => (
+                                <div key={label} className="flex items-center justify-between">
+                                  <span className="text-gray-400">{label}</span>
+                                  <span className="text-white font-semibold">{value}/{max}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* ── RIGHT: Live Resume Preview ── */}
+        <div className="bg-dark-800 border border-white/10 rounded-xl overflow-hidden sticky top-6">
+          <div className="px-5 py-3 border-b border-white/10 flex items-center gap-2">
+            <FileText className="w-4 h-4 text-neon-blue" />
+            <span className="text-white font-medium text-sm">Live Preview</span>
+            <span className="ml-auto text-xs text-gray-500">Updates as you type</span>
+          </div>
+
+          <div className="max-h-[780px] overflow-y-auto">
+            <div className="bg-white text-black p-8 space-y-4 min-h-[400px]">
+              {/* Header */}
+              {formData.fullName ? (
+                <div className="text-center border-b-2 border-gray-300 pb-4">
+                  <h1 className="text-2xl font-bold text-black">{formData.fullName}</h1>
+                  <p className="text-sm text-gray-600 mt-1">
+                    {[formData.email, formData.phone, formData.location].filter(Boolean).join(' | ')}
+                  </p>
+                  {(formData.linkedin || formData.github || formData.portfolio) && (
+                    <p className="text-xs text-gray-600 mt-1">
+                      {[formData.linkedin, formData.github, formData.portfolio].filter(Boolean).join(' | ')}
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <div className="text-center border-b-2 border-gray-200 pb-4">
+                  <div className="h-6 bg-gray-100 rounded w-48 mx-auto mb-2" />
+                  <div className="h-3 bg-gray-100 rounded w-72 mx-auto" />
+                </div>
+              )}
+
+              {/* Professional Summary */}
+              {formData.professionalSummary && (
+                <div>
+                  <h2 className="text-sm font-bold border-b border-gray-400 mb-2 uppercase tracking-wide">Professional Summary</h2>
+                  <p className="text-xs text-gray-800 leading-relaxed">{formData.professionalSummary}</p>
+                </div>
+              )}
+
+              {/* Technical Skills */}
+              {formData.technicalSkills && (
+                <div>
+                  <h2 className="text-sm font-bold border-b border-gray-400 mb-2 uppercase tracking-wide">Technical Skills</h2>
+                  <p className="text-xs text-gray-800">{formData.technicalSkills}</p>
+                </div>
+              )}
+
+              {/* Soft Skills */}
+              {formData.softSkills && (
+                <div>
+                  <h2 className="text-sm font-bold border-b border-gray-400 mb-2 uppercase tracking-wide">Soft Skills</h2>
+                  <p className="text-xs text-gray-800">{formData.softSkills}</p>
+                </div>
+              )}
+
+              {/* Experience */}
+              {formData.experiences.some((e) => e.company) && (
+                <div>
+                  <h2 className="text-sm font-bold border-b border-gray-400 mb-2 uppercase tracking-wide">Professional Experience</h2>
+                  {formData.experiences.map((exp, i) =>
+                    exp.company ? (
+                      <div key={i} className="mb-3">
+                        <p className="font-bold text-xs">{exp.role}{exp.company ? ` — ${exp.company}` : ''}</p>
+                        {exp.duration && <p className="text-xs text-gray-500 italic">{exp.duration}</p>}
+                        {exp.responsibilities && (
+                          <ul className="list-disc list-inside text-xs text-gray-800 mt-1 space-y-0.5">
+                            {exp.responsibilities.split('\n').map((b, bi) =>
+                              b.trim() ? <li key={bi}>{b.replace(/^[-•]\s*/, '').trim()}</li> : null
+                            )}
+                          </ul>
+                        )}
+                      </div>
+                    ) : null
+                  )}
+                </div>
+              )}
+
+              {/* Projects */}
+              {formData.projects.some((p) => p.name) && (
+                <div>
+                  <h2 className="text-sm font-bold border-b border-gray-400 mb-2 uppercase tracking-wide">Projects</h2>
+                  {formData.projects.map((proj, i) =>
+                    proj.name ? (
+                      <div key={i} className="mb-2">
+                        <p className="font-bold text-xs">{proj.name}</p>
+                        {proj.description && <p className="text-xs text-gray-800">{proj.description}</p>}
+                        {proj.technologies && <p className="text-xs text-gray-500 italic">Technologies: {proj.technologies}</p>}
+                      </div>
+                    ) : null
+                  )}
+                </div>
+              )}
+
+              {/* Education */}
+              {formData.educations.some((e) => e.degree) && (
+                <div>
+                  <h2 className="text-sm font-bold border-b border-gray-400 mb-2 uppercase tracking-wide">Education</h2>
+                  {formData.educations.map((edu, i) =>
+                    edu.degree ? (
+                      <div key={i} className="mb-1.5">
+                        <p className="font-bold text-xs">{edu.degree}{edu.institute ? ` — ${edu.institute}` : ''}{edu.year ? ` (${edu.year})` : ''}</p>
+                        {edu.gpa && <p className="text-xs text-gray-600">GPA: {edu.gpa}</p>}
+                      </div>
+                    ) : null
+                  )}
+                </div>
+              )}
+
+              {/* Certifications */}
+              {formData.certifications && (
+                <div>
+                  <h2 className="text-sm font-bold border-b border-gray-400 mb-2 uppercase tracking-wide">Certifications</h2>
+                  <p className="text-xs text-gray-800">{formData.certifications}</p>
+                </div>
+              )}
+
+              {/* Empty state */}
+              {!formData.fullName && !formData.professionalSummary && (
+                <div className="flex flex-col items-center justify-center py-16 text-center">
+                  <FileText className="w-12 h-12 text-gray-200 mb-3" />
+                  <p className="text-gray-400 text-sm">Fill in the sections on the left to see your resume here</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default ResumeBuilder;

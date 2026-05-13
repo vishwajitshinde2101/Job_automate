@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Menu, X, Cpu, User as UserIcon, LogOut, LayoutDashboard, Download, ChevronDown, ArrowRight } from 'lucide-react';
+import { Menu, X, Cpu, User as UserIcon, LogOut, LayoutDashboard, Download, ChevronDown, ArrowRight, BookOpen } from 'lucide-react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 
@@ -53,6 +53,10 @@ const Navbar: React.FC = () => {
                     <>
                       <a href="/#features" className="text-gray-700 dark:text-gray-300 hover:text-neon-blue transition-colors px-3 py-2 rounded-md text-sm font-medium">Features</a>
                       <a href="/#pricing" className="text-gray-700 dark:text-gray-300 hover:text-neon-blue transition-colors px-3 py-2 rounded-md text-sm font-medium">Pricing</a>
+                      <Link to="/blogs" className="flex items-center gap-1.5 text-gray-700 dark:text-gray-300 hover:text-neon-blue transition-colors px-3 py-2 rounded-md text-sm font-medium">
+                        <BookOpen className="w-4 h-4" />
+                        Blog
+                      </Link>
                       <Link to="/login">
                         <button className="border border-neon-blue text-neon-blue hover:bg-neon-blue hover:text-black dark:hover:text-black transition-all duration-300 px-6 py-2 rounded-full font-medium shadow-[0_0_15px_rgba(0,243,255,0.3)] hover:shadow-[0_0_25px_rgba(0,243,255,0.6)]">
                           Login
@@ -66,7 +70,12 @@ const Navbar: React.FC = () => {
                     </>
                   )}
                   {isLandingPage && (
-                    <Link to="/download">
+                    <>
+                      <Link to="/blogs" className="flex items-center gap-1.5 text-gray-700 dark:text-gray-300 hover:text-neon-blue transition-colors px-3 py-2 rounded-md text-sm font-medium">
+                        <BookOpen className="w-4 h-4" />
+                        Blog
+                      </Link>
+                      <Link to="/download">
                       <button
                         className="group relative bg-gradient-to-r from-neon-blue via-neon-purple to-neon-blue bg-[length:200%_100%] text-white hover:bg-right-bottom transition-all duration-500 px-8 py-3 rounded-full font-bold text-lg shadow-[0_0_30px_rgba(0,243,255,0.6)] hover:shadow-[0_0_40px_rgba(188,19,254,0.8)] flex items-center gap-2 animate-gradient-x overflow-hidden"
                       >
@@ -82,6 +91,7 @@ const Navbar: React.FC = () => {
                         </span>
                       </button>
                     </Link>
+                    </>
                   )}
                 </>
               ) : (
@@ -110,6 +120,10 @@ const Navbar: React.FC = () => {
           <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
             {!user.isLoggedIn ? (
               <>
+                <Link to="/blogs" className="flex items-center gap-2 px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-dark-800" onClick={() => setIsOpen(false)}>
+                  <BookOpen className="w-4 h-4 text-neon-blue" />
+                  Blog
+                </Link>
                 {!isLandingPage && !isDownloadPage ? (
                   <>
                     <Link to="/login" className="block px-3 py-2 rounded-md text-base font-medium text-gray-900 dark:text-white bg-gray-100 dark:bg-dark-800 hover:bg-gray-200 dark:hover:bg-dark-700" onClick={() => setIsOpen(false)}>Login</Link>

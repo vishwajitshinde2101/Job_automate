@@ -40,11 +40,30 @@ interface AnalyticsStats {
   dailyTrend: DailyTrend[];
 }
 
+const ACTIVITY_PLATFORMS = [
+  { id: 'naukri',        name: 'Naukri',        color: '#FF7555' },
+  { id: 'linkedin',      name: 'LinkedIn',      color: '#0077B5' },
+  { id: 'indeed',        name: 'Indeed',        color: '#2164F3' },
+  { id: 'instahire',     name: 'InstaHire',     color: '#7B3FF2' },
+  { id: 'shine',         name: 'Shine',         color: '#F5A623' },
+  { id: 'foundit',       name: 'Foundit',       color: '#6600CC' },
+  { id: 'timesjobs',     name: 'TimesJobs',     color: '#E31E24' },
+  { id: 'freshersworld', name: 'Freshersworld', color: '#00875A' },
+  { id: 'internshala',   name: 'Internshala',   color: '#4CAF50' },
+  { id: 'apna',          name: 'Apna',          color: '#F06C2F' },
+  { id: 'hirist',        name: 'Hirist',        color: '#00BCD4' },
+  { id: 'iimjobs',       name: 'IIMJobs',       color: '#1565C0' },
+  { id: 'glassdoor',     name: 'Glassdoor',     color: '#0CAA41' },
+  { id: 'cutshort',      name: 'Cutshort',      color: '#FF4F9A' },
+];
+
 const UserAnalytics: React.FC = () => {
   const [stats, setStats] = useState<AnalyticsStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [dateRange, setDateRange] = useState<'7d' | '30d' | 'all'>('all');
+  const [selectedPlatform, setSelectedPlatform] = useState<string>('naukri');
+  const activePlatform = ACTIVITY_PLATFORMS.find(p => p.id === selectedPlatform) ?? ACTIVITY_PLATFORMS[0];
 
   useEffect(() => {
     fetchAnalytics();
@@ -176,7 +195,23 @@ const UserAnalytics: React.FC = () => {
       {/* Header with Date Range Filter */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-white mb-1">Activity Dashboard</h2>
+          <div className="flex items-center gap-3 mb-1">
+            <h2 className="text-2xl font-bold text-white">Activity Dashboard</h2>
+            <span
+              className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border"
+              style={{
+                backgroundColor: `${activePlatform.color}20`,
+                color: activePlatform.color,
+                borderColor: `${activePlatform.color}50`,
+              }}
+            >
+              <span
+                className="w-2 h-2 rounded-full"
+                style={{ backgroundColor: activePlatform.color }}
+              />
+              {activePlatform.name}
+            </span>
+          </div>
           <p className="text-gray-400 text-sm">Track your job application analytics and trends</p>
         </div>
         <div className="flex items-center gap-2">
@@ -190,6 +225,43 @@ const UserAnalytics: React.FC = () => {
             <option value="30d">Last 30 Days</option>
             <option value="all">All Time</option>
           </select>
+        </div>
+      </div>
+
+      {/* Platform Selector */}
+      <div className="bg-dark-800 border border-white/10 rounded-xl p-4">
+        <p className="text-xs text-gray-500 font-medium mb-3 uppercase tracking-wide">Select Platform</p>
+        <div className="flex flex-wrap gap-2">
+          {ACTIVITY_PLATFORMS.map((platform) => {
+            const isActive = selectedPlatform === platform.id;
+            return (
+              <button
+                key={platform.id}
+                onClick={() => setSelectedPlatform(platform.id)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-all border"
+                style={
+                  isActive
+                    ? {
+                        backgroundColor: `${platform.color}25`,
+                        color: platform.color,
+                        borderColor: `${platform.color}60`,
+                        boxShadow: `0 0 10px ${platform.color}30`,
+                      }
+                    : {
+                        backgroundColor: 'transparent',
+                        color: '#9CA3AF',
+                        borderColor: 'rgba(255,255,255,0.1)',
+                      }
+                }
+              >
+                <span
+                  className="w-2 h-2 rounded-full flex-shrink-0"
+                  style={{ backgroundColor: isActive ? platform.color : '#4B5563' }}
+                />
+                {platform.name}
+              </button>
+            );
+          })}
         </div>
       </div>
 

@@ -84,7 +84,8 @@ const Downloads: React.FC = () => {
                 </div>
 
                 <a
-                  href="https://autojobzy-desktop-downloads.s3.eu-north-1.amazonaws.com/windows/AutoJobzy-1.0.0+.exe"
+                  // href="https://autojobzy-desktop-downloads.s3.eu-north-1.amazonaws.com/windows/AutoJobzy-1.0.0+.exe"
+                  href="https://autojobzy-desktop-downloads.s3.eu-north-1.amazonaws.com/windows/mac/AutoJobzy-1.2.0.exe"
                   className="group/btn flex items-center justify-center gap-2 w-full bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-bold py-4 rounded-xl hover:shadow-[0_0_30px_rgba(6,182,212,0.6)] transition-all duration-300 relative overflow-hidden"
                   download
                 >

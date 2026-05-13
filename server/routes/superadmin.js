@@ -881,4 +881,46 @@ router.put('/users/:id/toggle-active', authenticateToken, isSuperAdmin, async (r
     }
 });
 
+/**
+ * POST /api/superadmin/users/:id/reset-password
+ * Reset any individual user's password (SuperAdmin only)
+ */
+router.post('/users/:id/reset-password', authenticateToken, isSuperAdmin, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { newPassword } = req.body;
+
+        if (!newPassword || newPassword.length < 6) {
+            return res.status(400).json({ error: 'New password must be at least 6 characters long' });
+        }
+
+        const user = await User.findByPk(id);
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        // Prevent resetting superadmin passwords
+        if (user.role === 'superadmin') {
+            return res.status(403).json({ error: 'Cannot reset super admin passwords' });
+        }
+
+        // Manually hash password to avoid relying on beforeUpdate hook
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+        // Use update() with individualHooks:false to save hash directly (no double-hashing)
+        await User.update(
+            { password: hashedPassword },
+            { where: { id }, individualHooks: false }
+        );
+
+        console.log(`[SUPERADMIN] Password reset for user: ${user.email} by superadmin: ${req.userId}`);
+
+        res.json({ success: true, message: `Password reset successfully for ${user.email}` });
+    } catch (error) {
+        console.error('SuperAdmin reset password error:', error);
+        res.status(500).json({ error: 'Failed to reset password' });
+    }
+});
+
 export default router;

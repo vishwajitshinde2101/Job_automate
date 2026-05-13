@@ -2,33 +2,57 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
-import { Play, Square, Download, Activity, Save, User, Key, MapPin, Search, Globe, ChevronLeft, ChevronRight, RotateCw, X, UploadCloud, FileText, CheckCircle, Clock, IndianRupee, Calendar, Loader2, AlertCircle, Plus, Trash2, Star, Filter, Building2, Briefcase, GraduationCap, Home, Zap, Crown, Rocket, CreditCard, Check, BarChart3, TrendingUp, TrendingDown, Target, Award, Users, Mail, ThumbsUp, ArrowUpRight, Lightbulb, Eye, EyeOff, ExternalLink } from 'lucide-react';
+import { Play, Square, Download, Activity, Save, User, Key, MapPin, Search, Globe, ChevronLeft, ChevronRight, RotateCw, X, UploadCloud, FileText, CheckCircle, Clock, IndianRupee, Calendar, Loader2, AlertCircle, Plus, Trash2, Star, Filter, Building2, Briefcase, GraduationCap, Home, Zap, Crown, Rocket, CreditCard, Check, BarChart3, TrendingUp, TrendingDown, Target, Award, Users, Mail, ThumbsUp, ArrowUpRight, Lightbulb, Eye, EyeOff, ExternalLink, BookOpen, Settings } from 'lucide-react';
 import DashboardLayout from '../components/DashboardLayout';
 import OnboardingFlow from '../components/OnboardingFlow';
 import SuggestAndEarn from '../components/SuggestAndEarn';
 import AppSettings from '../components/AppSettings';
+import ChangePassword from '../components/ChangePassword';
 import UserAnalytics from '../components/UserAnalytics';
 import AutoProfileUpdate from '../components/AutoProfileUpdate';
 import ResumeBuilder from '../components/ResumeBuilder';
+import NaukriProfileGuide from '../components/NaukriProfileGuide';
 import AICareerCoach from '../components/AICareerCoach';
 import EmailManagement from '../components/EmailManagement';
 import MockInterview from '../components/MockInterview';
 import InterviewQA from '../components/InterviewQA';
+import LearningModule from '../components/LearningModule';
+import InternshipModule from '../components/InternshipModule';
+import UserBlogSection from '../components/UserBlogSection';
 import { runBot, stopAutomation, getAutomationLogs, updateJobSettings, getJobSettings, getSkills, saveSkillsBulk, updateSkill, deleteSkill, getAllFilters, getUserFilters, saveUserFilters, runFilter, getFilterLogs, verifyNaukriCredentials } from '../services/automationApi';
 import { getSubscriptionStatus, createOrder, initiatePayment } from '../services/subscriptionApi';
 import { getPlans, Plan } from '../services/plansApi';
 import { API_BASE_URL } from '../config/api';
+
+const PLATFORMS = [
+  { id: 'naukri',        name: 'Naukri',        abbr: 'N',   url: 'https://www.naukri.com/jobs',          color: '#FF7555', description: 'Apply to up to 50 jobs daily on Naukri automatically' },
+  { id: 'linkedin',      name: 'LinkedIn',       abbr: 'in',  url: 'https://www.linkedin.com/jobs',        color: '#0077B5', description: 'Apply via Easy Apply on LinkedIn automatically' },
+  { id: 'indeed',        name: 'Indeed',         abbr: 'i',   url: 'https://www.indeed.com/jobs',          color: '#2164F3', description: 'Apply to matching job listings on Indeed' },
+  { id: 'instahire',     name: 'InstaHire',      abbr: 'IH',  url: 'https://instahire.in/jobs',            color: '#7B3FF2', description: 'Apply to jobs on InstaHire platform automatically' },
+  { id: 'shine',         name: 'Shine',          abbr: 'Sh',  url: 'https://www.shine.com/jobs',           color: '#F5A623', description: 'Apply to jobs on Shine.com automatically' },
+  { id: 'foundit',       name: 'Foundit',        abbr: 'F',   url: 'https://www.foundit.in/jobs',          color: '#6600CC', description: 'Apply to jobs on Foundit (formerly Monster India) automatically' },
+  { id: 'timesjobs',     name: 'TimesJobs',      abbr: 'TJ',  url: 'https://www.timesjobs.com',            color: '#E31E24', description: 'Apply to jobs on TimesJobs portal automatically' },
+  { id: 'freshersworld', name: 'Freshersworld',  abbr: 'FW',  url: 'https://www.freshersworld.com/jobs',   color: '#00875A', description: 'Apply to fresher openings on Freshersworld automatically' },
+  { id: 'internshala',   name: 'Internshala',    abbr: 'IS',  url: 'https://internshala.com/jobs',         color: '#4CAF50', description: 'Apply to internships and jobs on Internshala automatically' },
+  { id: 'apna',          name: 'Apna',           abbr: 'Ap',  url: 'https://apna.co/jobs',                 color: '#F06C2F', description: 'Apply to jobs on Apna platform automatically' },
+  { id: 'hirist',        name: 'Hirist',         abbr: 'Hi',  url: 'https://www.hirist.tech/jobs',         color: '#00BCD4', description: 'Apply to tech jobs on Hirist automatically' },
+  { id: 'iimjobs',       name: 'IIMJobs',        abbr: 'IJ',  url: 'https://www.iimjobs.com/j',            color: '#1565C0', description: 'Apply to premium management jobs on IIMJobs automatically' },
+  { id: 'glassdoor',     name: 'Glassdoor',      abbr: 'G',   url: 'https://www.glassdoor.co.in/Jobs',     color: '#0CAA41', description: 'Apply to jobs on Glassdoor automatically' },
+  { id: 'cutshort',      name: 'Cutshort',       abbr: 'CS',  url: 'https://cutshort.io/jobs',             color: '#FF4F9A', description: 'Apply to startup and tech jobs on Cutshort automatically' },
+];
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
   const { user, logout, logs, reports, isAutomating, startAutomation, stopAutomation, updateConfig, completeOnboarding } = useApp();
   const logContainerRef = useRef<HTMLDivElement>(null);
   // New users without Naukri credentials should see Job Profile tab first
-  const [activeTab, setActiveTab] = useState(!user.config?.naukriUsername ? 'config' : 'overview');
+  const [activeTab, setActiveTab] = useState('dashboard');
   const [isRunning, setIsRunning] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [botLogs, setBotLogs] = useState<any[]>([]);
+  const [selectedPlatform, setSelectedPlatform] = useState<string>('naukri');
+  const activePlatform = PLATFORMS.find(p => p.id === selectedPlatform) ?? PLATFORMS[0];
 
   // Resume Upload State for Config Tab
   const [analyzing, setAnalyzing] = useState(false);
@@ -1028,9 +1052,209 @@ const Dashboard: React.FC = () => {
 
   const renderContent = () => {
     switch (activeTab) {
+      case 'dashboard':
+        return (
+          <div className="max-w-6xl mx-auto space-y-6">
+            {/* Welcome Header */}
+            <div className="bg-gradient-to-r from-neon-blue/10 via-neon-purple/10 to-neon-blue/10 border border-neon-blue/20 rounded-2xl p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-2xl font-bold text-white">
+                    Welcome back, {user.firstName || user.name || 'Student'}
+                  </h2>
+                  <p className="text-gray-400 mt-1 text-sm">Here's your progress overview</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  {currentSubscription ? (
+                    <span className="px-4 py-2 bg-green-500/10 border border-green-500/30 rounded-xl text-sm font-semibold text-green-400 flex items-center gap-2">
+                      <Crown className="w-4 h-4" /> {currentSubscription.planName || 'Active Plan'}
+                    </span>
+                  ) : (
+                    <button
+                      onClick={() => setActiveTab('billing')}
+                      className="px-4 py-2 bg-neon-blue/10 border border-neon-blue/30 rounded-xl text-sm font-semibold text-neon-blue hover:bg-neon-blue/20 transition-all"
+                    >
+                      Upgrade Plan
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Profile Completion */}
+            <div className="bg-dark-800 border border-white/10 rounded-2xl p-5">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-white font-semibold flex items-center gap-2">
+                  <User className="w-4 h-4 text-neon-blue" /> Profile Completion
+                </h3>
+                <span className={`text-lg font-bold ${profileCompletion === 100 ? 'text-green-400' : 'text-yellow-400'}`}>
+                  {profileCompletion}%
+                </span>
+              </div>
+              <div className="w-full h-3 bg-dark-900 rounded-full overflow-hidden">
+                <div
+                  className={`h-full rounded-full transition-all duration-700 ${profileCompletion === 100 ? 'bg-gradient-to-r from-green-500 to-emerald-400' : 'bg-gradient-to-r from-yellow-500 to-orange-400'}`}
+                  style={{ width: `${profileCompletion}%` }}
+                />
+              </div>
+              {profileCompletion < 100 && (
+                <button
+                  onClick={() => setActiveTab('config')}
+                  className="mt-3 text-xs text-neon-blue hover:underline flex items-center gap-1"
+                >
+                  Complete your profile <ArrowUpRight className="w-3 h-3" />
+                </button>
+              )}
+            </div>
+
+            {/* Quick Stats Grid */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {[
+                { label: 'Skills Added', value: skills.length, icon: Star, color: 'text-neon-purple', bg: 'bg-neon-purple/10' },
+                { label: 'Resume', value: configForm.resumeName ? 'Uploaded' : 'Not uploaded', icon: FileText, color: 'text-neon-blue', bg: 'bg-neon-blue/10' },
+                { label: 'Target Role', value: configForm.targetRole || 'Not set', icon: Target, color: 'text-green-400', bg: 'bg-green-500/10' },
+                { label: 'Experience', value: configForm.yearsOfExperience ? `${configForm.yearsOfExperience} yrs` : 'Not set', icon: TrendingUp, color: 'text-orange-400', bg: 'bg-orange-500/10' },
+              ].map((stat) => (
+                <div key={stat.label} className="bg-dark-800 border border-white/10 rounded-xl p-4">
+                  <div className={`w-9 h-9 rounded-lg ${stat.bg} flex items-center justify-center mb-3`}>
+                    <stat.icon className={`w-4 h-4 ${stat.color}`} />
+                  </div>
+                  <p className="text-[11px] text-gray-500 uppercase tracking-wider">{stat.label}</p>
+                  <p className="text-white font-semibold text-sm mt-0.5 truncate">{stat.value}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* Skills Visualization */}
+            {skills.length > 0 && (
+              <div className="bg-dark-800 border border-white/10 rounded-2xl p-5">
+                <h3 className="text-white font-semibold mb-4 flex items-center gap-2">
+                  <Star className="w-4 h-4 text-neon-purple" /> Your Skills
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {skills.slice(0, 10).map((skill: any, i: number) => (
+                    <div key={i} className="flex items-center gap-3">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-sm text-gray-300 truncate">{skill.displayName || skill.skillName}</span>
+                          <span className="text-xs text-gray-500 flex-shrink-0 ml-2">{skill.rating || 0}/{skill.outOf || 5}</span>
+                        </div>
+                        <div className="w-full h-2 bg-dark-900 rounded-full overflow-hidden">
+                          <div
+                            className="h-full rounded-full bg-gradient-to-r from-neon-purple to-neon-blue transition-all duration-500"
+                            style={{ width: `${((skill.rating || 0) / (skill.outOf || 5)) * 100}%` }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                {skills.length > 10 && (
+                  <p className="text-xs text-gray-500 mt-3">+{skills.length - 10} more skills</p>
+                )}
+              </div>
+            )}
+
+            {/* Quick Actions */}
+            <div className="bg-dark-800 border border-white/10 rounded-2xl p-5">
+              <h3 className="text-white font-semibold mb-4 flex items-center gap-2">
+                <Zap className="w-4 h-4 text-yellow-400" /> Quick Actions
+              </h3>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                {[
+                  { label: 'Job Profile', tab: 'config', icon: Settings, color: 'from-blue-500/10 to-blue-600/10', border: 'border-blue-500/20', text: 'text-blue-400' },
+                  { label: 'Resume Builder', tab: 'resume-builder', icon: FileText, color: 'from-purple-500/10 to-purple-600/10', border: 'border-purple-500/20', text: 'text-purple-400' },
+                  { label: 'Mock Interview', tab: 'mock-interview', icon: Users, color: 'from-green-500/10 to-green-600/10', border: 'border-green-500/20', text: 'text-green-400' },
+                  { label: 'AI Career Coach', tab: 'ai-career-coach', icon: Lightbulb, color: 'from-orange-500/10 to-orange-600/10', border: 'border-orange-500/20', text: 'text-orange-400' },
+                ].map((action) => (
+                  <button
+                    key={action.tab}
+                    onClick={() => setActiveTab(action.tab)}
+                    className={`bg-gradient-to-br ${action.color} border ${action.border} rounded-xl p-4 text-left hover:scale-[1.02] transition-all`}
+                  >
+                    <action.icon className={`w-5 h-5 ${action.text} mb-2`} />
+                    <p className="text-sm font-semibold text-white">{action.label}</p>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Subscription Info */}
+            {currentSubscription && (
+              <div className="bg-dark-800 border border-white/10 rounded-2xl p-5">
+                <h3 className="text-white font-semibold mb-4 flex items-center gap-2">
+                  <Crown className="w-4 h-4 text-yellow-400" /> Your Plan
+                </h3>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-white font-semibold">{currentSubscription.planName}</p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {currentSubscription.daysRemaining > 0
+                        ? `${currentSubscription.daysRemaining} days remaining`
+                        : 'Plan expired'}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setActiveTab('billing')}
+                    className="px-4 py-2 bg-dark-900 border border-white/10 rounded-lg text-xs text-gray-400 hover:text-white transition-colors"
+                  >
+                    View Details
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        );
+
       case 'overview':
         return (
-          <div className="w-full max-w-[95%] mx-auto p-6">            {/* Browser Simulation + Terminal Stack - Centered Container */}
+          <div className="w-full max-w-[95%] mx-auto p-6">
+            {/* ── Platform Selector ── */}
+            <div className="mb-5">
+              <p className="text-xs text-gray-500 uppercase tracking-widest font-semibold mb-3">Select Job Platform</p>
+              <div className="flex flex-wrap gap-2">
+                {PLATFORMS.map(platform => {
+                  const isActive = selectedPlatform === platform.id;
+                  return (
+                    <button
+                      key={platform.id}
+                      onClick={() => setSelectedPlatform(platform.id)}
+                      style={isActive ? {
+                        backgroundColor: `${platform.color}18`,
+                        borderColor: `${platform.color}80`,
+                        color: platform.color,
+                        boxShadow: `0 0 16px ${platform.color}30`,
+                      } : {}}
+                      className={`flex items-center gap-2.5 px-4 py-2.5 rounded-xl border font-semibold text-sm transition-all ${
+                        isActive ? '' : 'bg-white/5 border-white/10 text-gray-400 hover:border-white/20 hover:text-gray-200'
+                      }`}
+                    >
+                      <div
+                        style={isActive ? { backgroundColor: platform.color } : {}}
+                        className={`w-6 h-6 rounded-md flex items-center justify-center font-black text-[10px] flex-shrink-0 ${isActive ? 'text-white' : 'bg-white/10 text-gray-400'}`}
+                      >
+                        {platform.abbr}
+                      </div>
+                      <div className="text-left">
+                        <div className="leading-tight">{platform.name}</div>
+                        <div className="text-[10px] font-normal opacity-60">{platform.url.replace('https://www.', '').replace('https://', '').split('/')[0]}</div>
+                      </div>
+                      {isActive && (
+                        <div
+                          style={{ backgroundColor: `${platform.color}30`, color: platform.color }}
+                          className="flex items-center gap-1 ml-0.5 px-1.5 py-0.5 rounded-full text-[9px] font-bold"
+                        >
+                          <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ backgroundColor: platform.color }}></div>
+                          ON
+                        </div>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Browser Simulation + Terminal Stack - Centered Container */}
             <div className="flex flex-col bg-black rounded-2xl border border-gray-800 overflow-hidden shadow-2xl">
 
               {/* Mock Browser Header - Consistent Theme */}
@@ -1044,7 +1268,7 @@ const Dashboard: React.FC = () => {
                 {/* Address Bar - Consistent Style */}
                 <div className="flex-1 bg-dark-900 rounded-lg px-4 py-2.5 flex items-center gap-3 text-sm text-gray-300 font-mono border border-gray-700 shadow-inner">
                   <Globe className="w-4 h-4 text-gray-500" />
-                  <span className="flex-1 truncate">{isAutomating ? browserState.url : 'about:blank'}</span>
+                  <span className="flex-1 truncate">{isAutomating ? browserState.url : activePlatform.url}</span>
                   {isAutomating && <RotateCw className="w-4 h-4 animate-spin text-neon-blue" />}
                 </div>
 
@@ -1053,9 +1277,11 @@ const Dashboard: React.FC = () => {
                   {!isRunning ? (
                     <button
                       onClick={handleStartBot}
-                      className="flex items-center gap-2 px-5 py-2 bg-gradient-to-r from-neon-blue to-blue-500 text-black text-sm font-bold rounded-lg hover:from-white hover:to-neon-blue transition-all shadow-[0_0_20px_rgba(0,243,255,0.4)] hover:shadow-[0_0_30px_rgba(0,243,255,0.6)]"
+                      style={{ backgroundColor: activePlatform.color, boxShadow: `0 0 20px ${activePlatform.color}66` }}
+                      className="flex items-center gap-2 px-5 py-2 text-white text-sm font-bold rounded-lg transition-all hover:opacity-90"
                     >
-                      <Play className="w-4 h-4 fill-current" /> START AUTOMATION
+                      <Play className="w-4 h-4 fill-current" />
+                      START {activePlatform.name.toUpperCase()} BOT
                     </button>
                   ) : (
                     <button
@@ -1104,10 +1330,13 @@ const Dashboard: React.FC = () => {
                     </div>
 
                     {/* Status Badge */}
-                    <div className="mt-8 px-6 py-3 bg-dark-800/80 backdrop-blur-sm rounded-xl border border-neon-blue/30 inline-block text-sm text-neon-blue font-semibold shadow-[0_0_20px_rgba(0,243,255,0.3)]">
+                    <div
+                      style={{ borderColor: `${activePlatform.color}50`, color: activePlatform.color, boxShadow: `0 0 20px ${activePlatform.color}40` }}
+                      className="mt-8 px-6 py-3 bg-dark-800/80 backdrop-blur-sm rounded-xl border inline-block text-sm font-semibold"
+                    >
                       <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 bg-neon-blue rounded-full animate-pulse"></div>
-                        Automation Running...
+                        <div className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: activePlatform.color }}></div>
+                        {activePlatform.name} Automation Running...
                       </div>
                     </div>
                   </div>
@@ -1144,9 +1373,13 @@ const Dashboard: React.FC = () => {
                       <h3 className="text-2xl font-bold text-gray-400 font-heading">
                         <span style={{ animation: 'flicker 4s infinite' }}>Ready to Start</span>
                       </h3>
-                      <p className="text-sm text-gray-600 max-w-md mx-auto">
-                        Click the START AUTOMATION button to begin the automation process
-                      </p>
+                      <p className="text-sm text-gray-600 max-w-md mx-auto">{activePlatform.description}</p>
+                      <div
+                        style={{ backgroundColor: `${activePlatform.color}18`, borderColor: `${activePlatform.color}50`, color: activePlatform.color }}
+                        className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border text-xs font-semibold mt-2"
+                      >
+                        {activePlatform.name}
+                      </div>
                     </div>
                   </div>
                 )}
@@ -1155,7 +1388,7 @@ const Dashboard: React.FC = () => {
                 <div className="absolute bottom-4 right-4 px-4 py-2 bg-black/90 backdrop-blur-md text-xs text-green-400 font-mono border border-green-500/30 rounded-lg shadow-[0_0_15px_rgba(34,197,94,0.2)]">
                   <div className="flex items-center gap-2">
                     <div className={`w-2 h-2 rounded-full ${isRunning ? 'bg-green-400 animate-pulse' : 'bg-gray-600'}`}></div>
-                    Chromium: {isRunning ? 'Active' : 'Idle'}
+                    {activePlatform.name}: {isRunning ? 'Active' : 'Idle'}
                   </div>
                 </div>
 
@@ -1324,204 +1557,6 @@ const Dashboard: React.FC = () => {
 
             <div className="bg-dark-800 border border-white/10 rounded-2xl p-8">
               <form onSubmit={handleSaveConfig} className="space-y-6">
-
-                {/* HIGH PRIORITY: Naukri Credentials Section */}
-                <div className="bg-gradient-to-r from-neon-blue/10 via-neon-purple/10 to-neon-blue/10 p-6 rounded-xl border-2 border-neon-blue/30 shadow-lg shadow-neon-blue/20">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-white font-bold flex items-center gap-2">
-                      <Key className="text-neon-blue w-5 h-5" /> Naukri Account Credentials
-                      <span className="bg-red-500/20 text-red-400 text-[10px] px-2 py-0.5 rounded-full border border-red-500/30 font-semibold ml-2">
-                        REQUIRED
-                      </span>
-                    </h3>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                    <div className="space-y-2">
-                      <label className="text-xs text-gray-300 uppercase font-bold flex items-center gap-1">
-                        Naukri Email <span className="text-red-400">*</span>
-                        {isCredentialsVerified && (
-                          <span className="ml-2 text-[10px] bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded-full border border-blue-500/30 normal-case">
-                            Locked
-                          </span>
-                        )}
-                      </label>
-                      <div className="relative">
-                        <User className="absolute left-3 top-3 w-4 h-4 text-neon-blue" />
-                        <input
-                          type="email"
-                          value={configForm.naukriUsername}
-                          onChange={(e) => setConfigForm({ ...configForm, naukriUsername: e.target.value })}
-                          disabled={isCredentialsVerified}
-                          className={`w-full bg-dark-900 border-2 rounded-lg py-2.5 pl-10 pr-4 text-white text-sm outline-none transition-colors ${isCredentialsVerified
-                              ? 'border-gray-600 cursor-not-allowed opacity-60'
-                              : 'border-neon-blue/30 focus:border-neon-blue'
-                            }`}
-                          placeholder="your.email@example.com"
-                        />
-                      </div>
-                      {isCredentialsVerified && (
-                        <p className="text-xs text-gray-400 flex items-center gap-1 mt-1">
-                          <AlertCircle className="w-3 h-3" />
-                          Email cannot be changed after verification for security reasons.
-                        </p>
-                      )}
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-xs text-gray-300 uppercase font-bold flex items-center gap-1">
-                        Naukri Password <span className="text-red-400">*</span>
-                        {isCredentialsVerified && (
-                          <span className="ml-2 text-[10px] bg-green-500/20 text-green-400 px-2 py-0.5 rounded-full border border-green-500/30 normal-case">
-                            Editable
-                          </span>
-                        )}
-                      </label>
-                      <div className="relative">
-                        <Key className="absolute left-3 top-3 w-4 h-4 text-neon-blue" />
-                        <input
-                          type={showNaukriPassword ? "text" : "password"}
-                          value={configForm.naukriPassword}
-                          onChange={(e) => setConfigForm({ ...configForm, naukriPassword: e.target.value })}
-                          className="w-full bg-dark-900 border-2 border-neon-blue/30 rounded-lg py-2.5 pl-10 pr-10 text-white text-sm focus:border-neon-blue outline-none transition-colors"
-                          placeholder="••••••••••••"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowNaukriPassword(!showNaukriPassword)}
-                          className="absolute right-3 top-3 text-gray-500 hover:text-neon-blue transition-colors"
-                        >
-                          {showNaukriPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                        </button>
-                      </div>
-                      {isCredentialsVerified && (
-                        <p className="text-xs text-gray-400 flex items-center gap-1 mt-1">
-                          <AlertCircle className="w-3 h-3" />
-                          {needsReVerification
-                            ? 'Password changed. Re-verification required to use automation.'
-                            : 'You can update your password. Re-verification will be required.'
-                          }
-                        </p>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col md:flex-row gap-3 justify-center md:justify-start mt-4">
-                    {isCredentialsVerified && !needsReVerification ? (
-                      // Show verified status badge (green)
-                      <div className="w-full md:w-auto px-8 py-3 bg-gradient-to-r from-green-500/10 to-emerald-500/10 border-2 border-green-500 text-green-700 dark:text-green-400 font-bold rounded-lg flex items-center justify-center gap-2">
-                        <CheckCircle className="w-5 h-5" />
-                        Credentials Verified
-                      </div>
-                    ) : isCredentialsVerified && needsReVerification ? (
-                      // Show re-verification required badge + button (yellow/orange)
-                      <>
-                        <div className="w-full md:w-auto px-6 py-3 bg-gradient-to-r from-yellow-500/10 to-orange-500/10 border-2 border-yellow-500 text-yellow-600 dark:text-yellow-400 font-bold rounded-lg flex items-center justify-center gap-2">
-                          <AlertCircle className="w-5 h-5" />
-                          Re-verification Required
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            if (!configForm.naukriUsername || !configForm.naukriPassword) {
-                              setError('Please enter both Naukri email and password');
-                              return;
-                            }
-                            setShowVerificationConfirm(true);
-                          }}
-                          className="w-full md:w-auto px-8 py-3 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-bold rounded-lg transition-all flex items-center justify-center gap-2 shadow-xl shadow-orange-500/40 hover:shadow-2xl hover:shadow-orange-500/50 border-2 border-orange-400"
-                        >
-                          <CheckCircle className="w-5 h-5" />
-                          Re-verify Password
-                        </button>
-                      </>
-                    ) : (
-                      // Show initial verification button (blue)
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (!configForm.naukriUsername || !configForm.naukriPassword) {
-                            setError('Please enter both Naukri email and password');
-                            return;
-                          }
-                          setShowVerificationConfirm(true);
-                        }}
-                        className="w-full md:w-auto px-8 py-3 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-bold rounded-lg transition-all flex items-center justify-center gap-2 shadow-xl shadow-blue-500/40 hover:shadow-2xl hover:shadow-blue-500/50 border-2 border-blue-400"
-                      >
-                        <CheckCircle className="w-5 h-5" />
-                        Verify Naukri Credentials
-                      </button>
-                    )}
-                  </div>
-
-                  {/* Verification Confirmation Modal */}
-                  {showVerificationConfirm && (
-                    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-                      <div className="bg-dark-800 border-2 border-yellow-500/30 rounded-2xl p-6 max-w-md w-full shadow-2xl shadow-yellow-500/20">
-                        <div className="flex items-center gap-3 mb-4">
-                          <div className="bg-yellow-500/20 p-2 rounded-lg">
-                            <AlertCircle className="w-6 h-6 text-yellow-400" />
-                          </div>
-                          <h3 className="text-xl font-bold text-white">Confirm Verification</h3>
-                        </div>
-
-                        <div className="space-y-4 mb-6">
-                          <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4">
-                            <p className="text-yellow-200 text-sm font-semibold mb-2">Important Notice:</p>
-                            <ul className="space-y-2 text-sm text-gray-300">
-                              <li className="flex items-start gap-2">
-                                <span className="text-yellow-400 mt-0.5">⚠️</span>
-                                <span>Once submitted, your Naukri credentials <strong className="text-white">cannot be changed later</strong>.</span>
-                              </li>
-                              <li className="flex items-start gap-2">
-                                <span className="text-yellow-400 mt-0.5">⚠️</span>
-                                <span>After successful verification, your Naukri account email will be <strong className="text-white">permanently assigned</strong> to your login email.</span>
-                              </li>
-                            </ul>
-                          </div>
-
-                          <div className="bg-dark-900/50 border border-gray-700 rounded-lg p-3">
-                            <p className="text-xs text-gray-400 mb-1">You are verifying:</p>
-                            <p className="text-sm text-neon-blue font-mono">{configForm.naukriUsername}</p>
-                          </div>
-                        </div>
-
-                        <div className="flex gap-3 mt-6">
-                          <button
-                            type="button"
-                            onClick={() => setShowVerificationConfirm(false)}
-                            disabled={isVerifying}
-                            className="flex-1 px-4 py-3 bg-gray-600 hover:bg-gray-500 text-white font-semibold rounded-lg transition-all border-2 border-gray-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                          >
-                            Cancel
-                          </button>
-                          <button
-                            type="button"
-                            onClick={handleVerifyCredentials}
-                            disabled={isVerifying}
-                            className="flex-1 px-4 py-3 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-bold rounded-lg transition-all flex items-center justify-center gap-2 shadow-xl shadow-green-500/50 border-2 border-green-400 disabled:opacity-50 disabled:cursor-not-allowed"
-                          >
-                            {isVerifying ? (
-                              <>
-                                <Loader2 className="w-5 h-5 animate-spin" />
-                                Verifying...
-                              </>
-                            ) : verificationStatus === 'success' ? (
-                              <>
-                                <CheckCircle className="w-5 h-5" />
-                                Verified!
-                              </>
-                            ) : (
-                              <>
-                                <CheckCircle className="w-5 h-5" />
-                                Confirm Verification
-                              </>
-                            )}
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
 
                 {/* Resume Upload Section */}
                 <div className="bg-dark-900/50 p-6 rounded-xl border border-dashed border-gray-600">
@@ -1710,69 +1745,6 @@ const Dashboard: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Automation Settings */}
-                <div className="bg-dark-900/50 p-6 rounded-xl border border-dashed border-gray-600">
-                  <h3 className="text-white font-bold mb-4 flex items-center gap-2 text-sm">
-                    <Activity className="text-neon-blue w-4 h-4" /> Automation Settings
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                      <label className="text-xs text-gray-400 uppercase font-bold">Search Years of Experience</label>
-                      <input
-                        type="number"
-                        min="0"
-                        max="50"
-                        step="1"
-                        value={configForm.yearsOfExperience ?? 0}
-                        onChange={(e) => {
-                          const value = parseInt(e.target.value);
-                          if (!isNaN(value) && value >= 0 && value <= 50) {
-                            setConfigForm({ ...configForm, yearsOfExperience: value });
-                          }
-                        }}
-                        className="w-full bg-dark-900 border border-gray-700 rounded-lg py-2.5 px-4 text-white text-sm focus:border-neon-blue outline-none"
-                        placeholder="0"
-                      />
-                      <p className="text-[10px] text-gray-500">Used for job filtering and match calculation</p>
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-xs text-gray-400 uppercase font-bold">Max Pages to Process</label>
-                      <input
-                        type="number"
-                        min="1"
-                        max="50"
-                        value={configForm.maxPages || 5}
-                        onChange={(e) => setConfigForm({ ...configForm, maxPages: parseInt(e.target.value) || 5 })}
-                        className="w-full bg-dark-900 border border-gray-700 rounded-lg py-2.5 px-4 text-white text-sm focus:border-neon-blue outline-none"
-                        placeholder="5"
-                      />
-                      <p className="text-xs text-gray-500">Number of job listing pages to process (1-50)</p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Availability Field */}
-                <div className="space-y-2">
-                  <label className="text-xs text-gray-400 uppercase font-bold flex items-center gap-1">
-                    Face-to-Face Availability <span className="text-red-400">*</span>
-                  </label>
-                  <div className="relative">
-                    <Calendar className="absolute left-3 top-3 w-4 h-4 text-gray-500" />
-                    <select
-                      className="w-full bg-dark-900 border border-gray-700 rounded-lg py-2.5 pl-9 pr-2 text-white text-sm focus:border-neon-purple outline-none appearance-none cursor-pointer"
-                      value={configForm.availability}
-                      onChange={e => setConfigForm({ ...configForm, availability: e.target.value })}
-                      required
-                    >
-                      <option value="Flexible">Flexible</option>
-                      <option value="Available">Available</option>
-                      <option value="Not Available">Not Available</option>
-                      <option value="Weekends Only">Weekends Only</option>
-                      <option value="After Work Hours">After Work Hours</option>
-                    </select>
-                  </div>
-                </div>
-
                 {/* Skills Section */}
                 <div className="bg-dark-900/50 p-6 rounded-xl border border-dashed border-gray-600 space-y-4">
                   <div className="flex items-center justify-between">
@@ -1941,253 +1913,6 @@ const Dashboard: React.FC = () => {
                   )}
                 </div>
 
-                {/* Job Search Filters Section */}
-                <div className="bg-dark-900/50 p-6 rounded-xl border border-dashed border-gray-600 space-y-4">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-white font-bold flex items-center gap-2 text-sm">
-                      <Filter className="text-neon-green w-4 h-4" /> Job Search Filters
-                    </h3>
-                    <button
-                      type="button"
-                      onClick={() => setOpenFilterDropdown(openFilterDropdown ? null : 'main')}
-                      className="text-xs text-neon-green hover:text-neon-green/80 flex items-center gap-1"
-                    >
-                      {openFilterDropdown === 'main' ? <ChevronLeft className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
-                      {openFilterDropdown === 'main' ? 'Hide' : 'Show'} Filter Editor
-                    </button>
-                  </div>
-
-                  {/* Job Search URL Input */}
-                  <div className="space-y-2">
-                    <label className="text-xs text-gray-400 uppercase font-bold flex items-center gap-2">
-                      <Globe className="w-3 h-3" /> Enter Your Search URL
-                    </label>
-                    <input
-                      type="url"
-                      value={selectedFilters.finalUrl}
-                      onChange={(e) => setSelectedFilters({ ...selectedFilters, finalUrl: e.target.value })}
-                      className="w-full bg-dark-900 border border-gray-700 rounded-lg py-2.5 px-4 text-white text-sm focus:border-neon-green outline-none"
-                      placeholder="https://www.naukri.com/..."
-                    />
-                    <p className="text-[10px] text-gray-500">
-                      Paste your customized job search URL from Naukri.com. This URL will be used when running automation.
-                    </p>
-                  </div>
-
-                  {/* Visual Filter Configurator */}
-                  {openFilterDropdown === 'main' && (
-                    <div className="border-t border-gray-700 pt-4 mt-4 space-y-4">
-                      <p className="text-xs text-gray-400">
-                        Configure your job search filters visually. Changes will update your search URL automatically.
-                      </p>
-
-                      {/* Freshness Filter (Single Select) */}
-                      <div className="space-y-2">
-                        <label className="text-xs text-gray-300 font-semibold">Freshness</label>
-                        <select
-                          value={selectedFilters.freshness || ''}
-                          onChange={(e) => setSelectedFilters({ ...selectedFilters, freshness: e.target.value })}
-                          className="w-full bg-dark-800 border border-gray-700 rounded-lg py-2 px-3 text-white text-sm focus:border-neon-green outline-none"
-                        >
-                          <option value="">Any</option>
-                          {filters.freshness?.map((f: any) => (
-                            <option key={f.id} value={f.id}>{f.label} {f.count ? `(${f.count})` : ''}</option>
-                          ))}
-                        </select>
-                      </div>
-
-                      {/* Salary Range (Multi Select) */}
-                      <div className="space-y-2">
-                        <label className="text-xs text-gray-300 font-semibold">Salary Range</label>
-                        <div className="relative">
-                          <button
-                            type="button"
-                            onClick={() => setOpenFilterDropdown(openFilterDropdown === 'salary' ? 'main' : 'salary')}
-                            className="w-full bg-dark-800 border border-gray-700 rounded-lg py-2 px-3 text-white text-sm text-left flex items-center justify-between hover:border-neon-green focus:border-neon-green outline-none"
-                          >
-                            <span className={selectedFilters.salaryRange?.length > 0 ? 'text-white' : 'text-gray-500'}>
-                              {selectedFilters.salaryRange?.length > 0
-                                ? `${selectedFilters.salaryRange.length} selected`
-                                : 'Select salary ranges'}
-                            </span>
-                            <ChevronRight className={`w-4 h-4 transition-transform ${openFilterDropdown === 'salary' ? 'rotate-90' : ''}`} />
-                          </button>
-                          {openFilterDropdown === 'salary' && (
-                            <div className="absolute z-10 w-full mt-1 bg-dark-800 border border-gray-700 rounded-lg shadow-xl max-h-60 overflow-y-auto">
-                              {filters.salaryRange?.map((f: any) => (
-                                <label key={f.id} className="flex items-center gap-2 px-3 py-2 hover:bg-dark-700 cursor-pointer">
-                                  <input
-                                    type="checkbox"
-                                    checked={selectedFilters.salaryRange?.includes(f.id) || false}
-                                    onChange={(e) => {
-                                      const newSalary = e.target.checked
-                                        ? [...(selectedFilters.salaryRange || []), f.id]
-                                        : (selectedFilters.salaryRange || []).filter((id: string) => id !== f.id);
-                                      setSelectedFilters({ ...selectedFilters, salaryRange: newSalary });
-                                    }}
-                                    className="rounded border-gray-600"
-                                  />
-                                  <span className="text-sm text-white">{f.label} {f.count ? `(${f.count})` : ''}</span>
-                                </label>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                        {selectedFilters.salaryRange?.length > 0 && (
-                          <div className="flex flex-wrap gap-1">
-                            {selectedFilters.salaryRange.map((id: string) => {
-                              const filter = filters.salaryRange?.find((f: any) => f.id === id);
-                              return filter ? (
-                                <span key={id} className="inline-flex items-center gap-1 bg-neon-green/10 text-neon-green text-xs px-2 py-1 rounded">
-                                  {filter.label}
-                                  <X
-                                    className="w-3 h-3 cursor-pointer hover:text-red-400"
-                                    onClick={() => {
-                                      const newSalary = selectedFilters.salaryRange.filter((sid: string) => sid !== id);
-                                      setSelectedFilters({ ...selectedFilters, salaryRange: newSalary });
-                                    }}
-                                  />
-                                </span>
-                              ) : null;
-                            })}
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Work From Home Type */}
-                      <div className="space-y-2">
-                        <label className="text-xs text-gray-300 font-semibold">Work From Home</label>
-                        <div className="relative">
-                          <button
-                            type="button"
-                            onClick={() => setOpenFilterDropdown(openFilterDropdown === 'wfh' ? 'main' : 'wfh')}
-                            className="w-full bg-dark-800 border border-gray-700 rounded-lg py-2 px-3 text-white text-sm text-left flex items-center justify-between hover:border-neon-green focus:border-neon-green outline-none"
-                          >
-                            <span className={selectedFilters.wfhType?.length > 0 ? 'text-white' : 'text-gray-500'}>
-                              {selectedFilters.wfhType?.length > 0
-                                ? `${selectedFilters.wfhType.length} selected`
-                                : 'Select WFH options'}
-                            </span>
-                            <ChevronRight className={`w-4 h-4 transition-transform ${openFilterDropdown === 'wfh' ? 'rotate-90' : ''}`} />
-                          </button>
-                          {openFilterDropdown === 'wfh' && (
-                            <div className="absolute z-10 w-full mt-1 bg-dark-800 border border-gray-700 rounded-lg shadow-xl max-h-60 overflow-y-auto">
-                              {filters.wfhType?.map((f: any) => (
-                                <label key={f.id} className="flex items-center gap-2 px-3 py-2 hover:bg-dark-700 cursor-pointer">
-                                  <input
-                                    type="checkbox"
-                                    checked={selectedFilters.wfhType?.includes(f.id) || false}
-                                    onChange={(e) => {
-                                      const newWfh = e.target.checked
-                                        ? [...(selectedFilters.wfhType || []), f.id]
-                                        : (selectedFilters.wfhType || []).filter((id: string) => id !== f.id);
-                                      setSelectedFilters({ ...selectedFilters, wfhType: newWfh });
-                                    }}
-                                    className="rounded border-gray-600"
-                                  />
-                                  <span className="text-sm text-white">{f.label} {f.count ? `(${f.count})` : ''}</span>
-                                </label>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                        {selectedFilters.wfhType?.length > 0 && (
-                          <div className="flex flex-wrap gap-1">
-                            {selectedFilters.wfhType.map((id: string) => {
-                              const filter = filters.wfhType?.find((f: any) => f.id === id);
-                              return filter ? (
-                                <span key={id} className="inline-flex items-center gap-1 bg-neon-blue/10 text-neon-blue text-xs px-2 py-1 rounded">
-                                  {filter.label}
-                                  <X
-                                    className="w-3 h-3 cursor-pointer hover:text-red-400"
-                                    onClick={() => {
-                                      const newWfh = selectedFilters.wfhType.filter((wid: string) => wid !== id);
-                                      setSelectedFilters({ ...selectedFilters, wfhType: newWfh });
-                                    }}
-                                  />
-                                </span>
-                              ) : null;
-                            })}
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Cities */}
-                      <div className="space-y-2">
-                        <label className="text-xs text-gray-300 font-semibold">Cities</label>
-                        <div className="relative">
-                          <button
-                            type="button"
-                            onClick={() => setOpenFilterDropdown(openFilterDropdown === 'cities' ? 'main' : 'cities')}
-                            className="w-full bg-dark-800 border border-gray-700 rounded-lg py-2 px-3 text-white text-sm text-left flex items-center justify-between hover:border-neon-green focus:border-neon-green outline-none"
-                          >
-                            <span className={selectedFilters.citiesGid?.length > 0 ? 'text-white' : 'text-gray-500'}>
-                              {selectedFilters.citiesGid?.length > 0
-                                ? `${selectedFilters.citiesGid.length} selected`
-                                : 'Select cities'}
-                            </span>
-                            <ChevronRight className={`w-4 h-4 transition-transform ${openFilterDropdown === 'cities' ? 'rotate-90' : ''}`} />
-                          </button>
-                          {openFilterDropdown === 'cities' && (
-                            <div className="absolute z-10 w-full mt-1 bg-dark-800 border border-gray-700 rounded-lg shadow-xl max-h-60 overflow-y-auto">
-                              {filters.citiesGid?.map((f: any) => (
-                                <label key={f.id} className="flex items-center gap-2 px-3 py-2 hover:bg-dark-700 cursor-pointer">
-                                  <input
-                                    type="checkbox"
-                                    checked={selectedFilters.citiesGid?.includes(f.id) || false}
-                                    onChange={(e) => {
-                                      const newCities = e.target.checked
-                                        ? [...(selectedFilters.citiesGid || []), f.id]
-                                        : (selectedFilters.citiesGid || []).filter((id: string) => id !== f.id);
-                                      setSelectedFilters({ ...selectedFilters, citiesGid: newCities });
-                                    }}
-                                    className="rounded border-gray-600"
-                                  />
-                                  <span className="text-sm text-white">{f.label} {f.count ? `(${f.count})` : ''}</span>
-                                </label>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                        {selectedFilters.citiesGid?.length > 0 && (
-                          <div className="flex flex-wrap gap-1">
-                            {selectedFilters.citiesGid.map((id: string) => {
-                              const filter = filters.citiesGid?.find((f: any) => f.id === id);
-                              return filter ? (
-                                <span key={id} className="inline-flex items-center gap-1 bg-purple-500/10 text-purple-400 text-xs px-2 py-1 rounded">
-                                  {filter.label}
-                                  <X
-                                    className="w-3 h-3 cursor-pointer hover:text-red-400"
-                                    onClick={() => {
-                                      const newCities = selectedFilters.citiesGid.filter((cid: string) => cid !== id);
-                                      setSelectedFilters({ ...selectedFilters, citiesGid: newCities });
-                                    }}
-                                  />
-                                </span>
-                              ) : null;
-                            })}
-                          </div>
-                        )}
-                      </div>
-
-                      <button
-                        type="button"
-                        onClick={async () => {
-                          try {
-                            await saveUserFilters(selectedFilters);
-                            setSuccess('Filters saved successfully!');
-                            setTimeout(() => setSuccess(null), 3000);
-                          } catch (err: any) {
-                            setError(err.message);
-                          }
-                        }}
-                        className="w-full bg-neon-green hover:bg-neon-green/80 text-dark-900 font-bold py-2 rounded-lg transition-all flex items-center justify-center gap-2"
-                      >
-                        <Save className="w-4 h-4" /> Save Filter Configuration
-                      </button>
-                    </div>
-                  )}
-                </div>
 
                 {/* Save Button with Completion Check */}
                 <div className="space-y-3 mt-6">
@@ -3298,6 +3023,9 @@ const Dashboard: React.FC = () => {
       case 'auto-profile-update':
         return <AutoProfileUpdate />;
 
+      case 'naukri-guide':
+        return <NaukriProfileGuide />;
+
       case 'resume-builder':
         return <ResumeBuilder />;
 
@@ -3312,6 +3040,64 @@ const Dashboard: React.FC = () => {
 
       case 'email-management':
         return <EmailManagement />;
+
+      case 'learning':
+        return (
+          <div className="flex flex-col items-center justify-center py-20 text-center space-y-6">
+            <div className="w-20 h-20 rounded-2xl bg-neon-blue/10 border border-neon-blue/20 flex items-center justify-center">
+              <BookOpen className="w-10 h-10 text-neon-blue" />
+            </div>
+            <div>
+              <h2 className="text-2xl font-bold text-white">Learning Center</h2>
+              <span className="inline-block mt-2 px-4 py-1.5 bg-yellow-500/10 border border-yellow-500/30 rounded-full text-sm font-semibold text-yellow-400">Coming Soon</span>
+            </div>
+            <p className="text-gray-400 max-w-md">A complete learning platform is being built for you. Here's what's coming:</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-lg w-full">
+              {[
+                { title: 'Course Dashboard', desc: 'Track your enrolled courses and progress' },
+                { title: 'Explore Courses', desc: 'Browse Full Stack Java, .NET, React & more' },
+                { title: 'Tasks & Assignments', desc: 'Weekly tasks to build real-world skills' },
+                { title: 'Exams', desc: 'Module-wise exams to test your knowledge' },
+                { title: 'Certificates', desc: 'Earn certificates on course completion' },
+                { title: 'Weekly Mock Interview', desc: 'Practice interviews every week' },
+              ].map((item) => (
+                <div key={item.title} className="bg-dark-800 border border-white/10 rounded-xl p-4 text-left">
+                  <p className="text-sm font-semibold text-white">{item.title}</p>
+                  <p className="text-xs text-gray-500 mt-1">{item.desc}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+
+      case 'internship':
+        return (
+          <div className="flex flex-col items-center justify-center py-20 text-center space-y-6">
+            <div className="w-20 h-20 rounded-2xl bg-neon-purple/10 border border-neon-purple/20 flex items-center justify-center">
+              <Briefcase className="w-10 h-10 text-neon-purple" />
+            </div>
+            <div>
+              <h2 className="text-2xl font-bold text-white">Online Internship</h2>
+              <span className="inline-block mt-2 px-4 py-1.5 bg-yellow-500/10 border border-yellow-500/30 rounded-full text-sm font-semibold text-yellow-400">Coming Soon</span>
+            </div>
+            <p className="text-gray-400 max-w-md">Get real project experience with our online internship program. Here's what's coming:</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-lg w-full">
+              {[
+                { title: 'Internship Dashboard', desc: 'Overview of your internship journey' },
+                { title: 'Browse Internships', desc: 'Find internships matching your skills' },
+                { title: 'My Internship', desc: 'Track your active internship & mentor' },
+                { title: 'Tasks & Deliverables', desc: 'Real project tasks with deadlines' },
+                { title: 'Progress Tracking', desc: 'Weekly progress reports and feedback' },
+                { title: 'Certificate', desc: 'Get internship completion certificate' },
+              ].map((item) => (
+                <div key={item.title} className="bg-dark-800 border border-white/10 rounded-xl p-4 text-left">
+                  <p className="text-sm font-semibold text-white">{item.title}</p>
+                  <p className="text-xs text-gray-500 mt-1">{item.desc}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
 
       case 'billing':
         return (
@@ -3517,8 +3303,18 @@ const Dashboard: React.FC = () => {
       case 'suggest-earn':
         return <SuggestAndEarn />;
 
+      case 'change-password':
+        return <ChangePassword />;
+
       case 'settings':
         return <AppSettings />;
+
+      case 'my-blogs':
+        return (
+          <div className="p-6">
+            <UserBlogSection />
+          </div>
+        );
 
       default:
         return <div>Select a menu item</div>;

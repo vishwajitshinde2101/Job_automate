@@ -115,4 +115,78 @@ OUTPUT FORMAT - Return ONLY valid JSON in this exact format:
   }
 });
 
+/**
+ * POST /api/ai/chat
+ * Conversational AI Career Coach endpoint — ChatGPT-style multi-turn chat
+ */
+router.post('/chat', async (req, res) => {
+  try {
+    const { messages, userName, userConfig } = req.body;
+
+    if (!messages || !Array.isArray(messages) || messages.length === 0) {
+      return res.status(400).json({ success: false, error: 'messages array is required' });
+    }
+
+    // Build personalised system prompt
+    const profileLines = [];
+    if (userName) profileLines.push(`The user's name is ${userName}.`);
+    if (userConfig?.targetRole) profileLines.push(`Their target role is: ${userConfig.targetRole}.`);
+    if (userConfig?.experience) profileLines.push(`Years of experience: ${userConfig.experience}.`);
+    if (userConfig?.location) profileLines.push(`Location: ${userConfig.location}.`);
+
+    const profileContext = profileLines.length > 0
+      ? `\n\nUser context:\n${profileLines.join('\n')}`
+      : '';
+
+    const systemPrompt = `You are "Career AI", an expert and friendly AI Career Coach specialising in technology careers in India. You provide personalised, practical, and genuinely encouraging career guidance.
+
+Your areas of expertise:
+- Career path planning and role transitions (software engineering, data science, product management, UI/UX, DevOps, cloud, etc.)
+- Skill gap analysis with personalised learning roadmaps
+- Resume and LinkedIn profile optimisation
+- Technical and behavioural interview preparation
+- Salary benchmarking and negotiation strategies
+- Job search strategies and networking
+- Course and certification recommendations (Udemy, Coursera, LinkedIn Learning, Google, AWS, Microsoft, official docs)
+- Industry trends and in-demand technologies (2024–2025)
+
+Communication style:
+- Conversational, warm, motivating — like a mentor who genuinely cares
+- Give specific, actionable advice — not vague generalities
+- Structure longer responses clearly with bullet points or numbered steps
+- Ask a clarifying question when you need more context before giving advice
+- Celebrate wins and keep the user motivated
+- Be honest about realistic timelines and challenges
+- Use **bold** for key terms and important points
+- Keep responses focused and not overly long${profileContext}`;
+
+    // Validate and sanitise message roles
+    const chatMessages = messages
+      .filter((m) => m.role === 'user' || m.role === 'assistant')
+      .map((m) => ({ role: m.role, content: String(m.content) }));
+
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      messages: [
+        { role: 'system', content: systemPrompt },
+        ...chatMessages,
+      ],
+      temperature: 0.75,
+      max_tokens: 1200,
+    });
+
+    const reply = completion.choices[0]?.message?.content;
+
+    if (!reply) throw new Error('No reply from AI');
+
+    res.json({ success: true, reply });
+  } catch (error) {
+    console.error('[AI Chat] Error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Failed to get AI response',
+    });
+  }
+});
+
 export default router;

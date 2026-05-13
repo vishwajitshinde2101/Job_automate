@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { useNavigate, Link } from 'react-router-dom';
-import { Mail, Lock, User as UserIcon, ArrowRight, Loader2, AlertCircle, CheckCircle, Sparkles, Building2 } from 'lucide-react';
+import { Mail, Lock, User as UserIcon, ArrowRight, Loader2, AlertCircle, CheckCircle, Sparkles, Building2, Eye, EyeOff } from 'lucide-react';
 
 interface AuthProps {
   type: 'login' | 'signup';
@@ -16,6 +16,7 @@ const Auth: React.FC<AuthProps> = ({ type }) => {
   const [welcomeName, setWelcomeName] = useState('');
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [userType, setUserType] = useState<'individual' | 'institute'>('individual');
+  const [showPassword, setShowPassword] = useState(false);
 
   const [formData, setFormData] = useState({
     firstName: '',
@@ -327,17 +328,32 @@ const Auth: React.FC<AuthProps> = ({ type }) => {
           </div>
 
           <div className="space-y-2">
-            <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Password</label>
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Password</label>
+              {type === 'login' && (
+                <Link to="/forgot-password" className="text-xs text-neon-blue hover:underline">
+                  Forgot Password?
+                </Link>
+              )}
+            </div>
             <div className="relative">
               <Lock className="absolute left-3 top-3 w-5 h-5 text-gray-500" />
               <input
-                type="password"
+                type={showPassword ? 'text' : 'password'}
                 required
-                className="w-full bg-dark-900 border border-gray-700 rounded-lg py-3 pl-10 pr-4 text-white focus:border-neon-blue focus:ring-1 focus:ring-neon-blue outline-none transition-all"
+                className="w-full bg-dark-900 border border-gray-700 rounded-lg py-3 pl-10 pr-10 text-white focus:border-neon-blue focus:ring-1 focus:ring-neon-blue outline-none transition-all"
                 placeholder="••••••••"
                 value={formData.password}
                 onChange={e => setFormData({ ...formData, password: e.target.value })}
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-3 text-gray-500 hover:text-gray-300 transition-colors"
+                tabIndex={-1}
+              >
+                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+              </button>
             </div>
           </div>
 

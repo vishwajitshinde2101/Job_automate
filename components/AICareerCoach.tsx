@@ -1,345 +1,400 @@
-import React, { useState } from 'react';
-import {
-  BrainCircuit,
-  Target,
-  TrendingUp,
-  BookOpen,
-  Briefcase,
-  Award,
-  Loader2,
-  Sparkles,
-  CheckCircle2,
-  AlertCircle,
-  ArrowRight,
-  Lightbulb,
-} from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { BrainCircuit, Send, Trash2, Loader2, User, Sparkles } from 'lucide-react';
+import { useApp } from '../context/AppContext';
+import { fetchWithTimeout, API_BASE_URL } from '../src/utils/apiClient';
 
-interface UserProfile {
-  currentRole: string;
-  experience: string;
-  skills: string;
-  education: string;
-  targetRole: string;
-  additionalInfo: string;
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+interface Message {
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
+  timestamp: Date;
 }
 
-interface CareerAnalysis {
-  strengths: string[];
-  skillGaps: string[];
-  upskillingRecommendations: string[];
-  suggestedRoles: string[];
-  careerRoadmap: { step: number; action: string }[];
-}
+// ─── Constants ────────────────────────────────────────────────────────────────
 
-const AICareerCoach: React.FC = () => {
-  const [profile, setProfile] = useState<UserProfile>({
-    currentRole: '',
-    experience: '',
-    skills: '',
-    education: '',
-    targetRole: '',
-    additionalInfo: '',
-  });
+const SUGGESTION_CHIPS = [
+  'How do I transition to a Data Science role?',
+  'What skills do I need as a Senior Java Developer?',
+  'How should I prepare for technical interviews?',
+  'Help me plan a 6-month career roadmap',
+  'How to negotiate salary for a new offer?',
+  'What are the most in-demand tech skills in 2025?',
+  'How to improve my LinkedIn profile?',
+  'Which certifications should I pursue for cloud?',
+];
 
-  const [analysis, setAnalysis] = useState<CareerAnalysis | null>(null);
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [error, setError] = useState<string>('');
+// ─── Markdown-lite renderer ───────────────────────────────────────────────────
 
-  const analyzeCareer = async () => {
-    if (!profile.currentRole || !profile.skills || !profile.targetRole) {
-      setError('Please fill in at least Current Role, Skills, and Target Role');
-      return;
+const renderContent = (text: string) => {
+  const lines = text.split('\n');
+  const elements: React.ReactNode[] = [];
+  let i = 0;
+
+  while (i < lines.length) {
+    const line = lines[i];
+
+    // Empty line → spacer
+    if (line.trim() === '') {
+      elements.push(<div key={i} className="h-1" />);
+      i++;
+      continue;
     }
 
-    setIsAnalyzing(true);
-    setError('');
+    // Heading: ### or ## or #
+    const headingMatch = line.match(/^(#{1,3})\s+(.*)/);
+    if (headingMatch) {
+      elements.push(
+        <p key={i} className="font-bold text-white mt-1">
+          {renderInline(headingMatch[2])}
+        </p>
+      );
+      i++;
+      continue;
+    }
+
+    // Bullet: starts with - or •
+    if (/^[-•]\s/.test(line)) {
+      const bullets: string[] = [];
+      while (i < lines.length && /^[-•]\s/.test(lines[i])) {
+        bullets.push(lines[i].replace(/^[-•]\s/, ''));
+        i++;
+      }
+      elements.push(
+        <ul key={`ul-${i}`} className="space-y-1 my-1">
+          {bullets.map((b, bi) => (
+            <li key={bi} className="flex gap-2 items-start">
+              <span className="text-neon-purple mt-0.5 flex-shrink-0">•</span>
+              <span>{renderInline(b)}</span>
+            </li>
+          ))}
+        </ul>
+      );
+      continue;
+    }
+
+    // Numbered list: 1. 2. 3.
+    if (/^\d+\.\s/.test(line)) {
+      const items: string[] = [];
+      while (i < lines.length && /^\d+\.\s/.test(lines[i])) {
+        items.push(lines[i].replace(/^\d+\.\s/, ''));
+        i++;
+      }
+      elements.push(
+        <ol key={`ol-${i}`} className="space-y-1 my-1 list-none">
+          {items.map((item, ii) => (
+            <li key={ii} className="flex gap-2 items-start">
+              <span className="text-neon-purple font-semibold flex-shrink-0 min-w-[16px]">{ii + 1}.</span>
+              <span>{renderInline(item)}</span>
+            </li>
+          ))}
+        </ol>
+      );
+      continue;
+    }
+
+    // Normal paragraph
+    elements.push(
+      <p key={i} className="leading-relaxed">
+        {renderInline(line)}
+      </p>
+    );
+    i++;
+  }
+
+  return elements;
+};
+
+const renderInline = (text: string): React.ReactNode => {
+  // Handle **bold** and `code`
+  const parts = text.split(/(\*\*[^*]+\*\*|`[^`]+`)/g);
+  return parts.map((part, i) => {
+    if (part.startsWith('**') && part.endsWith('**')) {
+      return <strong key={i} className="font-semibold text-white">{part.slice(2, -2)}</strong>;
+    }
+    if (part.startsWith('`') && part.endsWith('`')) {
+      return <code key={i} className="bg-white/10 px-1 py-0.5 rounded text-xs font-mono text-neon-blue">{part.slice(1, -1)}</code>;
+    }
+    return part;
+  });
+};
+
+// ─── Component ───────────────────────────────────────────────────────────────
+
+const AICareerCoach: React.FC = () => {
+  const { user } = useApp();
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [input, setInput] = useState('');
+  const [isTyping, setIsTyping] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
+
+  // Derive display name
+  const rawName: string = (user as any).username || (user as any).firstName || (user as any).email?.split('@')[0] || 'there';
+  const firstName = rawName.split(' ')[0];
+
+  // Auto-scroll to bottom on new messages
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages, isTyping]);
+
+  // Auto-resize textarea
+  useEffect(() => {
+    const ta = textareaRef.current;
+    if (!ta) return;
+    ta.style.height = 'auto';
+    ta.style.height = `${Math.min(ta.scrollHeight, 128)}px`;
+  }, [input]);
+
+  // ── Send message ──────────────────────────────────────────────────────────
+
+  const sendMessage = async (content: string) => {
+    const trimmed = content.trim();
+    if (!trimmed || isTyping) return;
+
+    const userMsg: Message = {
+      id: `u-${Date.now()}`,
+      role: 'user',
+      content: trimmed,
+      timestamp: new Date(),
+    };
+
+    const updatedMessages = [...messages, userMsg];
+    setMessages(updatedMessages);
+    setInput('');
+    setIsTyping(true);
 
     try {
-      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.autojobzy.com/api';
-      const response = await fetch(`${API_BASE_URL}/ai/career-analysis`, {
+      const token = localStorage.getItem('token') || '';
+
+      const response = await fetchWithTimeout(`${API_BASE_URL}/ai/chat`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
-        body: JSON.stringify(profile),
+        body: JSON.stringify({
+          messages: updatedMessages.map((m) => ({ role: m.role, content: m.content })),
+          userName: rawName,
+          userConfig: (user as any).config || null,
+        }),
+        timeout: 60000,
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to analyze career profile');
-      }
+      if (!response.ok) throw new Error(`Server error: ${response.status}`);
 
       const data = await response.json();
 
-      if (data.success && data.analysis) {
-        setAnalysis(data.analysis);
+      if (data.success && data.reply) {
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: `a-${Date.now()}`,
+            role: 'assistant',
+            content: data.reply,
+            timestamp: new Date(),
+          },
+        ]);
       } else {
-        throw new Error(data.error || 'Analysis failed');
+        throw new Error(data.error || 'No reply received');
       }
     } catch (err: any) {
-      console.error('Career analysis error:', err);
-      setError(err.message || 'Failed to analyze career. Please try again.');
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `err-${Date.now()}`,
+          role: 'assistant',
+          content: "I'm having trouble connecting right now. Please check your connection and try again.",
+          timestamp: new Date(),
+        },
+      ]);
     } finally {
-      setIsAnalyzing(false);
+      setIsTyping(false);
+      setTimeout(() => textareaRef.current?.focus(), 50);
     }
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage(input);
+    }
+  };
+
+  const clearChat = () => {
+    setMessages([]);
+    setTimeout(() => textareaRef.current?.focus(), 50);
+  };
+
+  // ── Render ────────────────────────────────────────────────────────────────
+
+  const hasMessages = messages.length > 0;
+
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-            <BrainCircuit className="w-7 h-7 text-neon-purple" />
-            AI Career Coach
-          </h2>
-          <p className="text-gray-400 mt-1">
-            Get personalized career guidance and roadmap powered by AI
-          </p>
+    <div className="flex flex-col" style={{ height: 'calc(100vh - 160px)', minHeight: '560px' }}>
+
+      {/* ── Header ── */}
+      <div className="flex items-center justify-between mb-4 flex-shrink-0">
+        <div className="flex items-center gap-3">
+          <div className="relative">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-neon-purple/20 to-purple-700/20 border border-neon-purple/30 flex items-center justify-center shadow-lg shadow-neon-purple/10">
+              <BrainCircuit className="w-5 h-5 text-neon-purple" />
+            </div>
+            {/* Online dot */}
+            <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-green-400 border-2 border-dark-900" />
+          </div>
+          <div>
+            <h2 className="text-xl font-bold text-white leading-tight">AI Career Coach</h2>
+            <p className="text-xs text-gray-400">Personalized tech career guidance</p>
+          </div>
         </div>
+
+        {hasMessages && (
+          <button
+            onClick={clearChat}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-gray-500 hover:text-red-400 text-xs transition-colors rounded-lg hover:bg-red-400/5"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+            Clear chat
+          </button>
+        )}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Input Form */}
-        <div className="bg-dark-800 border border-white/10 rounded-xl p-6 space-y-6">
-          <h3 className="text-lg font-semibold text-white flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-neon-purple" />
-            Your Profile
-          </h3>
-
-          {error && (
-            <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4 flex items-start gap-3">
-              <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
-              <p className="text-red-400 text-sm">{error}</p>
-            </div>
-          )}
-
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Current Role / Position *
-              </label>
-              <input
-                type="text"
-                value={profile.currentRole}
-                onChange={(e) => setProfile({ ...profile, currentRole: e.target.value })}
-                placeholder="e.g., Junior Software Developer, Student, Fresher"
-                className="w-full px-4 py-2 bg-dark-900 border border-white/10 rounded-lg text-white focus:border-neon-purple focus:outline-none"
-              />
+      {/* ── Messages area ── */}
+      <div
+        ref={messagesContainerRef}
+        className="flex-1 bg-dark-900 border border-white/10 rounded-2xl overflow-y-auto"
+        style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgba(255,255,255,0.1) transparent' }}
+      >
+        {!hasMessages ? (
+          /* ── Welcome / Empty state ── */
+          <div className="flex flex-col items-center justify-center h-full text-center px-6 py-10">
+            {/* Avatar */}
+            <div className="relative mb-5">
+              <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-neon-purple/25 to-purple-700/25 border border-neon-purple/30 flex items-center justify-center shadow-xl shadow-neon-purple/15">
+                <BrainCircuit className="w-10 h-10 text-neon-purple" />
+              </div>
+              <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-gradient-to-br from-neon-blue/40 to-neon-purple/40 border border-white/10 flex items-center justify-center">
+                <Sparkles className="w-3 h-3 text-white" />
+              </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Years of Experience
-              </label>
-              <input
-                type="text"
-                value={profile.experience}
-                onChange={(e) => setProfile({ ...profile, experience: e.target.value })}
-                placeholder="e.g., 2 years, Fresher, 5+ years"
-                className="w-full px-4 py-2 bg-dark-900 border border-white/10 rounded-lg text-white focus:border-neon-purple focus:outline-none"
-              />
-            </div>
+            <h3 className="text-xl font-bold text-white mb-1">
+              Hey {firstName}! 👋
+            </h3>
+            <p className="text-gray-400 text-sm max-w-md leading-relaxed mb-1">
+              I'm your <span className="text-neon-purple font-semibold">AI Career Coach</span> — here to guide you through every step of your tech career.
+            </p>
+            <p className="text-gray-500 text-xs max-w-sm mb-7">
+              Ask me anything — career planning, skill gaps, interview prep, resume tips, salary advice, and more.
+            </p>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Current Skills (comma separated) *
-              </label>
-              <textarea
-                value={profile.skills}
-                onChange={(e) => setProfile({ ...profile, skills: e.target.value })}
-                placeholder="e.g., JavaScript, React, Node.js, Python, SQL, Communication"
-                rows={4}
-                className="w-full px-4 py-2 bg-dark-900 border border-white/10 rounded-lg text-white focus:border-neon-purple focus:outline-none resize-none"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">Education</label>
-              <input
-                type="text"
-                value={profile.education}
-                onChange={(e) => setProfile({ ...profile, education: e.target.value })}
-                placeholder="e.g., B.Tech Computer Science, MBA, Self-taught"
-                className="w-full px-4 py-2 bg-dark-900 border border-white/10 rounded-lg text-white focus:border-neon-purple focus:outline-none"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Target Role / Career Goal *
-              </label>
-              <input
-                type="text"
-                value={profile.targetRole}
-                onChange={(e) => setProfile({ ...profile, targetRole: e.target.value })}
-                placeholder="e.g., Senior Full Stack Developer, Data Scientist, Product Manager"
-                className="w-full px-4 py-2 bg-dark-900 border border-white/10 rounded-lg text-white focus:border-neon-purple focus:outline-none"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Additional Information (Optional)
-              </label>
-              <textarea
-                value={profile.additionalInfo}
-                onChange={(e) => setProfile({ ...profile, additionalInfo: e.target.value })}
-                placeholder="Any specific concerns, preferences, or context about your career goals..."
-                rows={3}
-                className="w-full px-4 py-2 bg-dark-900 border border-white/10 rounded-lg text-white focus:border-neon-purple focus:outline-none resize-none"
-              />
+            {/* Suggestion chips */}
+            <div className="flex flex-wrap gap-2 justify-center max-w-2xl">
+              {SUGGESTION_CHIPS.map((chip) => (
+                <button
+                  key={chip}
+                  onClick={() => sendMessage(chip)}
+                  className="px-3 py-2 bg-dark-800 border border-white/10 rounded-xl text-gray-300 text-xs hover:border-neon-purple/40 hover:bg-neon-purple/5 hover:text-white transition-all"
+                >
+                  {chip}
+                </button>
+              ))}
             </div>
           </div>
-
-          <button
-            onClick={analyzeCareer}
-            disabled={isAnalyzing}
-            className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-neon-purple to-purple-600 text-white font-semibold rounded-lg hover:from-neon-purple/90 hover:to-purple-600/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-neon-purple/20"
-          >
-            {isAnalyzing ? (
-              <>
-                <Loader2 className="w-5 h-5 animate-spin" />
-                Analyzing Your Career...
-              </>
-            ) : (
-              <>
-                <BrainCircuit className="w-5 h-5" />
-                Get AI Career Analysis
-              </>
-            )}
-          </button>
-        </div>
-
-        {/* Analysis Results */}
-        <div className="bg-dark-800 border border-white/10 rounded-xl p-6 space-y-6 max-h-[800px] overflow-y-auto">
-          {!analysis ? (
-            <div className="flex flex-col items-center justify-center h-full text-center py-20">
-              <BrainCircuit className="w-16 h-16 text-gray-600 mb-4" />
-              <h3 className="text-xl font-semibold text-gray-400 mb-2">
-                No Analysis Yet
-              </h3>
-              <p className="text-gray-500">
-                Fill in your profile and click "Get AI Career Analysis" to receive personalized
-                guidance
-              </p>
-            </div>
-          ) : (
-            <>
-              {/* Strengths */}
-              {analysis.strengths && analysis.strengths.length > 0 && (
-                <div className="bg-dark-900 border border-green-500/20 rounded-lg p-5">
-                  <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
-                    <CheckCircle2 className="w-5 h-5 text-green-500" />
-                    Your Strengths
-                  </h3>
-                  <ul className="space-y-2">
-                    {analysis.strengths.map((strength, index) => (
-                      <li key={index} className="flex items-start gap-2 text-gray-300">
-                        <span className="text-green-500 mt-1">✓</span>
-                        <span className="text-sm">{strength}</span>
-                      </li>
-                    ))}
-                  </ul>
+        ) : (
+          /* ── Chat messages ── */
+          <div className="p-4 space-y-5">
+            {messages.map((msg) => (
+              <div
+                key={msg.id}
+                className={`flex gap-3 ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}
+              >
+                {/* Avatar */}
+                <div
+                  className={`w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center text-sm font-semibold ${
+                    msg.role === 'assistant'
+                      ? 'bg-gradient-to-br from-neon-purple/20 to-purple-700/20 border border-neon-purple/30'
+                      : 'bg-neon-blue/10 border border-neon-blue/20'
+                  }`}
+                >
+                  {msg.role === 'assistant' ? (
+                    <BrainCircuit className="w-4 h-4 text-neon-purple" />
+                  ) : (
+                    <User className="w-4 h-4 text-neon-blue" />
+                  )}
                 </div>
-              )}
 
-              {/* Skill Gaps */}
-              {analysis.skillGaps && analysis.skillGaps.length > 0 && (
-                <div className="bg-dark-900 border border-yellow-500/20 rounded-lg p-5">
-                  <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
-                    <Target className="w-5 h-5 text-yellow-500" />
-                    Skill Gaps to Address
-                  </h3>
-                  <ul className="space-y-2">
-                    {analysis.skillGaps.map((gap, index) => (
-                      <li key={index} className="flex items-start gap-2 text-gray-300">
-                        <span className="text-yellow-500 mt-1">•</span>
-                        <span className="text-sm">{gap}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              {/* Upskilling Recommendations */}
-              {analysis.upskillingRecommendations &&
-                analysis.upskillingRecommendations.length > 0 && (
-                  <div className="bg-dark-900 border border-neon-blue/20 rounded-lg p-5">
-                    <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
-                      <BookOpen className="w-5 h-5 text-neon-blue" />
-                      Upskilling Recommendations
-                    </h3>
-                    <ul className="space-y-2">
-                      {analysis.upskillingRecommendations.map((rec, index) => (
-                        <li key={index} className="flex items-start gap-2 text-gray-300">
-                          <ArrowRight className="w-4 h-4 text-neon-blue mt-1 flex-shrink-0" />
-                          <span className="text-sm">{rec}</span>
-                        </li>
-                      ))}
-                    </ul>
+                {/* Bubble */}
+                <div
+                  className={`max-w-[78%] px-4 py-3 text-sm ${
+                    msg.role === 'user'
+                      ? 'bg-neon-blue/10 border border-neon-blue/20 text-gray-100 rounded-2xl rounded-tr-sm'
+                      : 'bg-dark-800 border border-white/10 text-gray-200 rounded-2xl rounded-tl-sm'
+                  }`}
+                >
+                  <div className="space-y-1.5">
+                    {msg.role === 'assistant' ? renderContent(msg.content) : <p className="leading-relaxed">{msg.content}</p>}
                   </div>
-                )}
-
-              {/* Suggested Roles */}
-              {analysis.suggestedRoles && analysis.suggestedRoles.length > 0 && (
-                <div className="bg-dark-900 border border-neon-purple/20 rounded-lg p-5">
-                  <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
-                    <Briefcase className="w-5 h-5 text-neon-purple" />
-                    Suggested Roles
-                  </h3>
-                  <div className="flex flex-wrap gap-2">
-                    {analysis.suggestedRoles.map((role, index) => (
-                      <span
-                        key={index}
-                        className="px-3 py-1.5 bg-neon-purple/10 border border-neon-purple/20 rounded-lg text-neon-purple text-sm"
-                      >
-                        {role}
-                      </span>
-                    ))}
-                  </div>
+                  <p className="text-[10px] mt-2 opacity-30 text-right">
+                    {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </p>
                 </div>
-              )}
+              </div>
+            ))}
 
-              {/* Career Roadmap */}
-              {analysis.careerRoadmap && analysis.careerRoadmap.length > 0 && (
-                <div className="bg-dark-900 border border-orange-500/20 rounded-lg p-5">
-                  <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                    <TrendingUp className="w-5 h-5 text-orange-500" />
-                    Career Roadmap
-                  </h3>
-                  <div className="space-y-4">
-                    {analysis.careerRoadmap.map((step, index) => (
-                      <div key={index} className="flex items-start gap-4">
-                        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-orange-500/20 border border-orange-500/30 flex items-center justify-center">
-                          <span className="text-orange-500 font-semibold text-sm">
-                            {step.step}
-                          </span>
-                        </div>
-                        <div className="flex-1 pt-1">
-                          <p className="text-gray-300 text-sm">{step.action}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+            {/* Typing indicator */}
+            {isTyping && (
+              <div className="flex gap-3">
+                <div className="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center bg-gradient-to-br from-neon-purple/20 to-purple-700/20 border border-neon-purple/30">
+                  <BrainCircuit className="w-4 h-4 text-neon-purple" />
                 </div>
-              )}
-
-              {/* Pro Tip */}
-              <div className="bg-gradient-to-r from-neon-purple/10 to-neon-blue/10 border border-neon-purple/20 rounded-lg p-4">
-                <div className="flex items-start gap-3">
-                  <Lightbulb className="w-5 h-5 text-neon-purple flex-shrink-0 mt-0.5" />
-                  <div>
-                    <h4 className="text-white font-semibold text-sm mb-1">Pro Tip</h4>
-                    <p className="text-gray-400 text-xs">
-                      Revisit your career analysis regularly and track your progress. Update your
-                      skills as you learn new things to get updated recommendations!
-                    </p>
+                <div className="bg-dark-800 border border-white/10 rounded-2xl rounded-tl-sm px-4 py-3">
+                  <div className="flex gap-1.5 items-center h-4">
+                    <span className="w-2 h-2 rounded-full bg-neon-purple/70 animate-bounce" style={{ animationDelay: '0ms' }} />
+                    <span className="w-2 h-2 rounded-full bg-neon-purple/70 animate-bounce" style={{ animationDelay: '160ms' }} />
+                    <span className="w-2 h-2 rounded-full bg-neon-purple/70 animate-bounce" style={{ animationDelay: '320ms' }} />
                   </div>
                 </div>
               </div>
-            </>
-          )}
+            )}
+
+            <div ref={messagesEndRef} />
+          </div>
+        )}
+      </div>
+
+      {/* ── Input area ── */}
+      <div className="mt-3 flex-shrink-0">
+        <div className="bg-dark-800 border border-white/10 rounded-2xl px-4 py-3 flex items-end gap-3 focus-within:border-neon-purple/40 transition-colors">
+          <textarea
+            ref={textareaRef}
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="Ask your Career Coach anything… (Enter to send)"
+            rows={1}
+            className="flex-1 bg-transparent text-white text-sm resize-none focus:outline-none placeholder-gray-600 leading-relaxed"
+            style={{ maxHeight: '128px', overflowY: 'auto', scrollbarWidth: 'none' }}
+            disabled={isTyping}
+          />
+          <button
+            onClick={() => sendMessage(input)}
+            disabled={!input.trim() || isTyping}
+            className="w-9 h-9 rounded-xl bg-neon-purple flex items-center justify-center text-white hover:bg-purple-600 transition-colors disabled:opacity-30 disabled:cursor-not-allowed flex-shrink-0"
+          >
+            {isTyping ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Send className="w-4 h-4" />
+            )}
+          </button>
         </div>
+        <p className="text-center text-[10px] text-gray-600 mt-1.5">
+          Enter to send &nbsp;·&nbsp; Shift + Enter for new line
+        </p>
       </div>
     </div>
   );

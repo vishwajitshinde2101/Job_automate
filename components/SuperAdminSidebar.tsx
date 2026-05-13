@@ -13,6 +13,7 @@ import {
   UserCircle,
   BarChart3,
   User,
+  BookOpen,
 } from 'lucide-react';
 
 interface SuperAdminSidebarProps {
@@ -55,6 +56,12 @@ const SuperAdminSidebar: React.FC<SuperAdminSidebarProps> = ({ children }) => {
       label: 'All Users',
       path: '/superadmin/users',
       description: 'Complete User List',
+    },
+    {
+      icon: BookOpen,
+      label: 'Blog Management',
+      path: '/superadmin/blogs',
+      description: 'Manage Blog Posts',
     },
   ];
 

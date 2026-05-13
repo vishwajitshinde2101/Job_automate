@@ -21,6 +21,10 @@ import {
   Mail,
   MessageSquare,
   HelpCircle,
+  BookOpen,
+  Briefcase,
+  KeyRound,
+  MonitorPlay,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { useNavigate } from 'react-router-dom';
@@ -63,23 +67,24 @@ const DashboardSidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) =
   const showAnalyticsTab = false;
 
   const menuItems = [
-    { id: 'overview', label: 'Job Engine', icon: LayoutDashboard },
-    ...(showAnalyticsTab ? [{ id: 'analytics', label: 'Analytics', icon: BarChart3 }] : []),
-    { id: 'activity', label: 'My Activity', icon: Activity },
+    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'config', label: 'Job Profile', icon: Settings },
-    { id: 'auto-profile-update', label: 'Auto Profile Update', icon: RefreshCw },
+    { id: 'naukri-guide', label: 'Naukri Profile Guide', icon: MonitorPlay },
     { id: 'resume-builder', label: 'Resume Builder', icon: FileUser },
     { id: 'ai-career-coach', label: 'AI Career Coach', icon: BrainCircuit },
     { id: 'mock-interview', label: 'Mock Interview', icon: MessageSquare },
     { id: 'interview-qa', label: 'Interview Q&A', icon: HelpCircle },
     { id: 'email-management', label: 'Email Management', icon: Mail },
-    { id: 'history', label: 'Application History', icon: FileText },
+    { id: 'my-blogs',    label: 'My Blogs',          icon: BookOpen  },
+    { id: 'learning',    label: 'Learning Center',    icon: BookOpen  },
+    { id: 'internship',  label: 'Online Internship',  icon: Briefcase },
   ];
 
   // Build profile menu items dynamically based on user role
   const profileMenuItems = [
     { id: 'billing', label: 'My Plan', icon: CreditCard },
     { id: 'suggest-earn', label: 'Suggest & Earn', icon: Lightbulb },
+    { id: 'change-password', label: 'Change Password', icon: KeyRound },
     { id: 'settings', label: 'App Settings', icon: UserCog },
     ...(userRole === 'institute_admin' ? [{ id: 'institute-admin', label: 'Institute Admin Panel', icon: Building2, isNavigation: true }] : []),
     { id: 'logout', label: 'Logout', icon: LogOut },
@@ -99,10 +104,11 @@ const DashboardSidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) =
           <button
             key={item.id}
             onClick={() => setActiveTab(item.id)}
-            className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 group ${activeTab === item.id
-              ? 'bg-neon-blue/10 text-neon-blue border border-neon-blue/20'
-              : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white'
-              }`}
+            className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 group ${
+              activeTab === item.id
+                ? 'bg-neon-blue/10 text-neon-blue border border-neon-blue/20'
+                : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white'
+            }`}
           >
             <item.icon className={`w-5 h-5 ${activeTab === item.id ? 'text-neon-blue' : 'text-gray-500 group-hover:text-gray-900 dark:group-hover:text-white'}`} />
             <span className="font-medium text-sm">{item.label}</span>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   HelpCircle,
   Sparkles,
@@ -11,6 +11,8 @@ import {
   Target,
   TrendingUp,
 } from 'lucide-react';
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.autojobzy.com/api';
 
 interface QASetup {
   topic: string;
@@ -35,6 +37,47 @@ const InterviewQA: React.FC = () => {
     difficulty: 'intermediate',
     numberOfQuestions: 10,
   });
+  const [profileLoading, setProfileLoading] = useState(true);
+
+  // Fetch profile data from DB
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) { setProfileLoading(false); return; }
+        const headers = { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` };
+
+        const [settingsRes, skillsRes] = await Promise.all([
+          fetch(`${API_BASE_URL}/job-settings`, { headers }),
+          fetch(`${API_BASE_URL}/skills`, { headers }),
+        ]);
+
+        const settingsData = await settingsRes.json();
+        const skillsData = await skillsRes.json();
+
+        const s = settingsData?.settings || settingsData;
+        const skillsList = (skillsData?.skills || []).map((sk: any) => sk.displayName || sk.skillName).filter(Boolean);
+
+        const yrs = s?.yearsOfExperience ?? 0;
+        let expLevel: 'fresher' | '1-3' | '3-5' | '5+' = 'fresher';
+        if (yrs >= 5) expLevel = '5+';
+        else if (yrs >= 3) expLevel = '3-5';
+        else if (yrs >= 1) expLevel = '1-3';
+
+        setSetup(prev => ({
+          ...prev,
+          position: s?.targetRole || prev.position,
+          topic: skillsList.length > 0 ? skillsList.join(', ') : prev.topic,
+          experienceLevel: expLevel,
+        }));
+      } catch (err) {
+        console.error('Failed to fetch profile for Q&A:', err);
+      } finally {
+        setProfileLoading(false);
+      }
+    };
+    fetchProfile();
+  }, []);
 
   const [qaList, setQaList] = useState<QuestionAnswer[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -42,8 +85,8 @@ const InterviewQA: React.FC = () => {
   const [success, setSuccess] = useState('');
 
   const generateQA = async () => {
-    if (!setup.topic || !setup.position) {
-      setError('Please fill topic and position');
+    if (!setup.topic) {
+      setError('Please enter a topic / technology');
       return;
     }
 
@@ -133,181 +176,34 @@ const InterviewQA: React.FC = () => {
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Setup Form */}
-        <div className="lg:col-span-1 bg-dark-800 border border-white/10 rounded-xl p-6 space-y-6 h-fit">
-          <h3 className="text-lg font-semibold text-white flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-neon-purple" />
-            Setup
-          </h3>
-
-          {/* Topic */}
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
-              Topic / Technology *
-            </label>
-            <input
-              type="text"
-              value={setup.topic}
-              onChange={(e) => setSetup({ ...setup, topic: e.target.value })}
-              placeholder="e.g., React, Node.js, HR Communication"
-              className="w-full px-4 py-2 bg-dark-900 border border-white/10 rounded-lg text-white focus:border-neon-purple focus:outline-none"
-            />
-          </div>
-
-          {/* Position */}
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
-              Position / Role *
-            </label>
-            <input
-              type="text"
-              value={setup.position}
-              onChange={(e) => setSetup({ ...setup, position: e.target.value })}
-              placeholder="e.g., Frontend Developer, HR Manager"
-              className="w-full px-4 py-2 bg-dark-900 border border-white/10 rounded-lg text-white focus:border-neon-purple focus:outline-none"
-            />
-          </div>
-
-          {/* Interview Type */}
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
-              Interview Type
-            </label>
-            <div className="grid grid-cols-2 gap-3">
-              <button
-                onClick={() => setSetup({ ...setup, interviewType: 'technical' })}
-                className={`p-3 rounded-lg border transition-all text-sm ${
-                  setup.interviewType === 'technical'
-                    ? 'bg-neon-purple/10 border-neon-purple text-neon-purple'
-                    : 'bg-dark-900 border-white/10 text-gray-400 hover:border-white/20'
-                }`}
-              >
-                Technical
-              </button>
-              <button
-                onClick={() => setSetup({ ...setup, interviewType: 'hr' })}
-                className={`p-3 rounded-lg border transition-all text-sm ${
-                  setup.interviewType === 'hr'
-                    ? 'bg-neon-purple/10 border-neon-purple text-neon-purple'
-                    : 'bg-dark-900 border-white/10 text-gray-400 hover:border-white/20'
-                }`}
-              >
-                HR
-              </button>
-            </div>
-          </div>
-
-          {/* Experience Level */}
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
-              Experience Level
-            </label>
-            <div className="grid grid-cols-2 gap-2">
-              {['fresher', '1-3', '3-5', '5+'].map((level) => (
-                <button
-                  key={level}
-                  onClick={() => setSetup({ ...setup, experienceLevel: level as any })}
-                  className={`p-2 rounded-lg border transition-all text-xs ${
-                    setup.experienceLevel === level
-                      ? 'bg-neon-blue/10 border-neon-blue text-neon-blue'
-                      : 'bg-dark-900 border-white/10 text-gray-400 hover:border-white/20'
-                  }`}
-                >
-                  {level === 'fresher' ? 'Fresher' : `${level} yrs`}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Difficulty */}
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
-              Difficulty Level
-            </label>
-            <div className="grid grid-cols-3 gap-2">
-              {['basic', 'intermediate', 'advanced'].map((level) => (
-                <button
-                  key={level}
-                  onClick={() => setSetup({ ...setup, difficulty: level as any })}
-                  className={`p-2 rounded-lg border transition-all text-xs capitalize ${
-                    setup.difficulty === level
-                      ? 'bg-neon-purple/10 border-neon-purple text-neon-purple'
-                      : 'bg-dark-900 border-white/10 text-gray-400 hover:border-white/20'
-                  }`}
-                >
-                  {level}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Number of Questions */}
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
-              Number of Questions
-            </label>
-            <select
-              value={setup.numberOfQuestions}
-              onChange={(e) => setSetup({ ...setup, numberOfQuestions: parseInt(e.target.value) })}
-              className="w-full px-4 py-2 bg-dark-900 border border-white/10 rounded-lg text-white focus:border-neon-purple focus:outline-none"
-            >
-              <option value={5}>5 Questions</option>
-              <option value={10}>10 Questions</option>
-              <option value={15}>15 Questions</option>
-              <option value={20}>20 Questions</option>
-              <option value={30}>30 Questions</option>
-            </select>
-          </div>
-
-          {/* Generate Button */}
-          <button
-            onClick={generateQA}
-            disabled={isGenerating}
-            className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-neon-purple to-purple-600 text-white font-semibold rounded-lg hover:from-neon-purple/90 hover:to-purple-600/90 transition-all disabled:opacity-50 shadow-lg shadow-neon-purple/20"
-          >
-            {isGenerating ? (
-              <>
-                <Loader2 className="w-5 h-5 animate-spin" />
-                Generating...
-              </>
-            ) : (
-              <>
-                <Sparkles className="w-5 h-5" />
-                Generate Q&A
-              </>
-            )}
-          </button>
-
-          {/* Info */}
-          <div className="pt-4 border-t border-white/10">
-            <h4 className="text-sm font-semibold text-white mb-2 flex items-center gap-2">
-              <BookOpen className="w-4 h-4 text-neon-blue" />
-              What you'll get:
-            </h4>
-            <ul className="space-y-2 text-xs text-gray-400">
-              <li className="flex items-start gap-2">
-                <CheckCircle className="w-3 h-3 text-green-500 mt-0.5 flex-shrink-0" />
-                <span>Interview-ready questions</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <CheckCircle className="w-3 h-3 text-green-500 mt-0.5 flex-shrink-0" />
-                <span>Clear, correct answers</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <CheckCircle className="w-3 h-3 text-green-500 mt-0.5 flex-shrink-0" />
-                <span>Difficulty-based questions</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <CheckCircle className="w-3 h-3 text-green-500 mt-0.5 flex-shrink-0" />
-                <span>Role-specific content</span>
-              </li>
-            </ul>
-          </div>
+      {/* Topic + Generate */}
+      <div className="flex items-center gap-4">
+        <div className="flex-1 max-w-md">
+          <input
+            type="text"
+            value={setup.topic}
+            onChange={(e) => setSetup({ ...setup, topic: e.target.value })}
+            placeholder="Topic / Technology (e.g., React, Spring Boot, HR)"
+            className="w-full px-4 py-3 bg-dark-800 border border-white/10 rounded-xl text-white text-sm focus:border-neon-purple focus:outline-none placeholder-gray-600"
+          />
         </div>
+        <button
+          onClick={generateQA}
+          disabled={isGenerating || profileLoading}
+          className="flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-neon-purple to-purple-600 text-white font-semibold rounded-xl hover:from-neon-purple/90 hover:to-purple-600/90 transition-all disabled:opacity-50 shadow-lg shadow-neon-purple/20"
+        >
+          {profileLoading ? (
+            <><Loader2 className="w-5 h-5 animate-spin" /> Loading...</>
+          ) : isGenerating ? (
+            <><Loader2 className="w-5 h-5 animate-spin" /> Generating...</>
+          ) : (
+            <><Sparkles className="w-5 h-5" /> Generate Q&A</>
+          )}
+        </button>
+      </div>
 
-        {/* Q&A Display */}
-        <div className="lg:col-span-2 bg-dark-800 border border-white/10 rounded-xl p-6">
+      {/* Q&A Display */}
+      <div className="bg-dark-800 border border-white/10 rounded-xl p-6">
           {qaList.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-center py-20">
               <HelpCircle className="w-16 h-16 text-gray-600 mb-4" />
@@ -322,10 +218,10 @@ const InterviewQA: React.FC = () => {
               <div className="flex items-center justify-between mb-6 pb-4 border-b border-white/10">
                 <div>
                   <h3 className="text-lg font-semibold text-white">
-                    {setup.topic} - {setup.position}
+                    {setup.topic}
                   </h3>
                   <p className="text-sm text-gray-400 mt-1">
-                    {setup.interviewType.toUpperCase()} • {setup.difficulty} • {qaList.length} Questions
+                    {qaList.length} Questions
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
@@ -390,7 +286,6 @@ const InterviewQA: React.FC = () => {
             </>
           )}
         </div>
-      </div>
     </div>
   );
 };
